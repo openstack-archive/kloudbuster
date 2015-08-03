@@ -54,11 +54,8 @@ ChangeLog
 *cscope*
 .ropeproject/
 
-# vmtp
-*.local*
-*.json
-
 # KloudBuster
+*.json
 *.html
 *.qcow2
 scale/dib/kloudbuster.d/

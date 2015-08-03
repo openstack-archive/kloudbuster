@@ -13,16 +13,16 @@
 # under the License.
 
 """
-test_vmtp
+test_kloudbuster
 ----------------------------------
 
-Tests for `vmtp` module.
+Tests for `kloudbuster` module.
 """
 
-from vmtp.tests import base
+from kloudbuster.tests import base
 
 
-class TestVmtp(base.TestCase):
+class TestKloudbuster(base.TestCase):
 
     def test_something(self):
         pass

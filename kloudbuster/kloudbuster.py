@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright 2015 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -33,12 +34,9 @@ from oslo_config import cfg
 from tabulate import tabulate
 import tenant
 
-import sshutils
-
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
-__version__ = '1.0.0'
 KB_IMAGE_MAJOR_VERSION = 1
 
 class KBVMCreationException(Exception):
@@ -392,7 +390,7 @@ class KloudBuster(object):
             LOG.info(self.final_result)
         except KeyboardInterrupt:
             traceback.format_exc()
-        except (sshutils.SSHError, ClientException, Exception):
+        except (ClientException, Exception):
             traceback.print_exc()
 
         # Cleanup: start with tested side first

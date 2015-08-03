@@ -1,7 +1,7 @@
 [run]
 branch = True
-source = vmtp
-omit = vmtp/tests/*,vmtp/openstack/*
+source = kloudbuster
+omit = kloudbuster/openstack/*
 
 [report]
 ignore-errors = True
