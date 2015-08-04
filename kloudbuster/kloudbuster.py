@@ -20,6 +20,7 @@ import sys
 import threading
 import traceback
 
+from __init__ import __version__
 import base_compute
 import base_network
 import glanceclient.exc as glance_exception
@@ -35,8 +36,8 @@ from tabulate import tabulate
 import tenant
 
 CONF = cfg.CONF
+CONF.version = __version__
 LOG = logging.getLogger(__name__)
-
 KB_IMAGE_MAJOR_VERSION = 1
 
 class KBVMCreationException(Exception):
@@ -292,8 +293,8 @@ class KloudBuster(object):
                                            self.kloud.placement_az, "Round-robin")
             for ins in svr_list:
                 ins.user_data['role'] = 'Server'
-                ins.boot_info['flavor_type'] =\
-                    self.kloud.flavor_to_use if self.tenants_list else 'kb.server'
+                ins.boot_info['flavor_type'] = 'kb.server' if \
+                    not self.tenants_list['server'] else self.kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)
         elif role == "Client":
             client_list = self.testing_kloud.get_all_instances()
@@ -310,8 +311,8 @@ class KloudBuster(object):
                 ins.user_data['target_shared_interface_ip'] = svr_list[idx].shared_interface_ip
                 ins.user_data['http_tool'] = ins.config['http_tool']
                 ins.user_data['http_tool_configs'] = ins.config['http_tool_configs']
-                ins.boot_info['flavor_type'] =\
-                    self.testing_kloud.flavor_to_use if self.tenants_list else 'kb.client'
+                ins.boot_info['flavor_type'] = 'kb.client' if \
+                    not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)
 
     def run(self):
@@ -337,8 +338,8 @@ class KloudBuster(object):
 
             self.kb_proxy.vm_name = 'KB-PROXY'
             self.kb_proxy.user_data['role'] = 'KB-PROXY'
-            self.kb_proxy.boot_info['flavor_type'] =\
-                self.testing_kloud.flavor_to_use if self.tenants_list else 'kb.proxy'
+            self.kb_proxy.boot_info['flavor_type'] = 'kb.proxy' if \
+                not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
             if self.testing_kloud.placement_az:
                 self.kb_proxy.boot_info['avail_zone'] = "%s:%s" %\
                     (self.testing_kloud.placement_az, self.topology.clients_rack.split()[0])
