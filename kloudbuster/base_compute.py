@@ -19,7 +19,6 @@ import log as logging
 
 LOG = logging.getLogger(__name__)
 
-
 class BaseCompute(object):
     """
     The Base class for nova compute resources
@@ -30,6 +29,7 @@ class BaseCompute(object):
     def __init__(self, vm_name, network):
         self.novaclient = network.router.user.nova_client
         self.network = network
+        self.res_logger = network.res_logger
         self.vm_name = vm_name
         self.instance = None
         self.host = None
@@ -71,6 +71,7 @@ class BaseCompute(object):
                                                   userdata=user_data,
                                                   config_drive=config_drive,
                                                   security_groups=[sec_group.id])
+        self.res_logger.log('instances', self.vm_name, instance.id)
 
         if not instance:
             return None
@@ -79,8 +80,8 @@ class BaseCompute(object):
             instance = self.novaclient.servers.get(instance.id)
             if instance.status == 'ACTIVE':
                 self.instance = instance
-                if 'OS-EXT-SRV-ATTR:hypervisor_hostname' in instance.__dict__:
-                    self.host = instance.__dict__['OS-EXT-SRV-ATTR:hypervisor_hostname']
+                if 'OS-EXT-SRV-ATTR:hypervisor_hostname' in vars(instance):
+                    self.host = vars(instance)['OS-EXT-SRV-ATTR:hypervisor_hostname']
                 else:
                     self.host = "Unknown"
                 return instance
@@ -217,6 +218,15 @@ class Flavor(object):
     def __init__(self, novaclient):
         self.novaclient = novaclient
 
+    def get(self, name):
+        flavor = None
+        try:
+            flavor = vars(self.novaclient.flavors.find(name=name))
+        except Exception:
+            pass
+
+        return flavor
+
     def list(self):
         return self.novaclient.flavors.list()
 
@@ -240,7 +250,7 @@ class NovaQuota(object):
         self.tenant_id = tenant_id
 
     def get(self):
-        return self.novaclient.quotas.get(self.tenant_id).__dict__
+        return vars(self.novaclient.quotas.get(self.tenant_id))
 
     def update_quota(self, **kwargs):
         self.novaclient.quotas.update(self.tenant_id, **kwargs)
@@ -252,7 +262,7 @@ class CinderQuota(object):
         self.tenant_id = tenant_id
 
     def get(self):
-        return self.cinderclient.quotas.get(self.tenant_id).__dict__
+        return vars(self.cinderclient.quotas.get(self.tenant_id))
 
     def update_quota(self, **kwargs):
         self.cinderclient.quotas.update(self.tenant_id, **kwargs)

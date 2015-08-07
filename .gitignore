@@ -55,6 +55,7 @@ ChangeLog
 .ropeproject/
 
 # KloudBuster
+kb*.log
 *.json
 *.html
 *.qcow2

@@ -45,6 +45,7 @@ class User(object):
         self.user_name = user_name
         self.password = password
         self.tenant = tenant
+        self.res_logger = tenant.res_logger
         self.router_list = []
         # Store the nova, neutron and cinder client
         self.nova_client = None
@@ -133,7 +134,7 @@ class User(object):
         flavor_manager = base_compute.Flavor(self.nova_client)
         flavor_to_use = None
         for flavor in flavor_manager.list():
-            flavor = flavor.__dict__
+            flavor = vars(flavor)
             if flavor['vcpus'] < 1 or flavor['ram'] < 1024 or flavor['disk'] < 10:
                 continue
             flavor_to_use = flavor
@@ -221,6 +222,8 @@ class User(object):
             router_name = self.user_name + "-R" + str(router_count)
             # Create the router and also attach it to external network
             router_instance.create_router(router_name, external_network)
+            self.res_logger.log('routers', router_instance.router['router']['name'],
+                                router_instance.router['router']['id'])
             # Now create the network resources inside the router
             router_instance.create_network_resources(config_scale)
 

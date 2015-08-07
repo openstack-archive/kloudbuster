@@ -35,6 +35,7 @@ class Tenant(object):
         tested cloud being on same cloud
         """
         self.kloud = kloud
+        self.res_logger = kloud.res_logger
         self.tenant_name = tenant_name
         if not self.kloud.reusing_tenants:
             self.tenant_object = self._get_tenant()
@@ -97,6 +98,7 @@ class Tenant(object):
                                            self.kloud.scale_cfg['keystone_admin_role'])
                 # Global list with all user instances
                 self.user_list.append(user_instance)
+                self.res_logger.log('users', user_instance.user_name, user_instance.user.id)
 
         for user_instance in self.user_list:
             # Now create the user resources like routers which inturn trigger network and

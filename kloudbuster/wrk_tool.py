@@ -121,7 +121,6 @@ class WrkTool(PerfTool):
                     all_res[key] += item['results'][key]
             all_res[key] = int(all_res[key])
 
-
         if 'latency_stats' in results[0]['results']:
             # for item in results:
             #     print item['results']['latency_stats']

@@ -89,6 +89,7 @@ class BaseNetwork(object):
         self.neutron_client = router.user.neutron_client
         self.nova_client = router.user.nova_client
         self.router = router
+        self.res_logger = router.res_logger
         self.network = None
         self.instance_list = []
         self.secgroup_list = []
@@ -106,6 +107,8 @@ class BaseNetwork(object):
             self.secgroup_list.append(secgroup_instance)
             secgroup_name = network_prefix + "-SG" + str(secgroup_count)
             secgroup_instance.create_secgroup_with_rules(secgroup_name)
+            self.res_logger.log('sec_groups', secgroup_instance.secgroup.name,
+                                secgroup_instance.secgroup.id)
 
         LOG.info("Scheduled to create VM for network %s..." % network_prefix)
         if config_scale['use_floatingip']:
@@ -122,6 +125,9 @@ class BaseNetwork(object):
                 # store it and the ip address in perf_instance object
                 perf_instance.fip = create_floating_ip(self.neutron_client, external_network)
                 perf_instance.fip_ip = perf_instance.fip['floatingip']['floating_ip_address']
+                self.res_logger.log('floating_ips',
+                                    perf_instance.fip['floatingip']['floating_ip_address'],
+                                    perf_instance.fip['floatingip']['id'])
 
             # Create the VMs on specified network, first keypair, first secgroup
             perf_instance.boot_info['image_name'] = config_scale['image_name']
@@ -218,6 +224,7 @@ class Router(object):
         self.nova_client = user.nova_client
         self.router = None
         self.user = user
+        self.res_logger = user.res_logger
         # Stores the list of networks
         self.network_list = []
         # Store the shared network
@@ -238,6 +245,8 @@ class Router(object):
             # Create the network and subnet
             network_name = self.router['router']['name'] + "-N" + str(network_count)
             network_instance.create_network_and_subnet(network_name)
+            self.res_logger.log('networks', network_instance.network['name'],
+                                network_instance.network['id'])
             # Attach the created network to router interface
             self.attach_router_interface(network_instance)
             # Create the compute resources in the network

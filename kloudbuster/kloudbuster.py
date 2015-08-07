@@ -26,6 +26,7 @@ import base_network
 import glanceclient.exc as glance_exception
 from glanceclient.v2 import client as glanceclient
 from kb_config import KBConfig
+from kb_res_logger import KBResLogger
 from kb_runner import KBRunner
 from kb_scheduler import KBScheduler
 from keystoneclient.v2_0 import client as keystoneclient
@@ -44,11 +45,11 @@ class KBVMCreationException(Exception):
     pass
 
 
-def create_keystone_client(admin_creds):
+def create_keystone_client(creds):
     """
     Return the keystone client and auth URL given a credential
     """
-    creds = admin_creds.get_credentials()
+    creds = creds.get_credentials()
     return (keystoneclient.Client(**creds), creds['auth_url'])
 
 def check_and_upload_images(cred, cred_testing, server_img_name, client_img_name):
@@ -67,7 +68,7 @@ def check_and_upload_images(cred, cred_testing, server_img_name, client_img_name
         except StopIteration:
             pass
 
-        # Trying upload images
+        # Trying to upload images
         LOG.info("Image is not found in %s, trying to upload..." % (kloud))
         if not os.path.exists('dib/kloudbuster.qcow2'):
             LOG.error("Image file dib/kloudbuster.qcow2 is not present, please refer "
@@ -88,14 +89,14 @@ def check_and_upload_images(cred, cred_testing, server_img_name, client_img_name
     return True
 
 class Kloud(object):
-    def __init__(self, scale_cfg, admin_creds, reusing_tenants, testing_side=False):
-        self.cred = admin_creds
+    def __init__(self, scale_cfg, cred, reusing_tenants, testing_side=False):
         self.tenant_list = []
         self.testing_side = testing_side
         self.scale_cfg = scale_cfg
         self.reusing_tenants = reusing_tenants
-        self.keystone, self.auth_url = create_keystone_client(self.cred)
+        self.keystone, self.auth_url = create_keystone_client(cred)
         self.flavor_to_use = None
+        self.res_logger = KBResLogger()
         if testing_side:
             self.prefix = 'KBc'
             self.name = 'Client Kloud'
@@ -103,9 +104,6 @@ class Kloud(object):
             self.prefix = 'KBs'
             self.name = 'Server Kloud'
         LOG.info("Creating kloud: " + self.prefix)
-        # if this cloud is sharing a network then all tenants must hook up to
-        # it and on deletion that shared network must NOT be deleted
-        # as it will be deleted by the owner
 
         # pre-compute the placement az to use for all VMs
         self.placement_az = None
@@ -125,6 +123,8 @@ class Kloud(object):
             for tenant_count in xrange(self.scale_cfg['number_tenants']):
                 tenant_name = self.prefix + "-T" + str(tenant_count)
                 tenant_instance = tenant.Tenant(tenant_name, self, tenant_quota)
+                self.res_logger.log('tenants', tenant_instance.tenant_name,
+                                    tenant_instance.tenant_id)
                 self.tenant_list.append(tenant_instance)
 
         for tenant_instance in self.tenant_list:
@@ -136,10 +136,14 @@ class Kloud(object):
             flavor_manager = base_compute.Flavor(nova_client)
             flavor_dict = self.scale_cfg.flavor
             if self.testing_side:
-                flavor_manager.create_flavor('kb.client', override=True, **flavor_dict)
-                flavor_manager.create_flavor('kb.proxy', override=True, ram=2048, vcpus=1, disk=20)
+                flv = flavor_manager.create_flavor('kb.client', override=True, **flavor_dict)
+                self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
+                flv = flavor_manager.create_flavor('kb.proxy', override=True,
+                                                   ram=2048, vcpus=1, disk=20)
+                self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
             else:
-                flavor_manager.create_flavor('kb.server', override=True, **flavor_dict)
+                flv = flavor_manager.create_flavor('kb.server', override=True, **flavor_dict)
+                self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
 
     def delete_resources(self):
         # Deleting flavors created by KloudBuster
@@ -206,6 +210,9 @@ class Kloud(object):
             external_network = base_network.find_external_network(neutron_client)
             instance.fip = base_network.create_floating_ip(neutron_client, external_network)
             instance.fip_ip = instance.fip['floatingip']['floating_ip_address']
+            self.res_logger.log('floating_ips',
+                                instance.fip['floatingip']['floating_ip_address'],
+                                instance.fip['floatingip']['id'])
 
         if instance.fip:
             # Associate the floating ip with this instance
@@ -318,8 +325,6 @@ class KloudBuster(object):
     def run(self):
         """
         The runner for KloudBuster Tests
-        Executes tests serially
-        Support concurrency in fututure
         """
         kbrunner = None
         vm_creation_concurrency = self.client_cfg.vm_creation_concurrency
@@ -401,11 +406,13 @@ class KloudBuster(object):
                 self.kloud.delete_resources()
             except Exception:
                 traceback.print_exc()
+                KBResLogger.dump_and_save('svr', self.kloud.res_logger.resource_list)
         if self.client_cfg['cleanup_resources']:
             try:
                 self.testing_kloud.delete_resources()
             except Exception:
                 traceback.print_exc()
+                KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
         if kbrunner:
             kbrunner.dispose()
 
@@ -506,32 +513,7 @@ class KloudBuster(object):
 
         return quota_dict
 
-# Some hardcoded client side options we do not want users to change
-hardcoded_client_cfg = {
-    # Number of tenants to be created on the cloud
-    'number_tenants': 1,
-
-    # Number of Users to be created inside the tenant
-    'users_per_tenant': 1,
-
-    # Number of routers to be created within the context of each User
-    # For now support only 1 router per user
-    'routers_per_user': 1,
-
-    # Number of networks to be created within the context of each Router
-    # Assumes 1 subnet per network
-    'networks_per_router': 1,
-
-    # Number of VM instances to be created within the context of each Network
-    'vms_per_network': 1,
-
-    # Number of security groups per network
-    'secgroups_per_network': 1
-}
-
-
-if __name__ == '__main__':
-
+def main():
     cli_opts = [
         cfg.StrOpt("config",
                    short="c",
@@ -596,3 +578,7 @@ if __name__ == '__main__':
         LOG.info('Saving results in json file: ' + CONF.json + "...")
         with open(CONF.json, 'w') as jfp:
             json.dump(kloudbuster.final_result, jfp, indent=4, sort_keys=True)
+
+
+if __name__ == '__main__':
+    main()
