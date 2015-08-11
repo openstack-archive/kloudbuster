@@ -37,7 +37,6 @@ from tabulate import tabulate
 import tenant
 
 CONF = cfg.CONF
-CONF.version = __version__
 LOG = logging.getLogger(__name__)
 KB_IMAGE_MAJOR_VERSION = 1
 
@@ -550,7 +549,7 @@ def main():
     ]
     CONF.register_cli_opts(cli_opts)
     CONF.set_default("verbose", True)
-    CONF(sys.argv[1:])
+    CONF(sys.argv[1:], project="kloudbuster", version=__version__)
 
     logging.setup("kloudbuster")
 

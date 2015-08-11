@@ -12,7 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from collections import deque
 from distutils.version import LooseVersion
+import threading
 import time
 
 import log as logging
@@ -55,6 +57,13 @@ class KBRunner(object):
         self.pubsub = None
         self.orches_chan_name = "kloudbuster_orches"
         self.report_chan_name = "kloudbuster_report"
+        self.message_queue = deque()
+
+    def msg_handler(self):
+        for message in self.pubsub.listen():
+            if message['data'] == "STOP":
+                break
+            self.message_queue.append(message)
 
     def setup_redis(self, redis_server, redis_server_port=6379, timeout=120):
         LOG.info("Setting up the redis connections...")
@@ -83,8 +92,13 @@ class KBRunner(object):
         # Subscribe to message channel
         self.pubsub = self.redis_obj.pubsub(ignore_subscribe_messages=True)
         self.pubsub.subscribe(self.report_chan_name)
+        self.msg_thread = threading.Thread(target=self.msg_handler)
+        self.msg_thread.daemon = True
+        self.msg_thread.start()
 
     def dispose(self):
+        self.redis_obj.publish(self.report_chan_name, "STOP")
+        self.msg_thread.join()
         if self.pubsub:
             self.pubsub.unsubscribe()
             self.pubsub.close()
@@ -112,8 +126,9 @@ class KBRunner(object):
             time.sleep(polling_interval)
             sample_count = 0
             while True:
-                msg = self.pubsub.get_message()
-                if not msg:
+                try:
+                    msg = self.message_queue.popleft()
+                except IndexError:
                     # No new message, commands are in executing
                     break
 
@@ -245,12 +260,16 @@ class KBRunner(object):
             self.tool_result['total_connections'] =\
                 len(self.client_dict) * self.config.http_tool_configs.connections
             self.gen_host_stats()
+            self.dispose()
         except (KBSetStaticRouteException):
             LOG.error("Could not set static route.")
+            self.dispose()
             return
         except (KBHTTPServerUpException):
             LOG.error("HTTP service is not up in testing cloud.")
+            self.dispose()
             return
         except KBHTTPBenchException():
             LOG.error("Error in HTTP benchmarking.")
+            self.dispose()
             return

@@ -28,38 +28,48 @@ class ConfigController(object):
 
     def __init__(self):
         self.kb_config = KBConfig()
-        self.status = 'READY'
-        self.def_config = self.kb_config.config_scale
+        self.kb_status = 'READY'
+        # self.def_config = self.kb_config.config_scale
 
     @expose(generic=True)
     def default_config(self):
-        return str(self.def_config)
+        return "DEFAULT_CONFIG"
+        # return str(self.def_config)
 
     @expose(generic=True)
     def running_config(self):
         return str(self.kb_config.config_scale)
 
+    @expose(generic=True)
+    def status(self):
+        return self.kb_status
+
+    @status.when(method='PUT')
+    def status_PUT(self, **kw):
+        return str(kw)
+
     @running_config.when(method='POST')
-    def running_config_POST(self, args):
+    def running_config_POST(self, arg):
         try:
             # Expectation:
             # {
-            #  'credentials': {'tested_rc': '<STRING>', 'passwd_tested': '<STRING>',
-            #                  'testing_rc': '<STRING>', 'passwd_testing': '<STRING>'},
+            #  'credentials': {'tested-rc': '<STRING>', 'tested-passwd': '<STRING>',
+            #                  'testing-rc': '<STRING>', 'testing-passwd': '<STRING>'},
             #  'kb_cfg': {<USER_OVERRIDED_CONFIGS>},
             #  'topo_cfg': {<TOPOLOGY_CONFIGS>}
             #  'tenants_cfg': {<TENANT_AND_USER_LISTS_FOR_REUSING>}
             # }
-            user_config = eval(args)
+            user_config = dict(arg)
+            print user_config
 
             # Parsing credentials from application input
             cred_config = user_config['credentials']
             cred_tested = Credentials(openrc_contents=cred_config['tested_rc'],
-                                      pwd=cred_config['passwd_tested'])
-            if ('testing_rc' in cred_config and
-               cred_config['testing_rc'] != cred_config['tested_rc']):
+                                      pwd=cred_config['tested-passwd'])
+            if ('testing-rc' in cred_config and
+               cred_config['testing-rc'] != cred_config['tested-rc']):
                 cred_testing = Credentials(openrc_contents=cred_config['testing_rc'],
-                                           pwd=cred_config['passwd_testing'])
+                                           pwd=cred_config['testing-passwd'])
             else:
                 # Use the same openrc file for both cases
                 cred_testing = cred_tested
@@ -89,7 +99,7 @@ class ConfigController(object):
                 tenants_list = None
         except Exception as e:
             response.status = 403
-            response.text = "Error while parsing configurations: %s" % e.message
+            response.text = u"Error while parsing configurations: %s" % (e.message)
             return response.text
 
         self.kb_config.init_with_rest_api(cred_tested=cred_tested,
@@ -97,13 +107,3 @@ class ConfigController(object):
                                           topo_cfg=topo_cfg,
                                           tenants_list=tenants_list)
         return str(self.kb_config.config_scale)
-
-    @expose(generic=True)
-    def status(self):
-        return "RETURN CURRENT STATUS HERE"
-
-    @status.when(method='PUT')
-    def status_PUT(self, **kw):
-        # @TODO(recursively update the config dictionary with the information
-        # provided by application (client))
-        return str(kw)
