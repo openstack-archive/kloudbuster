@@ -38,7 +38,7 @@ import tenant
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
-KB_IMAGE_MAJOR_VERSION = 1
+KB_IMAGE_MAJOR_VERSION = 2
 
 class KBVMCreationException(Exception):
     pass
@@ -412,8 +412,6 @@ class KloudBuster(object):
             except Exception:
                 traceback.print_exc()
                 KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
-        if kbrunner:
-            kbrunner.dispose()
 
     def get_tenant_vm_count(self, config):
         return (config['users_per_tenant'] * config['routers_per_user'] *

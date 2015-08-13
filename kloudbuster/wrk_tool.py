@@ -36,7 +36,7 @@ class WrkTool(PerfTool):
         duration_sec = self.instance.config.http_tool_configs.duration
         if not rate_limit:
             rate_limit = 65535
-        cmd = '%s -t%d -c%d -R%d -d%ds --timeout %ds -D2 -j %s' % \
+        cmd = '%s -t%d -c%d -R%d -d%ds --timeout %ds -D2 -e %s' % \
             (self.dest_path, threads, connections, rate_limit,
              duration_sec, timeout, target_url)
         LOG.kbdebug("[%s] %s" % (self.instance.vm_name, cmd))
@@ -48,23 +48,13 @@ class WrkTool(PerfTool):
 
         # Sample Output:
         # {
-        # "seq": 1,
-        # "latency": {
-        #     "min": 509440, "max": 798720,
-        #     "counters": [
-        #         8, [1990, 1, 2027, 1],
-        #         9, [1032, 1, 1058, 1, 1085, 1, 1093, 1, 1110, 1, 1111, 1,
-        #         1128, 1, 1129, 1, 1146, 1, 1147, 1, 1148, 1, 1165, 1, 1166, 1, 1169, 1,
-        #         1172, 1, 1182, 1, 1184, 1, 1187, 1, 1191, 1, 1201, 1, 1203, 1, 1206, 1,
-        #         1209, 1, 1219, 1, 1221, 1, 1223, 1, 1235, 1, 1237, 1, 1239, 1, 1242, 1,
-        #         1255, 1, 1257, 1, 1260, 1, 1276, 1, 1282, 1, 1286, 1, 1294, 1, 1308, 1,
-        #         1312, 1, 1320, 1, 1330, 1, 1334, 1, 1346, 1, 1349, 1, 1352, 1, 1364, 1,
-        #         1374, 1, 1383, 1, 1401, 1, 1427, 1, 1452, 1, 1479, 1, 1497, 1, 1523, 1,
-        #         1541, 1, 1560, 1]
-        #     ]
-        # },
+        # "total_req": 29, "rps": 29.39, "rx_bps": "1.43MB",
+        # "hist": "HISTggAAANB4nO3XsQ3DIBAAQFBWcJnskc6reJMokjfIcF7DI9iS3bkIFBg"
+        #         "k7iRE8wU88Hqe8+8b4ucdDo9zjvsYXssUxjUAAAAAAAAAAAAAAAAAAAAAAA"
+        #         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        #         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQKpYKS5V6+sDAACu7u7P/Rvq"
+        #         "kKe65L9tuefTaj2EnngXdeXWr1L17l98r/ek1323plR/ETdacAUk"
         # "errors": {"read": 1},
-        # "total_req": 58, "rps": 28.97, "rx_bps": "1.48MB"
         # }
 
         try:
@@ -94,7 +84,7 @@ class WrkTool(PerfTool):
                 http_sock_timeout = 0
                 http_err = 0
 
-            latency_stats = result['latency']
+            latency_stats = result['hist']
         except Exception:
             return self.parse_error('Could not parse: "%s"' % (stdout))
 
@@ -125,9 +115,9 @@ class WrkTool(PerfTool):
             # for item in results:
             #     print item['results']['latency_stats']
             all_res['latency_stats'] = []
-            histogram = HdrHistogram(1, 3600 * 1000 * 1000, 2)
+            histogram = HdrHistogram(1, 24 * 3600 * 1000 * 1000, 2)
             for item in results:
-                histogram.add_bucket_counts(item['results']['latency_stats'])
+                histogram.decode_and_add(item['results']['latency_stats'])
             perc_list = [50, 75, 90, 99, 99.9, 99.99, 99.999]
             latency_dict = histogram.get_percentile_to_value_dict(perc_list)
             for key, value in latency_dict.iteritems():
