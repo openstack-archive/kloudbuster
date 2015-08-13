@@ -28,7 +28,7 @@ import redis
 # requirements to run, and stopped with an error if not.
 #
 # Note: All majors are compatible regardless of minor.
-__version__ = '1.0'
+__version__ = '2.0'
 
 class KB_Instance(object):
 
@@ -88,7 +88,7 @@ class KB_Instance(object):
                       report_interval):
         if not rate_limit:
             rate_limit = 65535
-        cmd = '%s -t%d -c%d -R%d -d%ds -p%ds --timeout %ds -D2 -j %s' % \
+        cmd = '%s -t%d -c%d -R%d -d%ds -p%ds --timeout %ds -D2 -e %s' % \
               (dest_path, threads, connections, rate_limit, duration,
                report_interval, timeout, target_url)
         return cmd

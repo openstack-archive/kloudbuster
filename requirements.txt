@@ -2,11 +2,12 @@
 # of appearance. Changing the order has an impact on the overall integration
 # process, which may cause wedges in the gate later.
 
-pbr>=0.6,!=0.7,<1.0
+# pbr>=0.6,!=0.7,<1.0
+pbr>=1.3
 Babel>=1.3
 
 configure>=0.5
-hdrhistogram>=0.0.4
+hdrhistogram>=0.1.1
 oslo.log>=1.0.0
 pecan>=0.9.0
 python-openstackclient>=1.5.0
