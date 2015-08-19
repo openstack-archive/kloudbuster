@@ -14,6 +14,7 @@
 
 import os
 import sys
+import threading
 kb_main_path = os.path.split(os.path.abspath(__file__))[0] + "/../../.."
 sys.path.append(kb_main_path)
 
@@ -24,32 +25,23 @@ from kb_config import KBConfig
 from pecan import expose
 from pecan import response
 
+lock = threading.Lock()
+kb_config = KBConfig()
+
 class ConfigController(object):
-
-    def __init__(self):
-        self.kb_config = KBConfig()
-        self.kb_status = 'READY'
-        # self.def_config = self.kb_config.config_scale
-
-    @expose(generic=True)
-    def default_config(self):
-        return "DEFAULT_CONFIG"
-        # return str(self.def_config)
 
     @expose(generic=True)
     def running_config(self):
-        return str(self.kb_config.config_scale)
-
-    @expose(generic=True)
-    def status(self):
-        return self.kb_status
-
-    @status.when(method='PUT')
-    def status_PUT(self, **kw):
-        return str(kw)
+        return str(kb_config.config_scale)
 
     @running_config.when(method='POST')
     def running_config_POST(self, arg):
+        if not lock.acquire(False):
+            response.status = 403
+            response.text = u"An instance of KloudBuster is running, you cannot change"\
+                            "the config until the run is finished!"
+            return response.text
+
         try:
             # Expectation:
             # {
@@ -59,16 +51,15 @@ class ConfigController(object):
             #  'topo_cfg': {<TOPOLOGY_CONFIGS>}
             #  'tenants_cfg': {<TENANT_AND_USER_LISTS_FOR_REUSING>}
             # }
-            user_config = dict(arg)
-            print user_config
+            user_config = eval(arg)
 
             # Parsing credentials from application input
             cred_config = user_config['credentials']
-            cred_tested = Credentials(openrc_contents=cred_config['tested_rc'],
+            cred_tested = Credentials(openrc_contents=cred_config['tested-rc'],
                                       pwd=cred_config['tested-passwd'])
             if ('testing-rc' in cred_config and
                cred_config['testing-rc'] != cred_config['tested-rc']):
-                cred_testing = Credentials(openrc_contents=cred_config['testing_rc'],
+                cred_testing = Credentials(openrc_contents=cred_config['testing-rc'],
                                            pwd=cred_config['testing-passwd'])
             else:
                 # Use the same openrc file for both cases
@@ -81,10 +72,11 @@ class ConfigController(object):
                 f = open(pubkey_filename, 'w')
                 f.write(user_config['kb_cfg']['public_key_file'])
                 f.close()
-                self.kb_config.config_scale['public_key_file'] = pubkey_filename
+                kb_config.config_scale['public_key_file'] = pubkey_filename
 
-            alt_config = Configuration.from_string(user_config['kb_cfg']).configure()
-            self.kb_config.config_scale = self.kb_config.config_scale.merge(alt_config)
+            if user_config['kb_cfg']:
+                alt_config = Configuration.from_string(user_config['kb_cfg']).configure()
+                kb_config.config_scale = kb_config.config_scale.merge(alt_config)
 
             # Parsing topology configs from application input
             if 'topo_cfg' in user_config:
@@ -100,10 +92,13 @@ class ConfigController(object):
         except Exception as e:
             response.status = 403
             response.text = u"Error while parsing configurations: %s" % (e.message)
+            lock.release()
             return response.text
 
-        self.kb_config.init_with_rest_api(cred_tested=cred_tested,
-                                          cred_testing=cred_testing,
-                                          topo_cfg=topo_cfg,
-                                          tenants_list=tenants_list)
-        return str(self.kb_config.config_scale)
+        kb_config.init_with_rest_api(cred_tested=cred_tested,
+                                     cred_testing=cred_testing,
+                                     topo_cfg=topo_cfg,
+                                     tenants_list=tenants_list)
+        lock.release()
+
+        return "OK!"

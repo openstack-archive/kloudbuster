@@ -12,7 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from config import ConfigController
+from api_cfg import ConfigController
+from api_kb import KBController
 from pecan import abort
 from pecan import expose
 
@@ -21,6 +22,8 @@ class APIController(object):
     def _lookup(self, primary_key, *remainder):
         if primary_key == "config":
             return ConfigController(), remainder
+        elif primary_key == "kloudbuster":
+            return KBController(), remainder
         else:
             abort(404)
 

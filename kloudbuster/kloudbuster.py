@@ -43,49 +43,12 @@ KB_IMAGE_MAJOR_VERSION = 2
 class KBVMCreationException(Exception):
     pass
 
-
 def create_keystone_client(creds):
     """
     Return the keystone client and auth URL given a credential
     """
     creds = creds.get_credentials()
     return (keystoneclient.Client(**creds), creds['auth_url'])
-
-def check_and_upload_images(cred, cred_testing, server_img_name, client_img_name):
-    keystone_list = [create_keystone_client(cred)[0], create_keystone_client(cred_testing)[0]]
-    keystone_dict = dict(zip(['Server kloud', 'Client kloud'], keystone_list))
-    img_name_dict = dict(zip(['Server kloud', 'Client kloud'], [server_img_name, client_img_name]))
-
-    for kloud, keystone in keystone_dict.items():
-        glance_endpoint = keystone.service_catalog.url_for(
-            service_type='image', endpoint_type='publicURL')
-        glance_client = glanceclient.Client(glance_endpoint, token=keystone.auth_token)
-        try:
-            # Search for the image
-            glance_client.images.list(filters={'name': img_name_dict[kloud]}).next()
-            return True
-        except StopIteration:
-            pass
-
-        # Trying to upload images
-        LOG.info("Image is not found in %s, trying to upload..." % (kloud))
-        if not os.path.exists('dib/kloudbuster.qcow2'):
-            LOG.error("Image file dib/kloudbuster.qcow2 is not present, please refer "
-                      "to dib/README.rst for how to build image for KloudBuster.")
-            return False
-        with open('dib/kloudbuster.qcow2') as fimage:
-            try:
-                image = glance_client.images.create(name=img_name_dict[kloud],
-                                                    disk_format="qcow2",
-                                                    container_format="bare",
-                                                    visibility='public')
-                glance_client.images.upload(image['id'], fimage)
-            except glance_exception.HTTPForbidden:
-                LOG.error("Cannot upload image without admin access. Please make sure the "
-                          "image is existed in cloud, and is either public or owned by you.")
-                sys.exit(1)
-
-    return True
 
 class Kloud(object):
     def __init__(self, scale_cfg, cred, reusing_tenants, testing_side=False):
@@ -237,6 +200,8 @@ class KloudBuster(object):
     """
     def __init__(self, server_cred, client_cred, server_cfg, client_cfg, topology, tenants_list):
         # List of tenant objects to keep track of all tenants
+        self.server_cred = server_cred
+        self.client_cred = client_cred
         self.server_cfg = server_cfg
         self.client_cfg = client_cfg
         if topology and tenants_list:
@@ -267,6 +232,42 @@ class KloudBuster(object):
         self.final_result = None
         self.server_vm_create_thread = None
         self.client_vm_create_thread = None
+
+    def check_and_upload_images(self):
+        keystone_list = [create_keystone_client(self.server_cred)[0],
+                         create_keystone_client(self.client_cred)[0]]
+        keystone_dict = dict(zip(['Server kloud', 'Client kloud'], keystone_list))
+        img_name_dict = dict(zip(['Server kloud', 'Client kloud'],
+                                 [self.server_cfg.image_name, self.client_cfg.image_name]))
+
+        for kloud, keystone in keystone_dict.items():
+            glance_endpoint = keystone.service_catalog.url_for(
+                service_type='image', endpoint_type='publicURL')
+            glance_client = glanceclient.Client(glance_endpoint, token=keystone.auth_token)
+            try:
+                # Search for the image
+                glance_client.images.list(filters={'name': img_name_dict[kloud]}).next()
+                return True
+            except StopIteration:
+                pass
+
+            # Trying to upload images
+            LOG.info("Image is not found in %s, trying to upload..." % (kloud))
+            if not os.path.exists('dib/kloudbuster.qcow2'):
+                LOG.error("Image file dib/kloudbuster.qcow2 is not present, please refer "
+                          "to dib/README.rst for how to build image for KloudBuster.")
+                return False
+            with open('dib/kloudbuster.qcow2') as fimage:
+                try:
+                    image = glance_client.images.create(name=img_name_dict[kloud],
+                                                        disk_format="qcow2",
+                                                        container_format="bare",
+                                                        visibility='public')
+                    glance_client.images.upload(image['id'], fimage)
+                except glance_exception.HTTPForbidden:
+                    LOG.error("Cannot upload image without admin access. Please make sure the "
+                              "image is existed in cloud, and is either public or owned by you.")
+                    return False
 
     def print_provision_info(self):
         """
@@ -554,21 +555,14 @@ def main():
     kb_config = KBConfig()
     kb_config.init_with_cli()
 
-    image_check = check_and_upload_images(
-        kb_config.cred_tested,
-        kb_config.cred_testing,
-        kb_config.server_cfg.image_name,
-        kb_config.client_cfg.image_name)
-    if not image_check:
-        sys.exit(1)
-
     # The KloudBuster class is just a wrapper class
     # levarages tenant and user class for resource creations and deletion
     kloudbuster = KloudBuster(
         kb_config.cred_tested, kb_config.cred_testing,
         kb_config.server_cfg, kb_config.client_cfg,
         kb_config.topo_cfg, kb_config.tenants_list)
-    kloudbuster.run()
+    if kloudbuster.check_and_upload_images():
+        kloudbuster.run()
 
     if CONF.json:
         '''Save results in JSON format file.'''

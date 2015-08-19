@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright 2014 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -178,8 +179,7 @@ def get_absolute_path_for_file(file_name):
     abs_file = os.path.dirname(os.path.abspath(__file__))
     return abs_file + '/' + file_name
 
-if __name__ == '__main__':
-
+def main():
     parser = argparse.ArgumentParser(description='KloudBuster Chart Generator V' + __version__)
 
     parser.add_argument('-c', '--chart', dest='chart',
@@ -215,3 +215,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     gen_chart(opts.files, opts.chart, opts.browser, opts.line_rate)
+
+
+if __name__ == '__main__':
+    main()
