@@ -1,0 +1,51 @@
+swagger: '2.0'
+info:
+  title: KloudBuster API Specification Version 1
+  description: The OpenStack Data Plane Scale Tool
+  version: "1.0.0"
+# the domain of the service
+host: 127.0.0.1:8080
+# array of all schemes that your API supports
+schemes:
+  - https
+# will be prefixed to all paths
+produces:
+  - application/json
+paths:
+  /api/kloudbuster/status:
+    get:
+      summary: Get KloudBuster server status
+      description: |
+        Get the status of the KloudBuster server
+      tags:
+        - state
+      responses:
+        200:
+          description: OK
+          schema:
+            type: string
+
+  /api/config/running_config:
+    get:
+      summary: Get the running configuration
+      description: |
+        Get the running configuration of the KloudBuster server
+      tags:
+        - config
+      responses:
+        200:
+          description: The running configuration
+          schema:
+              $ref: '#/definitions/Configuration'
+
+
+definitions:
+  Configuration:
+    properties:
+      product_id:
+        type: string
+        description: Unique identifier.
+      description:
+        type: string
+        description: Description of product.
+
