@@ -1,51 +1,184 @@
 swagger: '2.0'
 info:
-  title: KloudBuster API Specification Version 1
-  description: The OpenStack Data Plane Scale Tool
-  version: "1.0.0"
-# the domain of the service
+    title: KloudBuster Rest API Specification
+    description: |
+        A tool to load OpenStack clouds end to end in both control plane and
+        data plane.
+    version: "0.1.0"
 host: 127.0.0.1:8080
-# array of all schemes that your API supports
+basePath: /api/v1
 schemes:
-  - https
-# will be prefixed to all paths
+    - http
+    - https
+consumes:
+    - application/json
 produces:
-  - application/json
+    - application/json
 paths:
-  /api/kloudbuster/status:
-    get:
-      summary: Get KloudBuster server status
-      description: |
-        Get the status of the KloudBuster server
-      tags:
-        - state
-      responses:
-        200:
-          description: OK
-          schema:
-            type: string
+    /config/running_config:
+        post:
+            description: |
+                Create a new KloudBuster session with provided configuration
+            parameters:
+                - name: arg
+                  in: body
+                  description: The configuration for KloudBuster
+                  required: true
+                  schema:
+                      $ref: '#/definitions/Configuration_New'
+            tags:
+                - config
+            responses:
+                200:
+                    description: Session is created successfully
+                    schema:
+                        type: string
+                        format: md5sum
+                        description: The newly created session ID
+                400:
+                    description: Error while parsing the configuration file
+                    schema:
+                        type: string
+                        description: Errors in details
 
-  /api/config/running_config:
-    get:
-      summary: Get the running configuration
-      description: |
-        Get the running configuration of the KloudBuster server
-      tags:
-        - config
-      responses:
-        200:
-          description: The running configuration
-          schema:
-              $ref: '#/definitions/Configuration'
+    /config/running_config/{session_id}:
+        get:
+            description: |
+                Get the running configuration of a KloudBuster session
+            parameters:
+                - name: session_id
+                  type: string
+                  format: md5sum
+                  in: path
+                  description: The session to be queried
+                  required: true
+            tags:
+                - config
+            responses:
+                200:
+                    description: The running configuration
+                    schema:
+                        type: string
+                        format: json
+                404:
+                    description: The session_id is not found or invalid
 
+        put:
+            description: |
+                Update KloudBuster configuration for an existing session
+            parameters:
+                - name: session_id
+                  type: string
+                  format: md5sum
+                  in: path
+                  description: |
+                      The session to be updated
+                  required: true
+                - name: arg
+                  in: body
+                  description: The configuration to be updated
+                  required: true
+                  schema:
+                      # @TODO: Adding Configuration_Update
+                      $ref: '#/definitions/Configuration_New'
+            tags:
+                - config
+            responses:
+                200:
+                    description: |
+                        Configuration of given session is updated successfully
+                405:
+                    description: |
+                        Cannot change configuration while KloudBuster is running
+        delete:
+            description: |
+                Terminate the given session in KloudBuster server
+            parameters:
+                - name: session_id
+                  type: string
+                  in: path
+                  description: |
+                      The session to be terminated
+                  required: true
+            tags:
+                - config
+            responses:
+                200:
+                    description: The session is terminated successfully
+                404:
+                    description: The session_id is not found or invalid
+
+    /kloudbuster/status/{session_id}:
+        get:
+            description: |
+                Get KloudBuster server status for a given session
+            parameters:
+                - name: session_id
+                  type: string
+                  format: md5sum
+                  in: path
+                  description: The session to be queried
+                  required: true
+            tags:
+                - kloudbuster
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        type: string
+                        description: The status of the given session
+                404:
+                    description: The session_id is not found or invalid
+
+    /kloudbuster/version:
+        get:
+            description: Get KloudBuster server version
+            tags:
+                - kloudbuster
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        type: string
+                        description: The version of the KloudBuster server
+
+    /kloudbuster/run/{session_id}:
+        post:
+            description: |
+                Run KloudBuster for a given session
+            parameters:
+                - name: session_id
+                  type: string
+                  format: md5sum
+                  in: path
+                  description: |
+                      The session to be run
+                  required: true
+            tags:
+                - kloudbuster
+            responses:
+                200:
+                    description: Successfully start the given session
+                403:
+                    description: |
+                        KloudBuster is already running on the given session
 
 definitions:
-  Configuration:
-    properties:
-      product_id:
-        type: string
-        description: Unique identifier.
-      description:
-        type: string
-        description: Description of product.
-
+    Configuration_New:
+        properties:
+            credentials:
+                type: string
+                format: json
+                description: Credentials for the clouds
+            kb_cfg:
+                type: string
+                format: json
+                description: User overrided configs
+            topo_cfg:
+                type: string
+                format: json
+                description: Topology config
+            tenants_cfg:
+                type: string
+                format: json
+                description: Tenant and User list for reusing
