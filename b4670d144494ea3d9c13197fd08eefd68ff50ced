@@ -1,0 +1,8 @@
+Verified+2: Jenkins
+Code-Review+2: Alec Hothan <ahothan@cisco.com>
+Workflow+1: Alec Hothan <ahothan@cisco.com>
+Submitted-by: Jenkins
+Submitted-at: Mon, 24 Aug 2015 19:56:21 +0000
+Reviewed-on: https://review.openstack.org/216389
+Project: openstack/kloudbuster
+Branch: refs/heads/master
