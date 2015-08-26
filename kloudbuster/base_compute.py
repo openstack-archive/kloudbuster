@@ -87,9 +87,7 @@ class BaseCompute(object):
                 return instance
             if instance.status == 'ERROR':
                 LOG.error('Instance creation error:' + instance.fault['message'])
-                break
-            #   print "[%s] VM status=%s, retrying %s of %s..." \
-            #         % (vmname, instance.status, (retry_attempt + 1), retry_count)
+                return None
             time.sleep(2)
 
     def get_server_list(self):

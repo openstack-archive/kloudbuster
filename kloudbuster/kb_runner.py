@@ -51,6 +51,7 @@ class KBRunner(object):
         self.tool_result = {}
         self.required_agent_version = str(required_agent_version)
         self.agent_version = None
+        self.report = {'seq': 0, 'report': None}
 
         # Redis
         self.redis_obj = None
@@ -176,7 +177,10 @@ class KBRunner(object):
             LOG.info(log_msg)
 
             if sample_count != 0:
-                print http_tool.consolidate_samples(samples, len(self.client_dict))
+                report = http_tool.consolidate_samples(samples, len(self.client_dict))
+                self.report['seq'] = self.report['seq'] + 1
+                self.report['report'] = report
+                LOG.info('Periodical report: %s.' % str(self.report))
                 samples = []
             retry = retry + 1
 

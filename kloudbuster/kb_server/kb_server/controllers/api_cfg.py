@@ -12,36 +12,57 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import hashlib
+import json
 import os
 import sys
-import threading
+import traceback
 kb_main_path = os.path.split(os.path.abspath(__file__))[0] + "/../../.."
 sys.path.append(kb_main_path)
 
 from credentials import Credentials
+from kb_session import KBSession
+from kb_session import KBSessionManager
+import log as logging
 
 from configure import Configuration
 from kb_config import KBConfig
 from pecan import expose
 from pecan import response
 
-lock = threading.Lock()
-kb_config = KBConfig()
-
 class ConfigController(object):
 
     @expose(generic=True)
-    def running_config(self):
+    def default_config(self):
+        kb_config = KBConfig()
+        # @TODO(Bug in Python???)
+        # return json.dumps(dict(kb_config.config_scale))
         return str(kb_config.config_scale)
+
+    @expose(generic=True)
+    def running_config(self, *args):
+        if len(args):
+            session_id = args[0]
+        else:
+            response.status = 400
+            response.text = u"Please specify the session_id."
+            return response.text
+        if KBSessionManager.has(session_id):
+            kb_config_obj = KBSessionManager.get(session_id).kb_config
+            config_scale = kb_config_obj.config_scale
+            config_scale['server'] = kb_config_obj.server_cfg
+            config_scale['client'] = kb_config_obj.client_cfg
+            config_scale = dict(config_scale)
+            # @TODO(Bug in Python???)
+            # return json.dumps(config_scale)
+            return str(config_scale)
+        else:
+            response.status = 404
+            response.text = u"Session ID is not found or invalid."
+            return response.text
 
     @running_config.when(method='POST')
     def running_config_POST(self, arg):
-        if not lock.acquire(False):
-            response.status = 403
-            response.text = u"An instance of KloudBuster is running, you cannot change"\
-                            "the config until the run is finished!"
-            return response.text
-
         try:
             # Expectation:
             # {
@@ -51,7 +72,7 @@ class ConfigController(object):
             #  'topo_cfg': {<TOPOLOGY_CONFIGS>}
             #  'tenants_cfg': {<TENANT_AND_USER_LISTS_FOR_REUSING>}
             # }
-            user_config = eval(arg)
+            user_config = json.loads(arg)
 
             # Parsing credentials from application input
             cred_config = user_config['credentials']
@@ -65,6 +86,13 @@ class ConfigController(object):
                 # Use the same openrc file for both cases
                 cred_testing = cred_tested
 
+            session_id = hashlib.md5(str(cred_config)).hexdigest()
+            kb_config = KBConfig()
+            if KBSessionManager.has(session_id):
+                response.status = 403
+                response.text = u"Session is already existed."
+                return response.text
+
             # Parsing server and client configs from application input
             # Save the public key into a temporary file
             if 'public_key' in user_config['kb_cfg']:
@@ -73,6 +101,9 @@ class ConfigController(object):
                 f.write(user_config['kb_cfg']['public_key_file'])
                 f.close()
                 kb_config.config_scale['public_key_file'] = pubkey_filename
+
+            if 'prompt_before_run' in user_config['kb_cfg']:
+                kb_config.config_scale['prompt_before_run'] = False
 
             if user_config['kb_cfg']:
                 alt_config = Configuration.from_string(user_config['kb_cfg']).configure()
@@ -89,16 +120,58 @@ class ConfigController(object):
                 tenants_list = Configuration.from_string(user_config['tenants_list']).configure()
             else:
                 tenants_list = None
-        except Exception as e:
-            response.status = 403
-            response.text = u"Error while parsing configurations: %s" % (e.message)
-            lock.release()
+        except Exception:
+            response.status = 400
+            response.text = u"Error while parsing configurations: \n%s" % (traceback.format_exc)
             return response.text
 
+        logging.setup("kloudbuster", logfile="/tmp/kb_log_%s" % session_id)
         kb_config.init_with_rest_api(cred_tested=cred_tested,
                                      cred_testing=cred_testing,
                                      topo_cfg=topo_cfg,
                                      tenants_list=tenants_list)
-        lock.release()
 
-        return "OK!"
+        kb_session = KBSession()
+        kb_session.kb_config = kb_config
+        KBSessionManager.add(session_id, kb_session)
+
+        return str(session_id)
+
+    @running_config.when(method='PUT')
+    def running_config_PUT(self, *args):
+        # @TODO(Not completed! ENOTSUP)
+        if len(args):
+            session_id = args[0]
+        else:
+            response.status = 400
+            response.text = u"Please specify the session_id."
+            return response.text
+        if KBSessionManager.has(session_id):
+            # kb_session = KBSessionManager.get(session_id)
+            #
+            #
+            #
+            return "OK!"
+        else:
+            response.status = 404
+            response.text = u"Session ID is not found or invalid."
+            return response.text
+
+    @running_config.when(method='DELETE')
+    def running_config_DELETE(self, *args):
+        if len(args):
+            session_id = args[0]
+        else:
+            response.status = 400
+            response.text = u"Please specify the session_id."
+            return response.text
+        if KBSessionManager.has(session_id):
+            kb_session = KBSessionManager.get(session_id)
+            if kb_session.kloudbuster:
+                kb_session.kloudbuster.dispose()
+            KBSessionManager.delete(session_id)
+            return "OK!"
+        else:
+            response.status = 404
+            response.text = u"Session ID is not found or invalid."
+            return response.text
