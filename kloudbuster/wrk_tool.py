@@ -129,7 +129,7 @@ class WrkTool(PerfTool):
     @staticmethod
     def consolidate_samples(results, vm_count):
         all_res = WrkTool.consolidate_results(results)
-        total_count = len(results) / vm_count
+        total_count = len(results)
         if not total_count:
             return all_res
 

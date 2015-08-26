@@ -25,10 +25,10 @@ app = {
     'static_root': '%(confdir)s/public',
     'template_path': '%(confdir)s/kb_server/templates',
     'debug': True,
-    'errors': {
-        404: '/error/404',
-        '__force_dict__': True
-    }
+    # 'errors': {
+    #     404: '/error/404',
+    #     '__force_dict__': True
+    # }
 }
 
 logging = {

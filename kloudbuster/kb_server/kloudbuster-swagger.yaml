@@ -6,7 +6,7 @@ info:
         data plane.
     version: "0.1.0"
 host: 127.0.0.1:8080
-basePath: /api/v1
+basePath: /api
 schemes:
     - http
     - https
@@ -15,6 +15,19 @@ consumes:
 produces:
     - application/json
 paths:
+    /config/default_config:
+        get:
+            description: |
+                Get the default KloudBuster configuration from server 
+            tags:
+                - config
+            responses:
+                200:
+                    description: The default configuration 
+                    schema:
+                        type: string
+                        format: json 
+
     /config/running_config:
         post:
             description: |
@@ -40,6 +53,8 @@ paths:
                     schema:
                         type: string
                         description: Errors in details
+                403:
+                    description: Session is already existed
 
     /config/running_config/{session_id}:
         get:
@@ -65,6 +80,7 @@ paths:
 
         put:
             description: |
+                (NOT IMPLEMENTED)
                 Update KloudBuster configuration for an existing session
             parameters:
                 - name: session_id
@@ -108,6 +124,18 @@ paths:
                 404:
                     description: The session_id is not found or invalid
 
+    /kloudbuster/version:
+        get:
+            description: Get KloudBuster server version
+            tags:
+                - kloudbuster
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        type: string
+                        description: The version of the KloudBuster server
+
     /kloudbuster/status/{session_id}:
         get:
             description: |
@@ -130,9 +158,17 @@ paths:
                 404:
                     description: The session_id is not found or invalid
 
-    /kloudbuster/version:
+    /kloudbuster/console_log/{session_id}:
         get:
-            description: Get KloudBuster server version
+            description: |
+                Get KloudBuster console log for a given session
+            parameters:
+                - name: session_id
+                  type: string
+                  format: md5sum
+                  in: path
+                  description: The session to be queried
+                  required: true
             tags:
                 - kloudbuster
             responses:
@@ -140,7 +176,32 @@ paths:
                     description: OK
                     schema:
                         type: string
-                        description: The version of the KloudBuster server
+                        description: The console log of the given session
+                404:
+                    description: The session_id is not found or invalid
+
+    /kloudbuster/report/{session_id}:
+        get:
+            description: |
+                Get KloudBuster periodical report for a given session. Only
+                last report will be returned.
+            parameters:
+                - name: session_id
+                  type: string
+                  format: md5sum
+                  in: path
+                  description: The session to be queried
+                  required: true
+            tags:
+                - kloudbuster
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        type: string
+                        description: The periodical report of the given session
+                404:
+                    description: The session_id is not found or invalid
 
     /kloudbuster/run/{session_id}:
         post:
@@ -162,6 +223,8 @@ paths:
                 403:
                     description: |
                         KloudBuster is already running on the given session
+                404:
+                    description: The session_id is not found or invalid
 
 definitions:
     Configuration_New:
