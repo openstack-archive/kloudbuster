@@ -17,9 +17,17 @@ export PATH=$PATH:`pwd`/diskimage-builder/bin:`pwd`/dib-utils/bin
 # Add the kloudbuster elements directory to the DIB elements path
 export ELEMENTS_PATH=`pwd`/elements
 
-time disk-image-create -o kloudbuster ubuntu kloudbuster
+# Extract image version number '__version__ = 2.0' becomes '__version__=2_0'
+ver=`grep '^__version__' ../kb_vm_agent.py | tr -d ' ' | tr '.' '_'`
+eval $ver
 
-ls -l kloudbuster.qcow2
+kb_image_name=kloudbuster_v$__version__
+
+echo "Building $kb_image_name.qcow2..."
+
+time disk-image-create -o $kb_image_name ubuntu kloudbuster
+
+ls -l $kb_image_name.qcow2
 
 # cleanup
 rm -rf diskimage-builder dib-utils

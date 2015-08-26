@@ -2,8 +2,12 @@
 
 # Name of the image to use for all test VMs (client, server and proxy)
 # The image name must exist in OpenStack and must be built with the appropriate
-# packages
-image_name: 'KloudBuster Image'
+# packages.
+# The default test VM image is named "kloudbuster_<version>" where
+# <version> is the KloudBuster test VM image version (e.g. "kloudbuster_v3")
+# Leave empty to use the default test VM image (recommended).
+# If non empty use quotes if there are space characters in the name (e.g. 'my image')
+image_name:
 
 # Config options common to client and server side
 keystone_admin_role: "admin"

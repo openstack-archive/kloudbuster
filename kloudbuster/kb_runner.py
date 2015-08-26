@@ -14,11 +14,15 @@
 
 from collections import deque
 from distutils.version import LooseVersion
+from sets import Set
 import threading
 import time
 
 import log as logging
 import redis
+
+# A set of warned VM version mismatches
+vm_version_mismatches = Set()
 
 LOG = logging.getLogger(__name__)
 
@@ -42,14 +46,14 @@ class KBRunner(object):
     Control the testing VMs on the testing cloud
     """
 
-    def __init__(self, client_list, config, required_agent_version, single_cloud=True):
+    def __init__(self, client_list, config, expected_agent_version, single_cloud=True):
         self.client_dict = dict(zip([x.vm_name for x in client_list], client_list))
         self.config = config
         self.single_cloud = single_cloud
         self.result = {}
         self.host_stats = {}
         self.tool_result = {}
-        self.required_agent_version = str(required_agent_version)
+        self.expected_agent_version = expected_agent_version
         self.agent_version = None
 
         # Redis
@@ -232,12 +236,14 @@ class KBRunner(object):
             LOG.info("Waiting for agents on VMs to come up...")
             self.wait_for_vm_up()
             if not self.agent_version:
-                self.agent_version = "0.0"
-            if (LooseVersion(self.agent_version) < LooseVersion(self.required_agent_version)):
-                LOG.error("The VM image you are running is too old (%s), the minimum version "
-                          "required is %s.x. Please build the image from latest repository." %
-                          (self.agent_version, self.required_agent_version))
-                return
+                self.agent_version = "0"
+            if (LooseVersion(self.agent_version) != LooseVersion(self.expected_agent_version)):
+                # only warn once for each unexpected VM version
+                if self.expected_agent_version not in vm_version_mismatches:
+                    vm_version_mismatches.add(self.expected_agent_version)
+                    LOG.warn("The VM image you are running (%s) is not the expected version (%s) "
+                             "this may cause some incompatibilities" %
+                             (self.agent_version, self.expected_agent_version))
             if self.single_cloud:
                 LOG.info("Setting up static route to reach tested cloud...")
                 self.setup_static_route()
