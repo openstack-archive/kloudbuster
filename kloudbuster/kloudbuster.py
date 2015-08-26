@@ -35,10 +35,10 @@ from novaclient.exceptions import ClientException
 from oslo_config import cfg
 from tabulate import tabulate
 import tenant
+import kb_vm_agent
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
-KB_IMAGE_MAJOR_VERSION = 2
 
 class KBVMCreationException(Exception):
     pass
@@ -237,6 +237,7 @@ class KloudBuster(object):
         keystone_list = [create_keystone_client(self.server_cred)[0],
                          create_keystone_client(self.client_cred)[0]]
         keystone_dict = dict(zip(['Server kloud', 'Client kloud'], keystone_list))
+
         img_name_dict = dict(zip(['Server kloud', 'Client kloud'],
                                  [self.server_cfg.image_name, self.client_cfg.image_name]))
 
@@ -252,12 +253,14 @@ class KloudBuster(object):
                 pass
 
             # Trying to upload images
-            LOG.info("Image is not found in %s, trying to upload..." % (kloud))
-            if not os.path.exists('dib/kloudbuster.qcow2'):
-                LOG.error("Image file dib/kloudbuster.qcow2 is not present, please refer "
+            kb_image_name = 'dib/' + kb_vm_agent.get_image_name() + '.qcow2'
+            if not os.path.exists(kb_image_name):
+                LOG.error("VM Image not in Glance and could not find " + kb_image_name +
+                          " to upload, please refer "
                           "to dib/README.rst for how to build image for KloudBuster.")
                 return False
-            with open('dib/kloudbuster.qcow2') as fimage:
+            LOG.info("Image is not found in %s, uploading %s..." % (kloud, kb_image_name))
+            with open(kb_image_name) as fimage:
                 try:
                     image = glance_client.images.create(name=img_name_dict[kloud],
                                                         disk_format="qcow2",
@@ -266,8 +269,9 @@ class KloudBuster(object):
                     glance_client.images.upload(image['id'], fimage)
                 except glance_exception.HTTPForbidden:
                     LOG.error("Cannot upload image without admin access. Please make sure the "
-                              "image is existed in cloud, and is either public or owned by you.")
+                              "image is uploaded and is either public or owned by you.")
                     return False
+            return True
 
     def print_provision_info(self):
         """
@@ -352,7 +356,7 @@ class KloudBuster(object):
             self.testing_kloud.create_vm(self.kb_proxy)
 
             kbrunner = KBRunner(client_list, self.client_cfg,
-                                KB_IMAGE_MAJOR_VERSION,
+                                kb_vm_agent.get_image_version(),
                                 self.single_cloud)
             kbrunner.setup_redis(self.kb_proxy.fip_ip)
 
@@ -548,12 +552,20 @@ def main():
     ]
     CONF.register_cli_opts(cli_opts)
     CONF.set_default("verbose", True)
-    CONF(sys.argv[1:], project="kloudbuster", version=__version__)
+    full_version = __version__ + ', VM image: ' + kb_vm_agent.get_image_name()
+    CONF(sys.argv[1:], project="kloudbuster", version=full_version)
 
     logging.setup("kloudbuster")
 
     kb_config = KBConfig()
     kb_config.init_with_cli()
+
+    # Use the default image name for Glance
+    # defaults to something like "kloudbuster_v3"
+    if 'image_name' not in kb_config.server_cfg or not kb_config.server_cfg['image_name']:
+        kb_config.server_cfg['image_name'] = kb_vm_agent.get_image_name()
+    if 'image_name' not in kb_config.client_cfg or not kb_config.client_cfg['image_name']:
+        kb_config.client_cfg['image_name'] = kb_vm_agent.get_image_name()
 
     # The KloudBuster class is just a wrapper class
     # levarages tenant and user class for resource creations and deletion

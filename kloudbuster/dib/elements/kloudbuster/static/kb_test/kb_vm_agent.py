@@ -20,15 +20,27 @@ import time
 
 import redis
 
-# Define the version of the KloudBuster agent.
+# Define the version of the KloudBuster agent and VM image
 #
 # When VM is up running, the agent will send the READY message to the
 # KloudBuster main program, along with its version. The main program
 # will check the version to see whether the image meets the minimum
 # requirements to run, and stopped with an error if not.
 #
-# Note: All majors are compatible regardless of minor.
-__version__ = '2.0'
+# This version must change is the interface changes or if new features
+# are added to the agent VM
+__version__ = '3'
+
+def get_image_name():
+    '''Return the versioned VM image name that corresponds to this
+    agent code. This string must match the way DIB names the kloudbuster image.
+    Return:
+        the versioned image name without the extension ('.qcow2' is implicit)
+    '''
+    return 'kloudbuster_v' + __version__
+
+def get_image_version():
+    return __version__
 
 class KB_Instance(object):
 
