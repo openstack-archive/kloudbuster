@@ -183,7 +183,7 @@ def main():
     parser = argparse.ArgumentParser(description='KloudBuster Chart Generator V' + __version__)
 
     parser.add_argument('-c', '--chart', dest='chart',
-                        action='store',
+                        action='store', required=True,
                         help='create and save chart in html file',
                         metavar='<file>')
 
