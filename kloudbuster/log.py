@@ -13,6 +13,7 @@
 #    under the License.
 
 import logging
+import os
 
 from oslo_config import cfg
 from oslo_log import handlers
@@ -41,11 +42,15 @@ KBDEBUG = logging.KBDEBUG
 WARN = logging.WARN
 WARNING = logging.WARNING
 
-def setup(product_name, version="unknown"):
+def setup(product_name, logfile=None):
     dbg_color = handlers.ColorHandler.LEVEL_COLORS[logging.DEBUG]
     handlers.ColorHandler.LEVEL_COLORS[logging.KBDEBUG] = dbg_color
 
-    oslogging.setup(CONF, product_name, version)
+    if logfile:
+        if os.path.exists(logfile):
+            os.remove(logfile)
+        CONF.log_file = logfile
+    oslogging.setup(CONF, product_name)
 
     if CONF.kb_debug:
         oslogging.getLogger(
@@ -58,6 +63,14 @@ def getLogger(name="unknown", version="unknown"):
             logging.getLogger(name), {"project": "kloudbuster",
                                       "version": version})
     return oslogging._loggers[name]
+
+def delete_logfile(product_name):
+    if CONF.log_file and os.path.exists(CONF.log_file):
+        os.remove(CONF.log_file)
+    # Reset the logging to default (stdout)
+    CONF.log_file = None
+    oslogging.setup(CONF, product_name)
+
 
 class KloudBusterContextAdapter(oslogging.KeywordArgumentAdapter):
 

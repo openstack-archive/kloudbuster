@@ -232,6 +232,8 @@ class KloudBuster(object):
         self.final_result = None
         self.server_vm_create_thread = None
         self.client_vm_create_thread = None
+        self.kb_runner = None
+        self.fp_logfile = None
 
     def check_and_upload_images(self):
         keystone_list = [create_keystone_client(self.server_cred)[0],
@@ -256,8 +258,8 @@ class KloudBuster(object):
             kb_image_name = 'dib/' + kb_vm_agent.get_image_name() + '.qcow2'
             if not os.path.exists(kb_image_name):
                 LOG.error("VM Image not in Glance and could not find " + kb_image_name +
-                          " to upload, please refer "
-                          "to dib/README.rst for how to build image for KloudBuster.")
+                          " to upload, please refer to dib/README.rst for how to build"
+                          " image for KloudBuster.")
                 return False
             LOG.info("Image is not found in %s, uploading %s..." % (kloud, kb_image_name))
             with open(kb_image_name) as fimage:
@@ -330,7 +332,6 @@ class KloudBuster(object):
         """
         The runner for KloudBuster Tests
         """
-        kbrunner = None
         vm_creation_concurrency = self.client_cfg.vm_creation_concurrency
         try:
             tenant_quota = self.calc_tenant_quota()
@@ -349,16 +350,19 @@ class KloudBuster(object):
             self.kb_proxy.user_data['role'] = 'KB-PROXY'
             self.kb_proxy.boot_info['flavor_type'] = 'kb.proxy' if \
                 not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
-            if self.testing_kloud.placement_az:
-                self.kb_proxy.boot_info['avail_zone'] = "%s:%s" %\
-                    (self.testing_kloud.placement_az, self.topology.clients_rack.split()[0])
+            if self.topology:
+                proxy_hyper = self.topology.clients_rack.split()[0]
+                self.kb_proxy.boot_info['avail_zone'] =\
+                    "%s:%s" % (self.testing_kloud.placement_az, proxy_hyper)\
+                    if self.testing_kloud.placement_az else "nova:%s" % (proxy_hyper)
+
             self.kb_proxy.boot_info['user_data'] = str(self.kb_proxy.user_data)
             self.testing_kloud.create_vm(self.kb_proxy)
 
-            kbrunner = KBRunner(client_list, self.client_cfg,
-                                kb_vm_agent.get_image_version(),
-                                self.single_cloud)
-            kbrunner.setup_redis(self.kb_proxy.fip_ip)
+            self.kb_runner = KBRunner(client_list, self.client_cfg,
+                                      kb_vm_agent.get_image_version(),
+                                      self.single_cloud)
+            self.kb_runner.setup_redis(self.kb_proxy.fip_ip)
 
             if self.single_cloud:
                 # Find the shared network if the cloud used to testing is same
@@ -392,11 +396,11 @@ class KloudBuster(object):
             self.print_provision_info()
 
             # Run the runner to perform benchmarkings
-            kbrunner.run()
-            self.final_result = kbrunner.tool_result
+            self.kb_runner.run()
+            self.final_result = self.kb_runner.tool_result
             self.final_result['total_server_vms'] = len(server_list)
             self.final_result['total_client_vms'] = len(client_list)
-            # self.final_result['host_stats'] = kbrunner.host_stats
+            # self.final_result['host_stats'] = self.kb_runner.host_stats
             LOG.info(self.final_result)
         except KeyboardInterrupt:
             traceback.format_exc()
@@ -417,6 +421,17 @@ class KloudBuster(object):
             except Exception:
                 traceback.print_exc()
                 KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
+
+    def dump_logs(self, offset=0):
+        if not self.fp_logfile:
+            self.fp_logfile = open(CONF.log_file)
+
+        self.fp_logfile.seek(offset)
+        return self.fp_logfile.read()
+
+    def dispose(self):
+        self.fp_logfile.close()
+        logging.delete_logfile('kloudbuster')
 
     def get_tenant_vm_count(self, config):
         return (config['users_per_tenant'] * config['routers_per_user'] *
@@ -562,13 +577,6 @@ def main():
     except TypeError:
         LOG.error('Error parsing the configuration file')
         sys.exit(1)
-
-    # Use the default image name for Glance
-    # defaults to something like "kloudbuster_v3"
-    if not kb_config.server_cfg['image_name']:
-        kb_config.server_cfg['image_name'] = kb_vm_agent.get_image_name()
-    if not kb_config.client_cfg['image_name']:
-        kb_config.client_cfg['image_name'] = kb_vm_agent.get_image_name()
 
     # The KloudBuster class is just a wrapper class
     # levarages tenant and user class for resource creations and deletion

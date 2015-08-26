@@ -129,10 +129,10 @@ class WrkTool(PerfTool):
     @staticmethod
     def consolidate_samples(results, vm_count):
         all_res = WrkTool.consolidate_results(results)
-        total_count = len(results) / vm_count
+        total_count = float(len(results)) / vm_count
         if not total_count:
             return all_res
 
-        all_res['http_rps'] = all_res['http_rps'] / total_count
-        all_res['http_throughput_kbytes'] = all_res['http_throughput_kbytes'] / total_count
+        all_res['http_rps'] = int(all_res['http_rps'] / total_count)
+        all_res['http_throughput_kbytes'] = int(all_res['http_throughput_kbytes'] / total_count)
         return all_res

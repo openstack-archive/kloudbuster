@@ -20,6 +20,7 @@ import log as logging
 from oslo_config import cfg
 
 import credentials
+import kb_vm_agent
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -108,6 +109,13 @@ class KBConfig(object):
         # There is an additional VM in client kloud as a proxy node
         self.client_cfg['vms_per_network'] =\
             self.get_total_vm_count(self.server_cfg) + 1
+
+        # Use the default image name for Glance
+        # defaults to something like "kloudbuster_v3"
+        if not self.server_cfg['image_name']:
+            self.server_cfg['image_name'] = kb_vm_agent.get_image_name()
+        if not self.client_cfg['image_name']:
+            self.client_cfg['image_name'] = kb_vm_agent.get_image_name()
 
     def init_with_cli(self):
         self.get_credentials()
