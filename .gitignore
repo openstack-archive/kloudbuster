@@ -60,3 +60,5 @@ kb*.log
 *.html
 *.qcow2
 scale/dib/kloudbuster.d/
+
+.vagrant/

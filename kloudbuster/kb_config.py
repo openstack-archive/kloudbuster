@@ -143,8 +143,12 @@ class KBConfig(object):
 
     def get_configs(self):
         if CONF.config:
-            alt_config = configure.Configuration.from_file(CONF.config).configure()
-            self.config_scale = self.config_scale.merge(alt_config)
+            try:
+                alt_config = configure.Configuration.from_file(CONF.config).configure()
+                self.config_scale = self.config_scale.merge(alt_config)
+            except configure.ConfigurationError:
+                # file can be empty
+                pass
 
     def get_topo_cfg(self):
         if CONF.topology:
