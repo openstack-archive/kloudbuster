@@ -18,6 +18,7 @@ import sys
 import configure
 import log as logging
 from oslo_config import cfg
+from pkg_resources import resource_string
 
 import credentials
 import kb_vm_agent

@@ -34,6 +34,7 @@ from keystoneclient.v2_0 import client as keystoneclient
 import log as logging
 from novaclient.exceptions import ClientException
 from oslo_config import cfg
+from pkg_resources import resource_string
 from tabulate import tabulate
 import tenant
 
@@ -563,12 +564,19 @@ def main():
                    help='store results in JSON format file'),
         cfg.BoolOpt("no-env",
                     default=False,
-                    help="Do not read env variables")
+                    help="Do not read env variables"),
+        cfg.BoolOpt("show-config",
+                    default=False,
+                    help="Show the default configuration")
     ]
     CONF.register_cli_opts(cli_opts)
     CONF.set_default("verbose", True)
     full_version = __version__ + ', VM image: ' + kb_vm_agent.get_image_name()
     CONF(sys.argv[1:], project="kloudbuster", version=full_version)
+
+    if CONF.show_config:
+        print resource_string(__name__, "cfg.scale.yaml")
+        sys.exit(0)
 
     logging.setup("kloudbuster")
     try:
