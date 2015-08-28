@@ -18,6 +18,7 @@ import sys
 import configure
 import log as logging
 from oslo_config import cfg
+from pkg_resources import resource_string
 
 import credentials
 import kb_vm_agent
@@ -70,9 +71,9 @@ class KBConfig(object):
 
     def __init__(self):
         # The default configuration file for KloudBuster
-        default_cfg_file = get_absolute_path_for_file("cfg.scale.yaml")
+        default_cfg = resource_string(__name__, "cfg.scale.yaml")
         # Read the configuration file
-        self.config_scale = configure.Configuration.from_file(default_cfg_file).configure()
+        self.config_scale = configure.Configuration.from_string(default_cfg).configure()
         self.cred_tested = None
         self.cred_testing = None
         self.server_cfg = None
