@@ -35,9 +35,8 @@ class ConfigController(object):
     @expose(generic=True)
     def default_config(self):
         kb_config = KBConfig()
-        # @TODO(Bug in Python???)
-        # return json.dumps(dict(kb_config.config_scale))
-        return str(kb_config.config_scale)
+        pdict = eval(str(kb_config.config_scale))
+        return json.dumps(pdict)
 
     @expose(generic=True)
     def running_config(self, *args):
@@ -52,10 +51,8 @@ class ConfigController(object):
             config_scale = kb_config_obj.config_scale
             config_scale['server'] = kb_config_obj.server_cfg
             config_scale['client'] = kb_config_obj.client_cfg
-            config_scale = dict(config_scale)
-            # @TODO(Bug in Python???)
-            # return json.dumps(config_scale)
-            return str(config_scale)
+            config_scale = eval(str(config_scale))
+            return json.dumps(config_scale)
         else:
             response.status = 404
             response.text = u"Session ID is not found or invalid."
