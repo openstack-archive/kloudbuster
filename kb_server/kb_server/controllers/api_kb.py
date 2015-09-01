@@ -16,7 +16,7 @@ import json
 import os
 import sys
 import threading
-kb_main_path = os.path.split(os.path.abspath(__file__))[0] + "/../../.."
+kb_main_path = os.path.split(os.path.abspath(__file__))[0] + "/../../../kloudbuster"
 sys.path.append(kb_main_path)
 
 from kb_session import KBSessionManager

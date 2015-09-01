@@ -1,1 +1,1 @@
-dib/elements/kloudbuster/static/kb_test/kb_vm_agent.py
+../kb_dib/elements/kloudbuster/static/kb_test/kb_vm_agent.py

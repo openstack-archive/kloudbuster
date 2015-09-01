@@ -17,7 +17,7 @@ import json
 import os
 import sys
 import traceback
-kb_main_path = os.path.split(os.path.abspath(__file__))[0] + "/../../.."
+kb_main_path = os.path.split(os.path.abspath(__file__))[0] + "/../../../kloudbuster"
 sys.path.append(kb_main_path)
 
 from credentials import Credentials
@@ -36,6 +36,9 @@ class ConfigController(object):
     def default_config(self):
         kb_config = KBConfig()
         pdict = eval(str(kb_config.config_scale))
+        # Normally we don't allow the clients to change below configs
+        pdict['client'].pop('tp_tool')
+        pdict['client'].pop('http_tool')
         return json.dumps(pdict)
 
     @expose(generic=True)

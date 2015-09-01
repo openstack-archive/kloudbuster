@@ -15,16 +15,16 @@
 
 import json
 from multiprocessing.pool import ThreadPool
-import os
 import sys
 import threading
+import time
 import traceback
 
 from __init__ import __version__
 import base_compute
 import base_network
 import glanceclient.exc as glance_exception
-from glanceclient.v2 import client as glanceclient
+from glanceclient.v1 import client as glanceclient
 from kb_config import KBConfig
 from kb_res_logger import KBResLogger
 from kb_runner import KBRunner
@@ -236,7 +236,8 @@ class KloudBuster(object):
         self.kb_runner = None
         self.fp_logfile = None
 
-    def check_and_upload_images(self):
+    def check_and_upload_images(self, retry_count=150):
+        retry = 0
         keystone_list = [create_keystone_client(self.server_cred)[0],
                          create_keystone_client(self.client_cred)[0]]
         keystone_dict = dict(zip(['Server kloud', 'Client kloud'], keystone_list))
@@ -250,31 +251,37 @@ class KloudBuster(object):
             glance_client = glanceclient.Client(glance_endpoint, token=keystone.auth_token)
             try:
                 # Search for the image
-                glance_client.images.list(filters={'name': img_name_dict[kloud]}).next()
-                return True
+                img = glance_client.images.list(filters={'name': img_name_dict[kloud]}).next()
+                continue
             except StopIteration:
                 pass
 
             # Trying to upload images
-            kb_image_name = 'dib/' + kb_vm_agent.get_image_name() + '.qcow2'
-            if not os.path.exists(kb_image_name):
-                LOG.error("VM Image not in Glance and could not find " + kb_image_name +
-                          " to upload, please refer to dib/README.rst for how to build"
-                          " image for KloudBuster.")
+            kb_image_name = kb_vm_agent.get_image_name() + '.qcow2'
+            image_url = 'http://storage.apps.openstack.org/images/%s' % kb_image_name
+            LOG.info("Image is not found in %s, uploading from OpenStack App Store..." % kloud)
+            try:
+                img = glance_client.images.create(name=img_name_dict[kloud],
+                                                  disk_format="qcow2",
+                                                  container_format="bare",
+                                                  is_public=True,
+                                                  copy_from=image_url)
+                while img.status in ['queued', 'saving'] and retry < retry_count:
+                    img = glance_client.images.find(name=img.name)
+                    retry = retry + 1
+                    time.sleep(2)
+                if img.status != 'active':
+                    raise Exception
+            except glance_exception.HTTPForbidden:
+                LOG.error("Cannot upload image without admin access. Please make sure the "
+                          "image is uploaded and is either public or owned by you.")
                 return False
-            LOG.info("Image is not found in %s, uploading %s..." % (kloud, kb_image_name))
-            with open(kb_image_name) as fimage:
-                try:
-                    image = glance_client.images.create(name=img_name_dict[kloud],
-                                                        disk_format="qcow2",
-                                                        container_format="bare",
-                                                        visibility='public')
-                    glance_client.images.upload(image['id'], fimage)
-                except glance_exception.HTTPForbidden:
-                    LOG.error("Cannot upload image without admin access. Please make sure the "
-                              "image is uploaded and is either public or owned by you.")
-                    return False
-            return True
+            except Exception:
+                LOG.error("Failed while uploading the image, please make sure the cloud "
+                          "under test has the access to URL: %s." % image_url)
+                return False
+
+        return True
 
     def print_provision_info(self):
         """

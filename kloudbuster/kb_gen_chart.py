@@ -163,7 +163,7 @@ def gen_chart(file_list, chart_dest, browser, line_rate):
             data_list.append(results)
     if not line_rate:
         line_rate = guess_line_rate(data_list)
-    print line_rate
+        print 'Guessed line rate: %s Gbps.' % line_rate
     chart = KbReport(data_list, line_rate)
     print('Generating report to ' + chart_dest + '...')
     chart.plot(chart_dest)
