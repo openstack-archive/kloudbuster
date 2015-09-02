@@ -1,11 +1,25 @@
-# Compute host topology file for running KloudBuster
-# Usage: Pass to KloudBuster using -t
+# Compute host topology file template for running KloudBuster
+# Usage: Pass to KloudBuster using -t <path>
+#
+# A typical use of this topology file is to shape traffic in order to maximize
+# inter-rack L3 traffic.
+# With 2 racks, simply place each rack node name in each group.
+# With more than 2 racks, separate the racks in 2 groups.
+#
+# When used, the topology file will override any availability zone settings in the
+# confguration file.
+# 
+
 
 # The compute host name must be exactly the same as shown from NOVA:
 # i.e. "nova hypervisor-list"
 
+# Grouping for placing all the server side VMs
+# Do not change the group name, you can add as many hosts as needed
 servers_rack:
     hh23-5
 
+# Grouping for placing all the client side VMs
+# Do not change the group name, you can add as many hosts as needed
 clients_rack:
     hh23-6

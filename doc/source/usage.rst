@@ -2,99 +2,54 @@
 Usage
 ========
 
-To run KloudBuster you need to:
+Quick Start Guide
+-----------------
 
-* install KloudBuster (see instructions in the Installation section) 
-* upload a KloudBuster test VM image to the OpenStack image store (Glance)
+This guide will allow you to run KloudBuster on your OpenStack cloud using the default scale settings which is generally safe to run on any cloud, small or large (it should also work on an all-in-one devstack cloud installation).
 
+Minimal pre-requisites
+^^^^^^^^^^^^^^^^^^^^^^
 
-There are 3 ways to launch KloudBuster:
+	* install KloudBuster (see instructions in the Installation section)
+	* admin access to the cloud under test
+	* download an admin rc file from the cloud under test using Horizon dashboard 
+	* 3 available floating IPs
 
-* run a scale session exclusively from the command line interface
-* run as a background server controlled by the KloudBuster Web User Interface
-* run as a background server controlled by an external tool or application using a RESTful interface
+Download an admin rc file::
+	Login to the Horizon dashboard of the cloud under test as admin, then go to the Projects, Access and Security, API Access.
+	Click on the "Download OpenStack RC File" button and note down where that file is downloaded by your browser.
 
-Build the KoudBuster test VM image
-----------------------------------
+The default scale settings can be displayed from the command line using the --show-config option. 
+By default KloudBuster will run on a single cloud and create:
 
-KloudBuster only needs one "universal" test VM image (referred to as "KloudBuster image") that contains the necessary test software. The KloudBuster image is then launched in the cloud by the KloudBuster application using the appropriate role (HTTP server, HTTP traffic generator...).
+* 1 tenant, 1 user, 2 routers, 1 network, 1 VM running as an HTTP server
+* 1 VM running the Redis server (for orchestration)
+* 1 VM running the HTTP traffic generator with 1000 connections and a total of 500 requests per second for 30 seconds
 
-Build on MacOSX with Vagrant
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Once done, all resources will be cleaned up and results will be displayed.
+In this minimal test, VMs are placed by Nova using its own scheduling logic. In more advanced usages, traffic can be shaped precisely to fill the appropriate network links by using specific configuration settings.
 
-You need to install first:
+Start KloudBuster
+^^^^^^^^^^^^^^^^^
 
-* `Virtualbox <https://cisco.jiveon.com/external-link.jspa?url=https://www.virtualbox.org/wiki/Downloads>`_
-* `Vagrant <https://cisco.jiveon.com/external-link.jspa?url=https://www.vagrantup.com/downloads.html>`_
+To list all command line options, pass --help.
 
-.. code::
-
-	# clone the kloudbuster repository if you have not done so
-	git clone https://github.com/openstack/kloudbuster.git 
-	# go to the dib directory  
-	cd kloudbuster/kloudbuster/dib  
-	# run vagrant and start building the image  
-	vagrant up  
-
-After a few minutes, the qcow2 image will be built and available in the same directory. You can then copy it in a safe location (or perhaps upload it to OpenStack using glance CLI), destroy the vagrant VM ("vagrant destroy") and dispose of the kloudbuster directory (if no longer needed).
-
-Build on Linux
-^^^^^^^^^^^^^^
-Your Linux server must have python, git and qemu utilities installed.
-
-Ubuntu/Debian::
-
-	$ sudo apt-get install python-dev git qemu-utils    
-
-Redhat/Fedora/CentOS::
-
- 	sudo yum install python-devel git qemu-img    
-
-Furthermore, the python PyYAML package must be installed (use "pip install PyYAML" in your virtual environment if you have one).
-
-Then build the image:
- 
-.. code::
-
-	# clone the kloudbuster repository  
-	git clone https://github.com/openstack/kloudbuster.git 
-
-	# go to the dib directory  
-	cd kloudbuster/kloudbuster/dib
-
-	# run the build image script, will install DIB and start the build  
-	sh build-image.sh
- 
-After a few minutes, the qcow2 image will be built and available in the same directory. You can then copy it in a safe location (or perhaps upload it to OpenStack using glance CLI),
-
-If you get an error message saying that import yaml fails (seems to happen only on Ubuntu):
+Run kloudbuster with the following options:
 
 .. code::
+	
+	kloudbuster --tested-rc <path of the admin rc file> --tested-passwd <admin password>
 
-	dib-run-parts Thu Jul 2 09:27:50 PDT 2015 Running /tmp/image.ewtpa5DW/hooks/extra-data.d/99-squash-package-install  
-	  
-	"/tmp/image.ewtpa5DW/hooks/extra-data.d/../bin/package-installs-squash",  
-	line 26, in <module>  
-	     import yaml  
-	ImportError: No module named yaml  
- 
-You need to comment out the secure_path option in your /etc/sudoers file (use "sudo visudo" to edit that file):
+The run should take around a minute (depending on how fast is the cloud to create resources) and you should see the actions taken by KloudBuster displayed on the console, followed by the scale results.
 
-.. code::
-
-	#Defaults   secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"  
-
-
-Command Line Interface Options
-------------------------------
+Once this minimal scale test passes you can tackle more elaborate scale testing by increasing the scale numbers or providing various traffic shaping options.
 
 
 Configuration File
 ------------------
+The default configuration can be displayed on the command line console using the --show-config option.
+It is easy to have a custom configuration by redirecting the output to a custom file, modifying that
+file and passing it to the KlousBuster command line using the --config option.
+Note that the default configuration is always loaded by KloudBuster and any default option can be overriden by providing a custom configuration file that only contains modified options.
 
-KloudBuster Web User Interface
-------------------------------
 
-
-RESTful Interface
------------------
