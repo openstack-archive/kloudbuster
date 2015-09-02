@@ -35,6 +35,7 @@ def create_floating_ip(neutron_client, ext_net):
     """
     Function that creates a floating ip and returns it
     Accepts the neutron client and ext_net
+
     Module level function since this is not associated with a
     specific network instance
     """
@@ -51,8 +52,19 @@ def delete_floating_ip(neutron_client, fip):
     Deletes the floating ip
     Module level function since this operation
     is not associated with a network
+
+    Sometimes this will fail if instance is just deleted
+    Add a retry mechanism
     """
-    neutron_client.delete_floatingip(fip)
+    for _ in range(10):
+        try:
+            neutron_client.delete_floatingip(fip)
+            return True
+        except Exception:
+            time.sleep(1)
+
+    LOG.error('Failed while deleting floating IP %s.' % fip['floatingip']['id'])
+    return False
 
 def find_external_network(neutron_client):
     """
@@ -141,26 +153,20 @@ class BaseNetwork(object):
         Deletes the compute resources
         Security groups, keypairs and instances
         """
+        flag = True
         # Delete the instances first
         for instance in self.instance_list:
             instance.delete_server()
             if instance.fip:
-                """
-                Delete the Floating IP
-                Sometimes this will fail if instance is just deleted
-                Add a retry mechanism
-                """
-                for _ in range(10):
-                    try:
-                        delete_floating_ip(self.neutron_client, instance.fip['floatingip']['id'])
-                        break
-                    except Exception:
-                        time.sleep(1)
+                # Delete the Floating IP
+                flag = flag &\
+                    delete_floating_ip(self.neutron_client, instance.fip['floatingip']['id'])
 
         # Delete all security groups
         for secgroup_instance in self.secgroup_list:
-            secgroup_instance.delete_secgroup()
+            flag = flag & secgroup_instance.delete_secgroup()
 
+        return flag
 
     def create_network_and_subnet(self, network_name):
         """
@@ -202,12 +208,17 @@ class BaseNetwork(object):
         Deletes the network and associated subnet
         retry the deletion since network may be in use
         """
-        for _ in range(1, 5):
+        if not self.network:
+            return True
+        for _ in range(10):
             try:
                 self.neutron_client.delete_network(self.network['id'])
-                break
+                return True
             except NetworkInUseClient:
                 time.sleep(1)
+
+        LOG.error('Failed while deleting network %s.' % self.network['id'])
+        return False
 
     def get_all_instances(self):
         return self.instance_list
@@ -269,21 +280,19 @@ class Router(object):
         associated with a router
         """
 
+        flag = True
         for network in self.network_list:
             # Now delete the compute resources and the network resources
-            network.delete_compute_resources()
+            flag = flag & network.delete_compute_resources()
             if network.network:
-                self.remove_router_interface(network)
-                network.delete_network()
+                flag = flag & self.remove_router_interface(network)
+                flag = flag & network.delete_network()
         # Also delete the shared port and remove it from router interface
         if self.shared_network:
-            for _ in range(10):
-                try:
-                    self.remove_router_interface(self.shared_network, use_port=True)
-                    self.shared_network = None
-                    break
-                except Exception:
-                    time.sleep(1)
+            flag = flag & self.remove_router_interface(self.shared_network, use_port=True)
+            self.shared_network = None
+
+        return flag
 
     def create_router(self, router_name, ext_net):
         """
@@ -317,20 +326,22 @@ class Router(object):
         Also delete the networks attached to this router
         """
         # Delete the network resources first and than delete the router itself
-        self.delete_network_resources()
+        if not self.router:
+            return True
+        network_flag = self.delete_network_resources()
+        router_flag = False
         for _ in range(10):
             try:
                 self.neutron_client.remove_gateway_router(self.router['router']['id'])
-                self.shared_network = None
-                break
-            except Exception:
-                time.sleep(1)
-        for _ in range(10):
-            try:
                 self.neutron_client.delete_router(self.router['router']['id'])
+                router_flag = True
                 break
             except Exception:
                 time.sleep(1)
+        if not router_flag:
+            LOG.error('Failed while deleting router %s.' % self.router['router']['id'])
+
+        return network_flag & router_flag
 
     def _port_create_neutron(self, network_instance):
         """
@@ -377,8 +388,15 @@ class Router(object):
             body = {
                 'subnet_id': network_instance.network['subnets'][0]
             }
-        self.neutron_client.remove_interface_router(self.router['router']['id'], body)
 
+        for _ in range(10):
+            try:
+                self.neutron_client.remove_interface_router(self.router['router']['id'], body)
+                return True
+            except Exception:
+                time.sleep(1)
+
+        return False
 
 class NeutronQuota(object):
 

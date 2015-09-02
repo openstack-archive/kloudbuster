@@ -18,7 +18,7 @@ export PATH=$PATH:`pwd`/diskimage-builder/bin:`pwd`/dib-utils/bin
 export ELEMENTS_PATH=`pwd`/elements
 
 # Extract image version number '__version__ = 2.0' becomes '__version__=2_0'
-ver=`grep '^__version__' ../kb_vm_agent.py | tr -d ' ' | tr '.' '_'`
+ver=`grep '^__version__' ../kloudbuster/kb_vm_agent.py | tr -d ' ' | tr '.' '_'`
 eval $ver
 
 kb_image_name=kloudbuster_v$__version__

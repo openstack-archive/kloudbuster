@@ -107,17 +107,20 @@ class User(object):
     def delete_resources(self):
         LOG.info("Deleting all user resources for user %s" % self.user_name)
 
+        flag = True
         # Delete key pair
         if self.key_pair:
             self.key_pair.remove_public_key()
 
         # Delete all user routers
         for router in self.router_list:
-            router.delete_router()
+            flag = flag & router.delete_router()
 
         if not self.tenant.reusing_users:
             # Finally delete the user
             self.tenant.kloud.keystone.users.delete(self.user.id)
+
+        return flag
 
     def update_tenant_quota(self, tenant_quota):
         nova_quota = base_compute.NovaQuota(self.nova_client, self.tenant.tenant_id)
@@ -209,6 +212,7 @@ class User(object):
         if config_scale.public_key_file:
             self.key_pair = base_compute.KeyPair(self.nova_client)
             self.key_name = self.user_name + '-K'
+            self.res_logger.log('keypairs', self.key_name, "")
             self.key_pair.add_public_key(self.key_name, config_scale.public_key_file)
 
         # Find the external network that routers need to attach to

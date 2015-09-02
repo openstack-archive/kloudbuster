@@ -170,13 +170,18 @@ class SecGroup(object):
         Sometimes this maybe in use if instance is just deleted
         Add a retry mechanism
         """
+        if not self.secgroup:
+            return True
+
         for _ in range(10):
             try:
                 self.novaclient.security_groups.delete(self.secgroup)
-                break
+                return True
             except Exception:
                 time.sleep(2)
 
+        LOG.error('Failed while deleting security group %s.' % self.secgroup.id)
+        return False
 
 class KeyPair(object):
 
@@ -208,7 +213,8 @@ class KeyPair(object):
         """
         Remove the keypair created by KloudBuster
         """
-        self.novaclient.keypairs.delete(self.keypair)
+        if self.keypair:
+            self.novaclient.keypairs.delete(self.keypair)
 
 
 class Flavor(object):

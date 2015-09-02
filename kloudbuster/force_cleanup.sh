@@ -62,6 +62,7 @@ if [ "$1" == "--file" ] && [ -f "$2" ]; then
     INSTANCE_LIST=`grep "instances" $2 | cut -d'|' -f3`
     SEC_GROUP_LIST=`grep "sec_groups" $2 | cut -d'|' -f3`
     FLAVOR_LIST=`grep "flavors" $2 | cut -d'|' -f3`
+    KEYPAIR_LIST=`grep "keypairs" $2 | cut -d'|' -f2`
     ROUTER_LIST=`grep "routers" $2 | cut -d'|' -f3`
     NETWORK_LIST=`grep "networks" $2 | cut -d'|' -f3`
     TENANT_LIST=`grep "tenants" $2 | cut -d'|' -f3`
@@ -72,6 +73,7 @@ else
     INSTANCE_LIST=`nova list --all-tenants | grep KB  | cut -d'|' -f2`
     SEC_GROUP_LIST=`neutron security-group-list | grep KB | cut -d'|' -f2`
     FLAVOR_LIST=`nova flavor-list | grep kb | cut -d'|' -f3`
+    KEYPAIR_LIST=`nova keypair-list | grep KB | cut -d'|' -f2`
     ROUTER_LIST=`neutron router-list | grep KB | cut -d'|' -f2`
     NETWORK_LIST=`neutron net-list | grep KB | cut -d'|' -f2`
     TENANT_LIST=`keystone tenant-list | grep KB | cut -d'|' -f2`
@@ -89,6 +91,10 @@ done;
 
 for line in $SEC_GROUP_LIST; do
     neutron security-group-delete $line &
+done;
+
+for line in $KEYPAIR_LIST; do
+    nova keypair-delete "$line"
 done;
 
 if [ "$FLOATINGIP_LIST" == "" ]; then

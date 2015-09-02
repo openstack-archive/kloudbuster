@@ -124,10 +124,13 @@ class Tenant(object):
         Delete all user resources and than
         deletes the tenant
         """
+        flag = True
         # Delete all the users in the tenant along with network and compute elements
         for user in self.user_list:
-            user.delete_resources()
+            flag = flag & user.delete_resources()
 
         if not self.reusing_users:
             # Delete the tenant (self)
             self.kloud.keystone.tenants.delete(self.tenant_id)
+
+        return flag

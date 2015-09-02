@@ -158,7 +158,7 @@ paths:
                 404:
                     description: The session_id is not found or invalid
 
-    /kloudbuster/console_log/{session_id}:
+    /kloudbuster/log/{session_id}:
         get:
             description: |
                 Get KloudBuster console log for a given session

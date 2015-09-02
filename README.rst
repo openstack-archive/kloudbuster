@@ -1,6 +1,6 @@
-===============================
-KloudBuster
-===============================    
+========
+Overview
+========    
 
 How good is your OpenStack data plane under real heavy load?
 
@@ -50,15 +50,9 @@ If you have any feedbacks or would like to make small or large contributions, si
 openstack-dev@lists.openstack.org with a '[kloudbuster]' tag in the subject.
 
 
-Links
------
-
-* Source: `<http://git.openstack.org/cgit/openstack/kloudbuster>`_
-* Bugs: `<http://bugs.launchpad.net/kloudbuster>`_
-* Documentation: `<http://kloudbuster.readthedocs.org>`_
-
 Licensing
 ---------
+
 KloudBuster is licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at `<http://www.apache.org/licenses/LICENSE-2.0>`_
@@ -70,4 +64,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 KloudBuster VM images contain multi-open source license components
+
+
+Links
+-----
+
+* Documentation: `<http://kloudbuster.readthedocs.org>`_
+* Source: `<http://git.openstack.org/cgit/openstack/kloudbuster>`_
+* Supports/Bugs: `<http://launchpad.net/kloudbuster>`_
+* Mailing List: kloudbuster-core@lists.launchpad.net
 

@@ -17,9 +17,9 @@ git clone git://github.com/openstack/dib-utils.git
 # install kloudbuster
 git clone git://github.com/openstack/kloudbuster.git
 
-kb_root=kloudbuster/kloudbuster
+kb_root=kloudbuster
 # Extract image version number '__version__ = 2.0' becomes '__version__=2_0'
-ver=`grep '^__version__' $kb_root/kb_vm_agent.py | tr -d ' ' | tr '.' '_'`
+ver=`grep '^__version__' $kb_root/kloudbuster/kb_vm_agent.py | tr -d ' ' | tr '.' '_'`
 eval $ver
 
 kb_image_name=kloudbuster_v$__version__
@@ -30,7 +30,7 @@ echo "Building $kb_image_name.qcow2..."
 export PATH=$PATH:`pwd`/diskimage-builder/bin:`pwd`/dib-utils/bin
 
 # Add the kloudbuster elements directory to the DIB elements path
-export ELEMENTS_PATH=`pwd`/$kb_root/dib/elements
+export ELEMENTS_PATH=`pwd`/$kb_root/kb_dib/elements
 time disk-image-create -o $kb_image_name ubuntu kloudbuster
 mv $kb_image_name.qcow2 /vagrant
 

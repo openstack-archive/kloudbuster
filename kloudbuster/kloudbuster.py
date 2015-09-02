@@ -114,8 +114,9 @@ class Kloud(object):
             nova_client = self.tenant_list[0].user_list[0].nova_client
         except Exception:
             # NOVA Client is not yet initialized, so skip cleaning up...
-            return
+            return True
 
+        flag = True
         if not self.reusing_tenants:
             flavor_manager = base_compute.Flavor(nova_client)
             if self.testing_side:
@@ -125,7 +126,9 @@ class Kloud(object):
                 flavor_manager.delete_flavor('kb.server')
 
         for tnt in self.tenant_list:
-            tnt.delete_resources()
+            flag = flag & tnt.delete_resources()
+
+        return flag
 
     def get_first_network(self):
         if self.tenant_list:
@@ -341,6 +344,7 @@ class KloudBuster(object):
         The runner for KloudBuster Tests
         """
         vm_creation_concurrency = self.client_cfg.vm_creation_concurrency
+        cleanup_flag = True
         try:
             tenant_quota = self.calc_tenant_quota()
             self.kloud.create_resources(tenant_quota['server'])
@@ -419,16 +423,22 @@ class KloudBuster(object):
         # then testing side last (order is important because of the shared network)
         if self.server_cfg['cleanup_resources']:
             try:
-                self.kloud.delete_resources()
+                cleanup_flag = self.kloud.delete_resources()
             except Exception:
                 traceback.print_exc()
                 KBResLogger.dump_and_save('svr', self.kloud.res_logger.resource_list)
+        if not cleanup_flag:
+            LOG.warn('Some resources are not cleaned up properly.')
+            KBResLogger.dump_and_save('svr', self.kloud.res_logger.resource_list)
+
         if self.client_cfg['cleanup_resources']:
             try:
-                self.testing_kloud.delete_resources()
+                cleanup_flag = self.testing_kloud.delete_resources()
             except Exception:
                 traceback.print_exc()
                 KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
+        if not cleanup_flag:
+            KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
 
     def dump_logs(self, offset=0):
         if not self.fp_logfile:
