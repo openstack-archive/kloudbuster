@@ -21,7 +21,7 @@ keystone_admin_role: "admin"
 
 # Cleanup all kloudbuster resources upon exit
 # If set to False, resources created will not be deleted on exit and the user
-# will have to execute the cleanup script later to remove all these resources 
+# will have to execute the cleanup script later to remove all these resources
 cleanup_resources: True
 
 # VM creation concurrency
@@ -84,7 +84,7 @@ server:
     # Availability zone to use for servers in the server cloud
     # Leave empty if you prefer to have the Nova scheduler place the server VMs
     # If you want to pick a particular AZ, put that AZ name (e.g. nova)
-    # If you want a paticular compute host, put the AZ and compute host names 
+    # If you want a paticular compute host, put the AZ and compute host names
     # separated by ':' (e.g. nova:tme100)
     # Note that this is ignored/overriden if you specify a topology file (-t)
     availability_zone:
@@ -119,7 +119,7 @@ client:
 
     # HTTP tool specific configs (per VM)
     # Every HTTP server VM is paired to 1 HTTP traffic generator VM
-    # KloudBuster will take care of setting up the proper static routes 
+    # KloudBuster will take care of setting up the proper static routes
     # to allow connectivity between all pairs of VMs.
     # For example, if 1000 HTTP servers are configured, KloudBuster will
     # instantiate 1000 HTTP traffic generators and match them 1:1, for a total

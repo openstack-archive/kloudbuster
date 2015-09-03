@@ -66,7 +66,7 @@ class KBController(object):
             return response.text
 
     @expose(generic=True)
-    def log(self, *args):
+    def log(self, *args, **kwargs):
         if len(args):
             session_id = args[0]
         else:
@@ -74,9 +74,18 @@ class KBController(object):
             response.text = u"Please specify the session_id."
             return response.text
 
+        offset = 0
+        if 'offset' in kwargs:
+            try:
+                offset = int(kwargs['offset'])
+            except ValueError:
+                response.status = 400
+                response.text = u"Parameter 'offset' is invalid."
+                return response.text
+
         if KBSessionManager.has(session_id):
             kb_session = KBSessionManager.get(session_id)
-            plog = kb_session.kloudbuster.dump_logs(offset=0)\
+            plog = kb_session.kloudbuster.dump_logs(offset=offset)\
                 if kb_session.kloudbuster else ""
             return json.dumps(plog)
         else:
@@ -85,7 +94,7 @@ class KBController(object):
             return response.text
 
     @expose(generic=True)
-    def report(self, *args):
+    def report(self, *args, **kwargs):
         if len(args):
             session_id = args[0]
         else:
@@ -93,10 +102,17 @@ class KBController(object):
             response.text = u"Please specify the session_id."
             return response.text
 
+        final = False
+        if 'final' in kwargs:
+            final = True if kwargs['final'].lower() == 'true' else False
+
+        preport = None
         if KBSessionManager.has(session_id):
             kb_session = KBSessionManager.get(session_id)
-            preport = kb_session.kloudbuster.kb_runner.report\
-                if kb_session.kloudbuster and kb_session.kloudbuster.kb_runner else ""
+            if kb_session.kloudbuster and kb_session.kloudbuster.kb_runner:
+                preport = kb_session.kloudbuster.final_result\
+                    if final else kb_session.kloudbuster.kb_runner.report
+
             return json.dumps(preport)
         else:
             response.status = 404

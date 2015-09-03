@@ -169,6 +169,11 @@ paths:
                   in: path
                   description: The session to be queried
                   required: true
+                - name: offset
+                  type: int
+                  in: query
+                  description: The offset of the log file to read
+                  required: false
             tags:
                 - kloudbuster
             responses:
@@ -177,14 +182,16 @@ paths:
                     schema:
                         type: string
                         description: The console log of the given session
+                400:
+                    description: Parameter is missing or invalid
                 404:
                     description: The session_id is not found or invalid
 
     /kloudbuster/report/{session_id}:
         get:
             description: |
-                Get KloudBuster periodical report for a given session. Only
-                last report will be returned.
+                Get the latest KloudBuster periodical report for a given session.
+                Set final to true to retrieve the final report.
             parameters:
                 - name: session_id
                   type: string
@@ -192,6 +199,11 @@ paths:
                   in: path
                   description: The session to be queried
                   required: true
+                - name: final
+                  type: boolean
+                  in: query
+                  description: Set to true to retrieve the final report
+                  required: false
             tags:
                 - kloudbuster
             responses:

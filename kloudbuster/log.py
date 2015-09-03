@@ -47,12 +47,15 @@ def setup(product_name, logfile=None):
     handlers.ColorHandler.LEVEL_COLORS[logging.KBDEBUG] = dbg_color
 
     oslogging.setup(CONF, product_name)
+    # Adding the FileHandler to all known loggers inside KloudBuster
     if logfile:
         if os.path.exists(logfile):
             os.remove(logfile)
         CONF.log_file = logfile
         hdlr = logging.FileHandler(logfile)
-        oslogging.getLogger(product_name).logger.addHandler(hdlr)
+        for name in oslogging._loggers:
+            if name:
+                oslogging.getLogger(name).logger.addHandler(hdlr)
 
     if CONF.kb_debug:
         oslogging.getLogger(
