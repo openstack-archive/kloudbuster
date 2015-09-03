@@ -25,22 +25,8 @@ LOG = logging.getLogger(__name__)
 
 class WrkTool(PerfTool):
 
-    def __init__(self, instance, cfg_http_tool):
-        PerfTool.__init__(self, instance, cfg_http_tool)
-
-    def cmd_run_client(self, target_url, threads, connections,
-                       rate_limit=0, timeout=5, connetion_type='Keep-alive'):
-        '''
-        Return the command for running the benchmarking tool
-        '''
-        duration_sec = self.instance.config.http_tool_configs.duration
-        if not rate_limit:
-            rate_limit = 65535
-        cmd = '%s -t%d -c%d -R%d -d%ds --timeout %ds -D2 -e %s' % \
-            (self.dest_path, threads, connections, rate_limit,
-             duration_sec, timeout, target_url)
-        LOG.kbdebug("[%s] %s" % (self.instance.vm_name, cmd))
-        return cmd
+    def __init__(self, instance):
+        PerfTool.__init__(self, instance, 'wrk2')
 
     def cmd_parser_run_client(self, status, stdout, stderr):
         if status:

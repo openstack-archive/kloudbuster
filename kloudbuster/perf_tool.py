@@ -24,16 +24,15 @@ LOG = logging.getLogger(__name__)
 class PerfTool(object):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, instance, tool_cfg):
-        self.name = tool_cfg.name
+    def __init__(self, instance, tool_name):
         self.instance = instance
-        self.dest_path = tool_cfg.dest_path
+        self.name = tool_name
         self.pid = None
 
     # Terminate pid if started
     def dispose(self):
         if self.pid:
-            # Terminate the iperf server
+            # Terminate the server
             LOG.kbdebug("[%s] Terminating %s" % (self.instance.vm_name,
                                                  self.name))
             self.instance.ssh.kill_proc(self.pid)
@@ -81,11 +80,6 @@ class PerfTool(object):
         if latency_stats:
             res['latency_stats'] = latency_stats
         return res
-
-    @abc.abstractmethod
-    def cmd_run_client(**kwargs):
-        # must be implemented by sub classes
-        return None
 
     @abc.abstractmethod
     def cmd_parser_run_client(self, status, stdout, stderr):

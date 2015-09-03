@@ -22,11 +22,10 @@ LOG = logging.getLogger(__name__)
 # An openstack instance (can be a VM or a LXC)
 class PerfInstance(BaseCompute):
 
-    def __init__(self, vm_name, network, config, is_server=False):
+    def __init__(self, vm_name, network, config):
         BaseCompute.__init__(self, vm_name, network)
 
         self.config = config
-        self.is_server = is_server
         self.boot_info = {}
         self.user_data = {}
         self.up_flag = False
@@ -34,25 +33,10 @@ class PerfInstance(BaseCompute):
         # SSH Configuration
         self.ssh_access = None
         self.ssh = None
-        self.port = None
         self.az = None
 
-        if 'tp_tool' not in config:
-            self.tp_tool = None
-        # elif config.tp_tool.lower() == 'nuttcp':
-        #     self.tp_tool = nuttcp_tool.NuttcpTool
-        # elif opts.tp_tool.lower() == 'iperf':
-        #     self.tp_tool = iperf_tool.IperfTool
-        # else:
-        #     self.tp_tool = None
-
-        if 'http_tool' not in config:
-            self.http_tool = None
-        elif config.http_tool.name.lower() == 'wrk':
-            self.http_tool = WrkTool(self, config.http_tool)
-            self.target_url = None
-        else:
-            self.http_tool = None
+        # self.tp_tool = nuttcp_tool.NuttcpTool(self)
+        self.http_tool = WrkTool(self)
 
     def run_tp_client(self, label, dest_ip, target_instance,
                       mss=None, bandwidth=0, bidirectional=False, az_to=None):

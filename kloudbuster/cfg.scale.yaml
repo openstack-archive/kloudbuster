@@ -117,11 +117,6 @@ client:
     # Interval for polling status from all VMs in seconds
     polling_interval: 5
 
-    # Tooling
-    http_tool:
-        name: 'wrk'
-        dest_path: '/usr/local/bin/wrk2'
-
     # HTTP tool specific configs (per VM)
     # Every HTTP server VM is paired to 1 HTTP traffic generator VM
     # KloudBuster will take care of setting up the proper static routes 
