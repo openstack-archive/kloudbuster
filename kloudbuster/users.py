@@ -219,8 +219,8 @@ class User(object):
         external_network = base_network.find_external_network(self.neutron_client)
 
         # Create the required number of routers and append them to router list
-        LOG.info("Creating routers and networks for user %s" % self.user_name)
-        for router_count in range(config_scale['routers_per_user']):
+        LOG.info("Creating routers and networks for tenant %s" % self.tenant.tenant_name)
+        for router_count in range(config_scale['routers_per_tenant']):
             router_instance = base_network.Router(self)
             self.router_list.append(router_instance)
             router_name = self.user_name + "-R" + str(router_count)

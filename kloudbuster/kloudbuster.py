@@ -218,7 +218,7 @@ class KloudBuster(object):
             self.tenants_list['server'] =\
                 [{'name': tenants_list['tenant_name'], 'user': tenants_list['server_user']}]
             self.tenants_list['client'] =\
-                [{'name': tenants_list['tenant_name'], 'user': [tenants_list['client_user']]}]
+                [{'name': tenants_list['tenant_name'], 'user': tenants_list['client_user']}]
             LOG.warn("REUSING MODE: The quotas will not be adjusted automatically.")
             LOG.warn("REUSING MODE: The flavor configs will be ignored.")
         else:
@@ -453,17 +453,17 @@ class KloudBuster(object):
         logging.delete_logfile('kloudbuster')
 
     def get_tenant_vm_count(self, config):
-        return (config['users_per_tenant'] * config['routers_per_user'] *
-                config['networks_per_router'] * config['vms_per_network'])
+        return (config['routers_per_tenant'] * config['networks_per_router'] *
+                config['vms_per_network'])
 
     def calc_neutron_quota(self):
         total_vm = self.get_tenant_vm_count(self.server_cfg)
 
         server_quota = {}
-        server_quota['network'] = self.server_cfg['routers_per_user'] *\
+        server_quota['network'] = self.server_cfg['routers_per_tenant'] *\
             self.server_cfg['networks_per_router']
         server_quota['subnet'] = server_quota['network']
-        server_quota['router'] = self.server_cfg['routers_per_user']
+        server_quota['router'] = self.server_cfg['routers_per_tenant']
         if (self.server_cfg['use_floatingip']):
             # (1) Each VM has one floating IP
             # (2) Each Router has one external IP

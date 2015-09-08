@@ -34,12 +34,8 @@ hardcoded_client_cfg = {
     # Number of tenants to be created on the cloud
     'number_tenants': 1,
 
-    # Number of Users to be created inside the tenant
-    'users_per_tenant': 1,
-
     # Number of routers to be created within the context of each User
-    # For now support only 1 router per user
-    'routers_per_user': 1,
+    'routers_per_tenant': 1,
 
     # Number of networks to be created within the context of each Router
     # Assumes 1 subnet per network
@@ -133,9 +129,8 @@ class KBConfig(object):
         self.update_configs()
 
     def get_total_vm_count(self, config):
-        return (config['number_tenants'] * config['users_per_tenant'] *
-                config['routers_per_user'] * config['networks_per_router'] *
-                config['vms_per_network'])
+        return (config['number_tenants'] * config['routers_per_tenant'] *
+                config['networks_per_router'] * config['vms_per_network'])
 
     def get_credentials(self):
         # Retrieve the credentials
@@ -168,7 +163,6 @@ class KBConfig(object):
             self.tenants_list = configure.Configuration.from_file(CONF.tenants_list).configure()
             try:
                 self.config_scale['number_tenants'] = 1
-                self.config_scale['users_per_tenant'] = len(self.tenants_list['server_user'])
             except Exception as e:
                 LOG.error('Cannot parse the count of tenant/user from the config file.')
                 raise KBConfigParseException(e.message)

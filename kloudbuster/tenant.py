@@ -85,20 +85,17 @@ class Tenant(object):
         a user offloads tasks to user class
         """
         if self.reusing_users:
-            for user_info in self.reusing_users:
-                user_name = user_info['username']
-                password = user_info['password']
-                user_instance = users.User(user_name, password, self, '_member_')
-                self.user_list.append(user_instance)
+            user_name = self.reusing_users['username']
+            password = self.reusing_users['password']
+            user_instance = users.User(user_name, password, self, '_member_')
+            self.user_list.append(user_instance)
         else:
-            # Loop over the required number of users and create resources
-            for user_count in xrange(self.kloud.scale_cfg['users_per_tenant']):
-                user_name = self.tenant_name + "-U" + str(user_count)
-                user_instance = users.User(user_name, user_name, self,
-                                           self.kloud.scale_cfg['keystone_admin_role'])
-                # Global list with all user instances
-                self.user_list.append(user_instance)
-                self.res_logger.log('users', user_instance.user_name, user_instance.user.id)
+            user_name = self.tenant_name + "-U"
+            user_instance = users.User(user_name, user_name, self,
+                                       self.kloud.scale_cfg['keystone_admin_role'])
+            # Global list with all user instances
+            self.user_list.append(user_instance)
+            self.res_logger.log('users', user_instance.user_name, user_instance.user.id)
 
         for user_instance in self.user_list:
             # Now create the user resources like routers which inturn trigger network and

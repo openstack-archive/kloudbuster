@@ -170,7 +170,7 @@ paths:
                   description: The session to be queried
                   required: true
                 - name: offset
-                  type: int
+                  type: integer
                   in: query
                   description: The offset of the log file to read
                   required: false

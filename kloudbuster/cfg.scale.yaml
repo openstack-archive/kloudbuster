@@ -56,14 +56,11 @@ server:
         disk: 20
 
     # Number of tenants to be created on the cloud
+    # KloudBuster will also create 1 user automatically for each tenant
     number_tenants: 1
 
-    # Number of Users to be created inside the tenant
-    # By default, create only 1 user per tenant
-    users_per_tenant: 1
-
     # Number of routers to be created within the context of each User
-    routers_per_user: 1
+    routers_per_tenant: 1
 
     # Number of networks to be created within the context of each Router
     # Assumes 1 subnet per network
@@ -136,14 +133,15 @@ client:
         # Timeout for HTTP requests
         timeout: 5
         # Connection Type: "Keep-alive", "New"
-        # keep-alive: the TCP connection is reused across requests
-        # new: create a new TCP connection for every request (and close it after receiving the reply)
+        # Keep-alive: the TCP connection is reused across requests
+        # New: create a new TCP connection for every request (and close it after receiving the reply)
+        # Note: "New" is not currently supported.
         connection_type: 'Keep-alive'
         # Interval for periodical report in seconds
         # Use 0 if you only need 1 final aggregated report for the entire run duration
         # Otherwise will provide results at every interval (results are reset at the start of each period and
         # are not cumulative across periods)
-        report_interval: 5
+        report_interval: 0
         # Duration of testing tools (seconds)
         duration: 30
 
