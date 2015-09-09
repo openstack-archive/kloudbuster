@@ -37,8 +37,6 @@ class ConfigController(object):
         kb_config = KBConfig()
         pdict = eval(str(kb_config.config_scale))
         # Normally we don't allow the clients to change below configs
-        pdict['client'].pop('tp_tool')
-        pdict['client'].pop('http_tool')
         return json.dumps(pdict)
 
     @expose(generic=True)
