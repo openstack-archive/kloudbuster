@@ -124,6 +124,8 @@ class KBConfig(object):
     def init_with_rest_api(self, **kwargs):
         self.cred_tested = kwargs['cred_tested']
         self.cred_testing = kwargs['cred_testing']
+
+    def update_with_rest_api(self, **kwargs):
         self.topo_cfg = kwargs['topo_cfg']
         self.tenants_list = kwargs['tenants_list']
         self.update_configs()

@@ -32,11 +32,41 @@ from pecan import response
 
 class ConfigController(object):
 
+    def update_config(self, kb_config, user_config):
+        # Parsing server and client configs from application input
+        # Save the public key into a temporary file
+        if 'public_key' in user_config['kb_cfg']:
+            pubkey_filename = '/tmp/kb_public_key.pub'
+            f = open(pubkey_filename, 'w')
+            f.write(user_config['kb_cfg']['public_key_file'])
+            f.close()
+            kb_config.config_scale['public_key_file'] = pubkey_filename
+
+        if 'prompt_before_run' in user_config['kb_cfg']:
+            kb_config.config_scale['prompt_before_run'] = False
+
+        if user_config['kb_cfg']:
+            alt_config = Configuration.from_dict(user_config['kb_cfg']).configure()
+            kb_config.config_scale = kb_config.config_scale.merge(alt_config)
+
+        # Parsing topology configs from application input
+        if 'topo_cfg' in user_config:
+            topo_cfg = Configuration.from_string(user_config['topo_cfg']).configure()
+        else:
+            topo_cfg = None
+
+        # Parsing tenants configs from application input
+        if 'tenants_list' in user_config:
+            tenants_list = Configuration.from_string(user_config['tenants_list']).configure()
+        else:
+            tenants_list = None
+
+        kb_config.update_with_rest_api(topo_cfg=topo_cfg, tenants_list=tenants_list)
+
     @expose(generic=True)
     def default_config(self):
         kb_config = KBConfig()
         pdict = eval(str(kb_config.config_scale))
-        # Normally we don't allow the clients to change below configs
         return json.dumps(pdict)
 
     @expose(generic=True)
@@ -44,7 +74,7 @@ class ConfigController(object):
         if len(args):
             session_id = args[0]
         else:
-            response.status = 400
+            response.status = 404
             response.text = u"Please specify the session_id."
             return response.text
         if KBSessionManager.has(session_id):
@@ -64,11 +94,11 @@ class ConfigController(object):
         try:
             # Expectation:
             # {
-            #  'credentials': {'tested-rc': '<STRING>', 'tested-passwd': '<STRING>',
-            #                  'testing-rc': '<STRING>', 'testing-passwd': '<STRING>'},
-            #  'kb_cfg': {<USER_OVERRIDED_CONFIGS>},
-            #  'topo_cfg': {<TOPOLOGY_CONFIGS>}
-            #  'tenants_cfg': {<TENANT_AND_USER_LISTS_FOR_REUSING>}
+            #   'credentials': {'tested-rc': '<STRING>', 'tested-passwd': '<STRING>',
+            #                   'testing-rc': '<STRING>', 'testing-passwd': '<STRING>'},
+            #   'kb_cfg': {<USER_OVERRIDED_CONFIGS>},
+            #   'topo_cfg': {<TOPOLOGY_CONFIGS>}
+            #   'tenants_cfg': {<TENANT_AND_USER_LISTS_FOR_REUSING>}
             # }
             user_config = json.loads(arg)
 
@@ -84,40 +114,12 @@ class ConfigController(object):
                 # Use the same openrc file for both cases
                 cred_testing = cred_tested
 
-            session_id = hashlib.md5(str(cred_config)).hexdigest()
             kb_config = KBConfig()
+            session_id = hashlib.md5(str(cred_config)).hexdigest()
             if KBSessionManager.has(session_id):
                 response.status = 403
                 response.text = u"Session is already existed."
                 return response.text
-
-            # Parsing server and client configs from application input
-            # Save the public key into a temporary file
-            if 'public_key' in user_config['kb_cfg']:
-                pubkey_filename = '/tmp/kb_public_key.pub'
-                f = open(pubkey_filename, 'w')
-                f.write(user_config['kb_cfg']['public_key_file'])
-                f.close()
-                kb_config.config_scale['public_key_file'] = pubkey_filename
-
-            if 'prompt_before_run' in user_config['kb_cfg']:
-                kb_config.config_scale['prompt_before_run'] = False
-
-            if user_config['kb_cfg']:
-                alt_config = Configuration.from_string(user_config['kb_cfg']).configure()
-                kb_config.config_scale = kb_config.config_scale.merge(alt_config)
-
-            # Parsing topology configs from application input
-            if 'topo_cfg' in user_config:
-                topo_cfg = Configuration.from_string(user_config['topo_cfg']).configure()
-            else:
-                topo_cfg = None
-
-            # Parsing tenants configs from application input
-            if 'tenants_list' in user_config:
-                tenants_list = Configuration.from_string(user_config['tenants_list']).configure()
-            else:
-                tenants_list = None
         except Exception:
             response.status = 400
             response.text = u"Error while parsing configurations: \n%s" % (traceback.format_exc)
@@ -125,9 +127,8 @@ class ConfigController(object):
 
         logging.setup("kloudbuster", logfile="/tmp/kb_log_%s" % session_id)
         kb_config.init_with_rest_api(cred_tested=cred_tested,
-                                     cred_testing=cred_testing,
-                                     topo_cfg=topo_cfg,
-                                     tenants_list=tenants_list)
+                                     cred_testing=cred_testing)
+        self.update_config(kb_config, user_config)
 
         kb_session = KBSession()
         kb_session.kb_config = kb_config
@@ -136,20 +137,31 @@ class ConfigController(object):
         return str(session_id)
 
     @running_config.when(method='PUT')
-    def running_config_PUT(self, *args):
-        # @TODO(Not completed! ENOTSUP)
+    def running_config_PUT(self, *args, **kwargs):
         if len(args):
             session_id = args[0]
         else:
-            response.status = 400
+            response.status = 404
             response.text = u"Please specify the session_id."
             return response.text
         if KBSessionManager.has(session_id):
-            # kb_session = KBSessionManager.get(session_id)
-            #
-            #
-            #
-            return "OK!"
+            status = KBSessionManager.get(session_id).kb_status
+            if status == "READY":
+                # Expectation:
+                # {
+                #   'kb_cfg': {<USER_OVERRIDED_CONFIGS>},
+                #   'topo_cfg': {<TOPOLOGY_CONFIGS>}
+                #   'tenants_cfg': {<TENANT_AND_USER_LISTS_FOR_REUSING>}
+                # }
+                kb_config = KBConfig()
+                KBSessionManager.get(session_id).kb_config = kb_config
+                user_config = json.loads(kwargs['arg'])
+                self.update_config(kb_config, user_config)
+                return "OK!"
+            else:
+                response.status = 403
+                response.text = u"Cannot update configuration if KloudBuster is not at READY"
+                return response.text
         else:
             response.status = 404
             response.text = u"Session ID is not found or invalid."
@@ -160,7 +172,7 @@ class ConfigController(object):
         if len(args):
             session_id = args[0]
         else:
-            response.status = 400
+            response.status = 404
             response.text = u"Please specify the session_id."
             return response.text
         if KBSessionManager.has(session_id):

@@ -80,7 +80,6 @@ paths:
 
         put:
             description: |
-                (NOT IMPLEMENTED)
                 Update KloudBuster configuration for an existing session
             parameters:
                 - name: session_id
@@ -95,17 +94,23 @@ paths:
                   description: The configuration to be updated
                   required: true
                   schema:
-                      # @TODO: Adding Configuration_Update
-                      $ref: '#/definitions/Configuration_New'
+                      $ref: '#/definitions/Configuration_Update'
             tags:
                 - config
             responses:
                 200:
                     description: |
                         Configuration of given session is updated successfully
-                405:
+                400:
+                    description: Error while parsing the configuration file
+                    schema:
+                        type: string
+                        description: Errors in details
+                403:
                     description: |
-                        Cannot change configuration while KloudBuster is running
+                        Cannot update configuration if KloudBuster is not at READY
+                404:
+                    description: The session_id is not found or invalid
         delete:
             description: |
                 Terminate the given session in KloudBuster server
@@ -245,6 +250,20 @@ definitions:
                 type: string
                 format: json
                 description: Credentials for the clouds
+            kb_cfg:
+                type: string
+                format: json
+                description: User overrided configs
+            topo_cfg:
+                type: string
+                format: json
+                description: Topology config
+            tenants_cfg:
+                type: string
+                format: json
+                description: Tenant and User list for reusing
+    Configuration_Update:
+        properties:
             kb_cfg:
                 type: string
                 format: json
