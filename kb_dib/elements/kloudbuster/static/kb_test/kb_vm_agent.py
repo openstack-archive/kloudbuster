@@ -190,16 +190,21 @@ class KB_VM_Agent(object):
             self.stop_hello.set()
         elif message['cmd'] == 'EXEC':
             self.last_cmd = ""
-            try:
-                cmd_res_tuple = eval('self.exec_' + message['data']['cmd'] + '()')
-                cmd_res_dict = dict(zip(("status", "stdout", "stderr"), cmd_res_tuple))
-            except Exception as exc:
-                cmd_res_dict = {
-                    "status": 1,
-                    "stdout": self.last_cmd,
-                    "stderr": str(exc)
-                }
-            self.report('DONE', message['client-type'], cmd_res_dict)
+            arange = message['data']['active_range']
+            my_id = int(self.vm_name[self.vm_name.rindex('I') + 1:])
+            if (not arange) or (my_id >= arange[0] and my_id <= arange[1]):
+                try:
+                    par = message['data'].get('parameter', '')
+                    str_par = 'par' if par else ''
+                    cmd_res_tuple = eval('self.exec_%s(%s)' % (message['data']['cmd'], str_par))
+                    cmd_res_dict = dict(zip(("status", "stdout", "stderr"), cmd_res_tuple))
+                except Exception as exc:
+                    cmd_res_dict = {
+                        "status": 1,
+                        "stdout": self.last_cmd,
+                        "stderr": str(exc)
+                    }
+                self.report('DONE', message['client-type'], cmd_res_dict)
         elif message['cmd'] == 'ABORT':
             # TODO(Add support to abort a session)
             pass
@@ -207,7 +212,6 @@ class KB_VM_Agent(object):
             # Unexpected
             # TODO(Logging on Agent)
             print 'ERROR: Unexpected command received!'
-            pass
 
     def work(self):
         for item in self.pubsub.listen():
@@ -232,11 +236,11 @@ class KB_VM_Agent(object):
         self.last_cmd = KB_Instance.check_http_service(self.user_data['target_url'])
         return self.exec_command(self.last_cmd)
 
-    def exec_run_http_test(self):
+    def exec_run_http_test(self, http_tool_configs):
         self.last_cmd = KB_Instance.run_http_test(
-            dest_path=self.user_data['http_tool']['dest_path'],
+            dest_path='/usr/local/bin/wrk2',
             target_url=self.user_data['target_url'],
-            **self.user_data['http_tool_configs'])
+            **http_tool_configs)
         return self.exec_command_report(self.last_cmd)
 
 def exec_command(cmd):
