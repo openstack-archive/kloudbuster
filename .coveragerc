@@ -4,4 +4,4 @@ source = kloudbuster
 omit = kloudbuster/openstack/*
 
 [report]
-ignore-errors = True
+ignore_errors = True
