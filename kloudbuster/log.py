@@ -45,6 +45,7 @@ WARNING = logging.WARNING
 def setup(product_name, logfile=None):
     dbg_color = handlers.ColorHandler.LEVEL_COLORS[logging.DEBUG]
     handlers.ColorHandler.LEVEL_COLORS[logging.KBDEBUG] = dbg_color
+    CONF.logging_default_format_string = '%(asctime)s %(levelname)s %(message)s'
 
     oslogging.setup(CONF, product_name)
     # Adding the FileHandler to all known loggers inside KloudBuster
@@ -67,6 +68,7 @@ def getLogger(name="unknown", version="unknown"):
         oslogging._loggers[name] = KloudBusterContextAdapter(
             logging.getLogger(name), {"project": "kloudbuster",
                                       "version": version})
+
     return oslogging._loggers[name]
 
 def delete_logfile(product_name):

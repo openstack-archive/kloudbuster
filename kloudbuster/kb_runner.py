@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from __future__ import division
 from collections import deque
 from distutils.version import LooseVersion
 import threading
@@ -46,7 +47,8 @@ class KBRunner(object):
     """
 
     def __init__(self, client_list, config, expected_agent_version, single_cloud=True):
-        self.client_dict = dict(zip([x.vm_name for x in client_list], client_list))
+        self.full_client_dict = dict(zip([x.vm_name for x in client_list], client_list))
+        self.client_dict = self.full_client_dict
         self.config = config
         self.single_cloud = single_cloud
         self.result = {}
@@ -63,10 +65,18 @@ class KBRunner(object):
         self.report_chan_name = "kloudbuster_report"
         self.message_queue = deque()
 
+    def header_formatter(self, stage, vm_count):
+        conns = vm_count * self.config.http_tool_configs.connections
+        rate_limit = vm_count * self.config.http_tool_configs.rate_limit
+        msg = "Stage %d: %d VM(s), %d Connections, %d Expected RPS" %\
+              (stage, vm_count, conns, rate_limit)
+        return msg
+
     def msg_handler(self):
         for message in self.pubsub.listen():
             if message['data'] == "STOP":
                 break
+            LOG.kbdebug(message)
             self.message_queue.append(message)
 
     def setup_redis(self, redis_server, redis_server_port=6379, timeout=120):
@@ -78,7 +88,7 @@ class KBRunner(object):
                                            socket_connect_timeout=1,
                                            socket_timeout=1)
         success = False
-        retry_count = max(timeout / self.config.polling_interval, 1)
+        retry_count = max(timeout // self.config.polling_interval, 1)
         # Check for connections to redis server
         for retry in xrange(retry_count):
             try:
@@ -120,7 +130,7 @@ class KBRunner(object):
         '''
         if not polling_interval:
             polling_interval = self.config.polling_interval
-        retry_count = max(timeout / polling_interval, 1)
+        retry_count = max(timeout // polling_interval, 1)
         retry = cnt_succ = cnt_failed = 0
         clist = self.client_dict.copy()
         samples = []
@@ -136,15 +146,14 @@ class KBRunner(object):
                     # No new message, commands are in executing
                     break
 
-                LOG.kbdebug(msg)
                 payload = eval(msg['data'])
                 vm_name = payload['sender-id']
-                instance = self.client_dict[vm_name]
                 cmd = payload['cmd']
                 if cmd == 'READY':
                     # If a READY packet is received, the corresponding VM is up
                     # running. We mark the flag for that VM, and skip all READY
                     # messages received afterwards.
+                    instance = self.full_client_dict[vm_name]
                     if instance.up_flag:
                         continue
                     else:
@@ -195,22 +204,23 @@ class KBRunner(object):
             raise KBVMUpException()
         self.send_cmd('ACK', None, None)
 
-    def setup_static_route(self, timeout=30):
-        func = {'cmd': 'setup_static_route'}
+    def setup_static_route(self, active_range, timeout=30):
+        func = {'cmd': 'setup_static_route', 'active_range': active_range}
         self.send_cmd('EXEC', 'http', func)
         cnt_succ = self.polling_vms(timeout)[0]
         if cnt_succ != len(self.client_dict):
             raise KBSetStaticRouteException()
 
-    def check_http_service(self, timeout=30):
-        func = {'cmd': 'check_http_service'}
+    def check_http_service(self, active_range, timeout=30):
+        func = {'cmd': 'check_http_service', 'active_range': active_range}
         self.send_cmd('EXEC', 'http', func)
         cnt_succ = self.polling_vms(timeout)[0]
         if cnt_succ != len(self.client_dict):
             raise KBHTTPServerUpException()
 
-    def run_http_test(self):
-        func = {'cmd': 'run_http_test'}
+    def run_http_test(self, active_range):
+        func = {'cmd': 'run_http_test', 'active_range': active_range,
+                'parameter': self.config.http_tool_configs}
         self.send_cmd('EXEC', 'http', func)
         # Give additional 30 seconds for everybody to report results
         timeout = self.config.http_tool_configs.duration + 30
@@ -224,6 +234,7 @@ class KBRunner(object):
             self.result[key] = instance.http_client_parser(**self.result[key])
 
     def gen_host_stats(self):
+        self.host_stats = {}
         for vm in self.result.keys():
             phy_host = self.client_dict[vm].host
             if phy_host not in self.host_stats:
@@ -233,6 +244,48 @@ class KBRunner(object):
         http_tool = self.client_dict.values()[0].http_tool
         for phy_host in self.host_stats:
             self.host_stats[phy_host] = http_tool.consolidate_results(self.host_stats[phy_host])
+
+    def single_run(self, active_range=None):
+        try:
+            if self.single_cloud:
+                LOG.info("Setting up static route to reach tested cloud...")
+                self.setup_static_route(active_range)
+
+            LOG.info("Waiting for HTTP service to come up...")
+            self.check_http_service(active_range)
+
+            if self.config.prompt_before_run:
+                print "Press enter to start running benchmarking tools..."
+                raw_input()
+
+            LOG.info("Running HTTP Benchmarking...")
+            self.run_http_test(active_range)
+
+            # Call the method in corresponding tools to consolidate results
+            http_tool = self.client_dict.values()[0].http_tool
+            LOG.kbdebug(self.result.values())
+            self.tool_result = http_tool.consolidate_results(self.result.values())
+            self.tool_result['http_rate_limit'] =\
+                len(self.client_dict) * self.config.http_tool_configs.rate_limit
+            self.tool_result['total_connections'] =\
+                len(self.client_dict) * self.config.http_tool_configs.connections
+            self.tool_result['total_client_vms'] = len(self.full_client_dict)
+            self.tool_result['total_server_vms'] = len(self.full_client_dict)
+            # self.tool_result['host_stats'] = self.gen_host_stats()
+        except KBSetStaticRouteException:
+            LOG.error("Could not set static route.")
+            self.dispose()
+            return False
+        except KBHTTPServerUpException:
+            LOG.error("HTTP service is not up in testing cloud.")
+            self.dispose()
+            return False
+        except KBHTTPBenchException:
+            LOG.error("Error while running HTTP benchmarking tool.")
+            self.dispose()
+            return False
+
+        return True
 
     def run(self):
         try:
@@ -247,38 +300,53 @@ class KBRunner(object):
                     LOG.warn("The VM image you are running (%s) is not the expected version (%s) "
                              "this may cause some incompatibilities" %
                              (self.agent_version, self.expected_agent_version))
-            if self.single_cloud:
-                LOG.info("Setting up static route to reach tested cloud...")
-                self.setup_static_route()
-
-            LOG.info("Waiting for HTTP service to come up...")
-            self.check_http_service()
-
-            if self.config.prompt_before_run:
-                print "Press enter to start running benchmarking tools..."
-                raw_input()
-
-            LOG.info("Running HTTP Benchmarking...")
-            self.run_http_test()
-
-            # Call the method in corresponding tools to consolidate results
-            http_tool = self.client_dict.values()[0].http_tool
-            LOG.kbdebug(self.result.values())
-            self.tool_result = http_tool.consolidate_results(self.result.values())
-            self.tool_result['http_rate_limit'] = self.config.http_tool_configs.rate_limit
-            self.tool_result['total_connections'] =\
-                len(self.client_dict) * self.config.http_tool_configs.connections
-            self.gen_host_stats()
-            self.dispose()
-        except (KBSetStaticRouteException):
-            LOG.error("Could not set static route.")
+        except KBVMUpException:
+            LOG.error("Some VMs failed to start.")
             self.dispose()
             return
-        except (KBHTTPServerUpException):
-            LOG.error("HTTP service is not up in testing cloud.")
+
+        if self.config.progression.enabled:
+            start = self.config.progression.vm_start
+            step = self.config.progression.vm_step
+            limit = self.config.progression.stop_limit
+            timeout = self.config.http_tool_configs.timeout
+            vm_list = self.full_client_dict.keys()
+            vm_list.sort()
+
+            self.client_dict = {}
+            cur_stage = 1
+
+            while True:
+                cur_vm_count = len(self.client_dict)
+                target_vm_count = start + (cur_stage - 1) * step
+                if target_vm_count > len(self.full_client_dict):
+                    break
+                if self.tool_result:
+                    err = self.tool_result['http_sock_err'] / self.tool_result['http_total_req']
+                    pert_dict = dict(self.tool_result['latency_stats'])
+                    if limit[1] in pert_dict.keys():
+                        timeout_at_percentile = pert_dict[limit[1]] // 1000000
+                    else:
+                        timeout_at_percentile = 0
+                        LOG.warn('Percentile %s%% is not a standard statistic point.' % limit[1])
+                    if err > limit[0] or timeout_at_percentile > timeout:
+                        LOG.warn('KloudBuster is stopping the iteration because the result '
+                                 'reaches the stop limit.')
+                        break
+
+                for idx in xrange(cur_vm_count, target_vm_count):
+                    self.client_dict[vm_list[idx]] = self.full_client_dict[vm_list[idx]]
+                description = "-- %s --" % self.header_formatter(cur_stage, len(self.client_dict))
+                LOG.info(description)
+                if not self.single_run(active_range=[0, target_vm_count - 1]):
+                    break
+                LOG.info('-- Stage %s: %s --' % (cur_stage, str(self.tool_result)))
+                self.tool_result['description'] = description
+                cur_stage += 1
+                yield self.tool_result
+
             self.dispose()
-            return
-        except KBHTTPBenchException():
-            LOG.error("Error in HTTP benchmarking.")
+        else:
+            if self.single_run():
+                yield self.tool_result
             self.dispose()
-            return

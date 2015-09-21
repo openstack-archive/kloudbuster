@@ -98,7 +98,7 @@ class KbReport(object):
         # add values for each row
         rows = []
         for run_res in self.data_list:
-            rps_max = run_res['http_rate_limit'] * run_res['total_client_vms']
+            rps_max = run_res['http_rate_limit']
             rx_tp = float(run_res['http_throughput_kbytes'])
             rx_tp = round(rx_tp * 8 / (1024 * 1024), 1)
             cells = [run_res['filename'],

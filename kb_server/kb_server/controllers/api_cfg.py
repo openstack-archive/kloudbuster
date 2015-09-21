@@ -37,9 +37,8 @@ class ConfigController(object):
         # Save the public key into a temporary file
         if 'public_key' in user_config['kb_cfg']:
             pubkey_filename = '/tmp/kb_public_key.pub'
-            f = open(pubkey_filename, 'w')
-            f.write(user_config['kb_cfg']['public_key_file'])
-            f.close()
+            with open(pubkey_filename, 'w') as f:
+                f.write(user_config['kb_cfg']['public_key_file'])
             kb_config.config_scale['public_key_file'] = pubkey_filename
 
         if 'prompt_before_run' in user_config['kb_cfg']:

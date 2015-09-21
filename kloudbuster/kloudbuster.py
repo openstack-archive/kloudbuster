@@ -69,10 +69,10 @@ class Kloud(object):
         LOG.info("Creating kloud: " + self.prefix)
 
         # pre-compute the placement az to use for all VMs
-        self.placement_az = None
-        if scale_cfg['availability_zone']:
-            self.placement_az = scale_cfg['availability_zone']
-        LOG.info('%s Availability Zone: %s' % (self.name, self.placement_az))
+        self.placement_az = scale_cfg['availability_zone']\
+            if scale_cfg['availability_zone'] else None
+        if self.placement_az:
+            LOG.info('%s Availability Zone: %s' % (self.name, self.placement_az))
 
     def create_resources(self, tenant_quota):
         if self.reusing_tenants:
@@ -233,7 +233,7 @@ class KloudBuster(object):
                                    self.tenants_list['client'],
                                    testing_side=True)
         self.kb_proxy = None
-        self.final_result = None
+        self.final_result = []
         self.server_vm_create_thread = None
         self.client_vm_create_thread = None
         self.kb_runner = None
@@ -261,7 +261,8 @@ class KloudBuster(object):
 
             # Trying to upload images
             kb_image_name = kb_vm_agent.get_image_name() + '.qcow2'
-            image_url = 'http://storage.apps.openstack.org/images/%s' % kb_image_name
+            # image_url = 'http://storage.apps.openstack.org/images/%s' % kb_image_name
+            image_url = 'http://172.29.172.152/downloads/scale_image/%s' % kb_image_name
             LOG.info("Image is not found in %s, uploading from OpenStack App Store..." % kloud)
             try:
                 img = glance_client.images.create(name=img_name_dict[kloud],
@@ -333,9 +334,11 @@ class KloudBuster(object):
                 ins.user_data['redis_server_port'] = 6379
                 ins.user_data['target_subnet_ip'] = svr_list[idx].subnet_ip
                 ins.user_data['target_shared_interface_ip'] = svr_list[idx].shared_interface_ip
-                # @TODO(Move this hard coded part to kb_vm_agent.py)
-                ins.user_data['http_tool'] = {'dest_path': '/usr/local/bin/wrk2'}
-                ins.user_data['http_tool_configs'] = ins.config['http_tool_configs']
+                # @TODO(DELETE BELOW TWO LINES WHEN V4 IS OFFICIALLY UPLOADED)
+                # TO BE REMOVED #
+                # ins.user_data['http_tool'] = {'dest_path': '/usr/local/bin/wrk2'}
+                # ins.user_data['http_tool_configs'] = ins.config['http_tool_configs']
+                # TO BE REMOVED #
                 ins.boot_info['flavor_type'] = 'kb.client' if \
                     not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)
@@ -346,16 +349,14 @@ class KloudBuster(object):
         """
         vm_creation_concurrency = self.client_cfg.vm_creation_concurrency
         cleanup_flag = True
+        self.final_result = []
         try:
             tenant_quota = self.calc_tenant_quota()
             self.kloud.create_resources(tenant_quota['server'])
             self.testing_kloud.create_resources(tenant_quota['client'])
 
-            # Start the runner and ready for the incoming redis messages
-            client_list = self.testing_kloud.get_all_instances()
-            server_list = self.kloud.get_all_instances()
-
             # Setting up the KloudBuster Proxy node
+            client_list = self.testing_kloud.get_all_instances()
             self.kb_proxy = client_list[-1]
             client_list.pop()
 
@@ -376,6 +377,20 @@ class KloudBuster(object):
                                       kb_vm_agent.get_image_version(),
                                       self.single_cloud)
             self.kb_runner.setup_redis(self.kb_proxy.fip_ip)
+            if self.client_cfg.progression['enabled']:
+                log_info = "Progression run is enabled, KloudBuster will schedule "\
+                    "multiple runs as listed:"
+                stage = 1
+                start = self.client_cfg.progression.vm_start
+                step = self.client_cfg.progression.vm_step
+                cur_vm_count = start
+                total_vm = self.get_tenant_vm_count(self.server_cfg) *\
+                    self.server_cfg['number_tenants']
+                while (cur_vm_count <= total_vm):
+                    log_info += "\n" + self.kb_runner.header_formatter(stage, cur_vm_count)
+                    cur_vm_count = start + stage * step
+                    stage += 1
+                LOG.info(log_info)
 
             if self.single_cloud:
                 # Find the shared network if the cloud used to testing is same
@@ -409,12 +424,9 @@ class KloudBuster(object):
             self.print_provision_info()
 
             # Run the runner to perform benchmarkings
-            self.kb_runner.run()
-            self.final_result = self.kb_runner.tool_result
-            self.final_result['total_server_vms'] = len(server_list)
-            self.final_result['total_client_vms'] = len(client_list)
-            # self.final_result['host_stats'] = self.kb_runner.host_stats
-            LOG.info(self.final_result)
+            for run_result in self.kb_runner.run():
+                self.final_result.append(self.kb_runner.tool_result)
+            LOG.info('SUMMARY: %s' % self.final_result)
         except KeyboardInterrupt:
             traceback.format_exc()
         except (ClientException, Exception):
@@ -429,7 +441,7 @@ class KloudBuster(object):
                 traceback.print_exc()
                 KBResLogger.dump_and_save('svr', self.kloud.res_logger.resource_list)
         if not cleanup_flag:
-            LOG.warn('Some resources are not cleaned up properly.')
+            LOG.warn('Some resources in server cloud are not cleaned up properly.')
             KBResLogger.dump_and_save('svr', self.kloud.res_logger.resource_list)
 
         if self.client_cfg['cleanup_resources']:
@@ -439,6 +451,7 @@ class KloudBuster(object):
                 traceback.print_exc()
                 KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
         if not cleanup_flag:
+            LOG.warn('Some resources in client cloud are not cleaned up properly.')
             KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
 
     def dump_logs(self, offset=0):
