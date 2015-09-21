@@ -1,15 +1,17 @@
 # KloudBuster Default configuration file
+#
+# This file can be copied and used as a template to specify different settings,
+# then passed to KloudBuster using the '--config-file <path>' option.
+#
+# NOTE: In the copy, properties that are unchanged (same as default) can be simply
+# removed from the file.
 
-# This file can be copied, used as a template to specify different settings, then
-# passed to KloudBuster using the '--config-file <path> option.
-# In the copy, properties that are unchanged (use same as default) can be simply removed
-# from the file.
-
-# Config options common to client and server side
+# =====================================================
+# COMMON CONFIG OPTIONS FOR BOTH SERVER AND CLIENT SIDE
+# =====================================================
 
 # Name of the image to use for all test VMs (client, server and proxy)
-# The image name must exist in OpenStack and must be built with the appropriate
-# packages.
+# The image name must exist in OpenStack and built with appropriate packages.
 # The default test VM image is named "kloudbuster_v<version>" where
 # <version> is the KloudBuster test VM image version (e.g. "kloudbuster_v3")
 # Leave empty to use the default test VM image (recommended).
@@ -28,23 +30,22 @@ cleanup_resources: True
 # Specifies how many VMs will be created at a time. Larger numbers can be used
 # but will not necessarily shorten the overall staging time (this will largely
 # depend on the scalability of the OpenStack control plane).
-# Well tuned control planes with multiple instances of Nova have shown to support
-# a concurrency level of up to around 50
+# Well tuned control planes with multiple instances of NOVA have shown to
+# support a concurrency level of up to around 50
 vm_creation_concurrency: 5
 
 # Public key to use to access all test VMs
-# ssh access to the test VMs launched by kloudbuster is not required
-# but can be handy if the user wants to ssh manually to any of them (for example
-# to debug)
-#
 # If empty will default to the user's public key (~/.ssh/id_rsa.pub) if it
 # exists, otherwise will not provision any public key.
-# If configured or available, a key pair will be added for each
-# configured user.
 #
+# NOTE: SSH access to the test VMs launched by kloudbuster is not required,
+# but can be handy if the user wants to ssh manually to any of them (for
+# example to debug)
 public_key_file:
 
+# ==========================
 # SERVER SIDE CONFIG OPTIONS
+# ==========================
 server:
     # Flavor to use for the test images
     flavor:
@@ -86,9 +87,35 @@ server:
     # Note that this is ignored/overriden if you specify a topology file (-t)
     availability_zone:
 
-
+# ==========================
 # CLIENT SIDE CONFIG OPTIONS
+# ==========================
 client:
+    # Progression testing configuration
+    # If enabled, KloudBuster will give multiple runs (progression) on the cloud,
+    # unless it reaches the scale defined in the below sections, or the stop limit.
+    progression:
+        # Enable/Disable the progression
+        enabled: False
+        # The starting count of VMs
+        vm_start: 1
+        # The steping for the VM count for each stage
+        vm_step: 1
+        # The stop condition, it is used for KloudBuster to determine when to
+        # stop the progression, and do the cleanup if needed. It defines as:
+        # [err_count(%%), percentile_of_packet_not_timeout(%%)]
+        #
+        # e.g. [0, 99.99] means, KloudBuster will continue the progression run
+        #   only if *ALL* below conditions are satisfied:
+        #   (1) The error count of packets are less or equal than 0%%; (no errors)
+        #   (2) 99.99%% of the packets are within the timeout range;
+        #
+        # Note:
+        #   (1) The timeout value is defined in the client:http_tool_config section;
+        #   (2) The percentile of packets must be in the below list:
+        #       [50, 75, 90, 99, 99.9, 99.99, 99.999]
+        stop_limit: [0, 99.99]
+
     # Assign floating IP for every client side test VM
     # Default: no floating IP (only assign internal fixed IP)
     use_floatingip: False
@@ -129,18 +156,18 @@ client:
         # connected at any time to the matching HTTP server
         connections: 1000
         # Rate limit in RPS per client (0 for unlimit)
-        rate_limit: 500
+        rate_limit: 1000
         # Timeout for HTTP requests
         timeout: 5
         # Connection Type: "Keep-alive", "New"
         # Keep-alive: the TCP connection is reused across requests
         # New: create a new TCP connection for every request (and close it after receiving the reply)
-        # Note: "New" is not currently supported.
+        # NOTE: "New" is not currently supported.
         connection_type: 'Keep-alive'
         # Interval for periodical report in seconds
         # Use 0 if you only need 1 final aggregated report for the entire run duration
-        # Otherwise will provide results at every interval (results are reset at the start of each period and
-        # are not cumulative across periods)
+        # Otherwise will provide results at every interval (results are reset
+        # at the start of each period and are not cumulative across periods)
         report_interval: 0
         # Duration of testing tools (seconds)
         duration: 30
