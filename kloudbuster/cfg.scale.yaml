@@ -87,6 +87,12 @@ server:
     # Note that this is ignored/overriden if you specify a topology file (-t)
     availability_zone:
 
+    # HTTP Server specific configs (per VM)
+    http_server_configs:
+        # The size of HTML page in Bytes
+        html_size: 32768
+
+
 # ==========================
 # CLIENT SIDE CONFIG OPTIONS
 # ==========================

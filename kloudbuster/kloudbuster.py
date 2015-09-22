@@ -317,6 +317,7 @@ class KloudBuster(object):
                                            self.kloud.placement_az, "Round-robin")
             for ins in svr_list:
                 ins.user_data['role'] = 'Server'
+                ins.user_data['http_server_configs'] = ins.config['http_server_configs']
                 ins.boot_info['flavor_type'] = 'kb.server' if \
                     not self.tenants_list['server'] else self.kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)

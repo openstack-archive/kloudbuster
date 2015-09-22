@@ -253,6 +253,13 @@ def start_redis_server():
     cmd = ['sudo', 'service', 'redis-server', 'start']
     return exec_command(cmd)
 
+def config_nginx_server(http_server_configs):
+    # Generate the HTML file with specified size
+    html_size = http_server_configs['html_size']
+    cmd_str = 'dd if=/dev/zero of=/data/www/index.html bs=%s count=1' % html_size
+    cmd = cmd_str.split()
+    return False if exec_command(cmd) else True
+
 def start_nuttcp_server():
     cmd = ['/usr/bin/nuttcp', '-P5002', '-S', '--single-threaded']
     return exec_command(cmd)
@@ -263,8 +270,8 @@ def start_nginx_server():
 
 if __name__ == "__main__":
     try:
-        f = open('user-data', 'r')
-        user_data = eval(f.read())
+        with open('user-data', 'r') as f:
+            user_data = eval(f.read())
     except Exception as e:
         # TODO(Logging on Agent)
         print e.message
@@ -276,9 +283,9 @@ if __name__ == "__main__":
     if user_data['role'] == 'KB-PROXY':
         sys.exit(start_redis_server())
     if user_data['role'] == 'Server':
-        rc1 = start_nuttcp_server()
-        rc2 = start_nginx_server()
-        sys.exit(rc1 or rc2)
+        # rc = start_nuttcp_server()
+        if config_nginx_server(user_data['http_server_configs']):
+            sys.exit(start_nginx_server())
     elif user_data['role'] == 'Client':
         agent = KB_VM_Agent(user_data)
         agent.setup_channels()

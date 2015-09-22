@@ -38,12 +38,9 @@ update-rc.d -f nginx remove
 # Change permission to 777 for kb_test
 chmod -R 777 /kb_test
 
-# Generate a 32K HTML files
+# Create nginx server root
 mkdir -p /data/www
-cd /data/www/
-dd if=/dev/zero of=index.html bs=32K count=1
 chmod -R 777 /data
-cd -
 
 # redis server should listen on all interfaces
 sed -i "s/127.0.0.1/0.0.0.0/g" /etc/redis/redis.conf
@@ -74,12 +71,12 @@ git clone -b HdrHistogram_c-0.9.0 git://github.com/HdrHistogram/HdrHistogram_c.g
 cd HdrHistogram_c
 /tmp/cmake-3.3.0-Linux-x86_64/bin/cmake .
 make install
+cd -
 
 # Remove cmake and HdrHistogram_c builds
 rm /tmp/cmake-3.3.0-Linux-x86_64.tar.gz
 rm -rf /tmp/cmake-3.3.0-Linux-x86_64
-cd ..
-rm -rf HdrHistogram_c
+rm -rf /tmp/HdrHistogram_c
 
 # Install the http traffic generator
 git clone git://github.com/yicwang/wrk2.git
