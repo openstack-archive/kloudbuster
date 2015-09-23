@@ -334,11 +334,6 @@ class KloudBuster(object):
                 ins.user_data['redis_server_port'] = 6379
                 ins.user_data['target_subnet_ip'] = svr_list[idx].subnet_ip
                 ins.user_data['target_shared_interface_ip'] = svr_list[idx].shared_interface_ip
-                # @TODO(DELETE BELOW TWO LINES WHEN V4 IS OFFICIALLY UPLOADED)
-                # TO BE REMOVED #
-                ins.user_data['http_tool'] = {'dest_path': '/usr/local/bin/wrk2'}
-                ins.user_data['http_tool_configs'] = ins.config['http_tool_configs']
-                # TO BE REMOVED #
                 ins.boot_info['flavor_type'] = 'kb.client' if \
                     not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)

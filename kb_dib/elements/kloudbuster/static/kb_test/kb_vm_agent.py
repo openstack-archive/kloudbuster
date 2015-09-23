@@ -29,7 +29,7 @@ import redis
 #
 # This version must be incremented if the interface changes or if new features
 # are added to the agent VM
-__version__ = '3'
+__version__ = '4'
 
 def get_image_name():
     '''Return the versioned VM image name that corresponds to this

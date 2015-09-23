@@ -67,7 +67,7 @@ wget http://www.cmake.org/files/v3.3/cmake-3.3.0-Linux-x86_64.tar.gz
 tar xzf cmake-3.3.0-Linux-x86_64.tar.gz
 
 # Install HdrHistorgram_c
-git clone -b HdrHistogram_c-0.9.0 git://github.com/HdrHistogram/HdrHistogram_c.git
+git clone git://github.com/HdrHistogram/HdrHistogram_c.git
 cd HdrHistogram_c
 /tmp/cmake-3.3.0-Linux-x86_64/bin/cmake .
 make install
