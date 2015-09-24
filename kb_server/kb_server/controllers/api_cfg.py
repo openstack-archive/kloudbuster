@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
 import hashlib
 import json
 import os
@@ -20,17 +21,33 @@ import traceback
 kb_main_path = os.path.split(os.path.abspath(__file__))[0] + "/../../../kloudbuster"
 sys.path.append(kb_main_path)
 
+from attrdict import AttrDict
 from credentials import Credentials
 from kb_session import KBSession
 from kb_session import KBSessionManager
 import log as logging
 
-from configure import Configuration
 from kb_config import KBConfig
 from pecan import expose
 from pecan import response
 
 class ConfigController(object):
+
+    # Decorator to check for missing or invalid session ID
+    def check_session_id(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            if not len(args):
+                response.status = 404
+                response.text = u"Please specify the session_id."
+                return response.text
+            if not KBSessionManager.has(args[0]):
+                response.status = 404
+                response.text = u"Session ID is not found or invalid."
+                return response.text
+            return func(self, *args, **kwargs)
+
+        return wrapper
 
     def update_config(self, kb_config, user_config):
         # Parsing server and client configs from application input
@@ -41,52 +58,31 @@ class ConfigController(object):
                 f.write(user_config['kb_cfg']['public_key_file'])
             kb_config.config_scale['public_key_file'] = pubkey_filename
 
-        if 'prompt_before_run' in user_config['kb_cfg']:
-            kb_config.config_scale['prompt_before_run'] = False
+        kb_config.config_scale['prompt_before_run'] = False
 
-        if user_config['kb_cfg']:
-            alt_config = Configuration.from_dict(user_config['kb_cfg']).configure()
-            kb_config.config_scale = kb_config.config_scale.merge(alt_config)
+        # Parsing the KloudBuster/topology/tenants configs from application input
+        alt_config = AttrDict(user_config['kb_cfg']) if 'kb_cfg' in user_config else None
+        topo_cfg = AttrDict(user_config['topo_cfg']) if 'topo_cfg' in user_config else None
+        tenants_list = AttrDict(user_config['tenants_list'])\
+            if 'tenants_list' in user_config else None
 
-        # Parsing topology configs from application input
-        if 'topo_cfg' in user_config:
-            topo_cfg = Configuration.from_string(user_config['topo_cfg']).configure()
-        else:
-            topo_cfg = None
-
-        # Parsing tenants configs from application input
-        if 'tenants_list' in user_config:
-            tenants_list = Configuration.from_string(user_config['tenants_list']).configure()
-        else:
-            tenants_list = None
-
-        kb_config.update_with_rest_api(topo_cfg=topo_cfg, tenants_list=tenants_list)
+        key = ['alt_cfg', 'topo_cfg', 'tenants_list']
+        val = [alt_config, topo_cfg, tenants_list]
+        kwargs = dict([(k, v) for k, v in zip(key, val) if v])
+        kb_config.update_with_rest_api(**kwargs)
 
     @expose(generic=True)
     def default_config(self):
         kb_config = KBConfig()
-        pdict = eval(str(kb_config.config_scale))
-        return json.dumps(pdict)
+        return json.dumps(dict(kb_config.config_scale))
 
     @expose(generic=True)
+    @check_session_id
     def running_config(self, *args):
-        if len(args):
-            session_id = args[0]
-        else:
-            response.status = 404
-            response.text = u"Please specify the session_id."
-            return response.text
-        if KBSessionManager.has(session_id):
-            kb_config_obj = KBSessionManager.get(session_id).kb_config
-            config_scale = kb_config_obj.config_scale
-            config_scale['server'] = kb_config_obj.server_cfg
-            config_scale['client'] = kb_config_obj.client_cfg
-            config_scale = eval(str(config_scale))
-            return json.dumps(config_scale)
-        else:
-            response.status = 404
-            response.text = u"Session ID is not found or invalid."
-            return response.text
+        session_id = args[0]
+        kb_config_obj = KBSessionManager.get(session_id).kb_config
+        config_scale = dict(kb_config_obj.config_scale)
+        return json.dumps(config_scale)
 
     @running_config.when(method='POST')
     def running_config_POST(self, arg):
@@ -121,7 +117,7 @@ class ConfigController(object):
                 return response.text
         except Exception:
             response.status = 400
-            response.text = u"Error while parsing configurations: \n%s" % (traceback.format_exc)
+            response.text = u"Error while parsing configurations: \n%s" % (traceback.format_exc())
             return response.text
 
         logging.setup("kloudbuster", logfile="/tmp/kb_log_%s" % session_id)
@@ -136,51 +132,32 @@ class ConfigController(object):
         return str(session_id)
 
     @running_config.when(method='PUT')
+    @check_session_id
     def running_config_PUT(self, *args, **kwargs):
-        if len(args):
-            session_id = args[0]
+        session_id = args[0]
+        status = KBSessionManager.get(session_id).kb_status
+        if status == "READY":
+            # Expectation:
+            # {
+            #   'kb_cfg': {<USER_OVERRIDED_CONFIGS>},
+            #   'topo_cfg': {<TOPOLOGY_CONFIGS>}
+            #   'tenants_cfg': {<TENANT_AND_USER_LISTS_FOR_REUSING>}
+            # }
+            kb_config = KBSessionManager.get(session_id).kb_config
+            user_config = json.loads(kwargs['arg'])
+            self.update_config(kb_config, user_config)
+            return "OK!"
         else:
-            response.status = 404
-            response.text = u"Please specify the session_id."
-            return response.text
-        if KBSessionManager.has(session_id):
-            status = KBSessionManager.get(session_id).kb_status
-            if status == "READY":
-                # Expectation:
-                # {
-                #   'kb_cfg': {<USER_OVERRIDED_CONFIGS>},
-                #   'topo_cfg': {<TOPOLOGY_CONFIGS>}
-                #   'tenants_cfg': {<TENANT_AND_USER_LISTS_FOR_REUSING>}
-                # }
-                kb_config = KBConfig()
-                KBSessionManager.get(session_id).kb_config = kb_config
-                user_config = json.loads(kwargs['arg'])
-                self.update_config(kb_config, user_config)
-                return "OK!"
-            else:
-                response.status = 403
-                response.text = u"Cannot update configuration if KloudBuster is not at READY"
-                return response.text
-        else:
-            response.status = 404
-            response.text = u"Session ID is not found or invalid."
+            response.status = 403
+            response.text = u"Cannot update configuration if KloudBuster is not at READY."
             return response.text
 
     @running_config.when(method='DELETE')
+    @check_session_id
     def running_config_DELETE(self, *args):
-        if len(args):
-            session_id = args[0]
-        else:
-            response.status = 404
-            response.text = u"Please specify the session_id."
-            return response.text
-        if KBSessionManager.has(session_id):
-            kb_session = KBSessionManager.get(session_id)
-            if kb_session.kloudbuster:
-                kb_session.kloudbuster.dispose()
-            KBSessionManager.delete(session_id)
-            return "OK!"
-        else:
-            response.status = 404
-            response.text = u"Session ID is not found or invalid."
-            return response.text
+        session_id = args[0]
+        kb_session = KBSessionManager.get(session_id)
+        if kb_session.kloudbuster:
+            kb_session.kloudbuster.dispose()
+        KBSessionManager.delete(session_id)
+        return "OK!"

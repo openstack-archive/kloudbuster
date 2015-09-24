@@ -14,8 +14,9 @@
 
 import os
 import sys
+import yaml
 
-import configure
+from attrdict import AttrDict
 import log as logging
 from oslo_config import cfg
 from pkg_resources import resource_string
@@ -69,7 +70,8 @@ class KBConfig(object):
         # The default configuration file for KloudBuster
         default_cfg = resource_string(__name__, "cfg.scale.yaml")
         # Read the configuration file
-        self.config_scale = configure.Configuration.from_string(default_cfg).configure()
+        self.config_scale = AttrDict(yaml.safe_load(default_cfg))
+        self.alt_config = None
         self.cred_tested = None
         self.cred_testing = None
         self.server_cfg = None
@@ -91,10 +93,18 @@ class KBConfig(object):
                 self.config_scale['public_key_file'] = pub_key
                 LOG.info('Using %s as public key for all VMs' % (pub_key))
 
+        if self.alt_cfg:
+            self.config_scale.update(self.alt_cfg)
+
+        # Use the default image name for Glance
+        # defaults to something like "kloudbuster_v3"
+        if not self.config_scale['image_name']:
+            self.config_scale['image_name'] = kb_vm_agent.get_image_name()
+
         # A bit of config dict surgery, extract out the client and server side
         # and transplant the remaining (common part) into the client and server dict
-        self.server_cfg = self.config_scale.pop('server')
-        self.client_cfg = self.config_scale.pop('client')
+        self.server_cfg = AttrDict(self.config_scale.pop('server'))
+        self.client_cfg = AttrDict(self.config_scale.pop('client'))
         self.server_cfg.update(self.config_scale)
         self.client_cfg.update(self.config_scale)
 
@@ -107,12 +117,8 @@ class KBConfig(object):
         self.client_cfg['vms_per_network'] =\
             self.get_total_vm_count(self.server_cfg) + 1
 
-        # Use the default image name for Glance
-        # defaults to something like "kloudbuster_v3"
-        if not self.server_cfg['image_name']:
-            self.server_cfg['image_name'] = kb_vm_agent.get_image_name()
-        if not self.client_cfg['image_name']:
-            self.client_cfg['image_name'] = kb_vm_agent.get_image_name()
+        self.config_scale['server'] = self.server_cfg
+        self.config_scale['client'] = self.client_cfg
 
     def init_with_cli(self):
         self.get_credentials()
@@ -126,8 +132,9 @@ class KBConfig(object):
         self.cred_testing = kwargs['cred_testing']
 
     def update_with_rest_api(self, **kwargs):
-        self.topo_cfg = kwargs['topo_cfg']
-        self.tenants_list = kwargs['tenants_list']
+        self.alt_cfg = kwargs.get('alt_cfg', None)
+        self.topo_cfg = kwargs.get('topo_cfg', self.topo_cfg)
+        self.tenants_list = kwargs.get('tenants_list', self.tenants_list)
         self.update_configs()
 
     def get_total_vm_count(self, config):
@@ -150,19 +157,22 @@ class KBConfig(object):
     def get_configs(self):
         if CONF.config:
             try:
-                alt_config = configure.Configuration.from_file(CONF.config).configure()
-                self.config_scale = self.config_scale.merge(alt_config)
-            except configure.ConfigurationError:
+                with open(CONF.config) as f:
+                    alt_config = AttrDict(yaml.safe_load(f))
+                self.config_scale = self.config_scale + alt_config
+            except TypeError:
                 # file can be empty
                 pass
 
     def get_topo_cfg(self):
         if CONF.topology:
-            self.topo_cfg = configure.Configuration.from_file(CONF.topology).configure()
+            with open(CONF.topology) as f:
+                self.topo_cfg = AttrDict(yaml.safe_load(f))
 
     def get_tenants_list(self):
         if CONF.tenants_list:
-            self.tenants_list = configure.Configuration.from_file(CONF.tenants_list).configure()
+            with open(CONF.tenants_list) as f:
+                self.tenants_list = AttrDict(yaml.safe_load(f))
             try:
                 self.config_scale['number_tenants'] = 1
             except Exception as e:

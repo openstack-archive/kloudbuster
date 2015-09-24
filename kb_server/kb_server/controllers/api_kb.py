@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
 import json
 import os
 import sys
@@ -31,6 +32,22 @@ class KBController(object):
     def __init__(self):
         self.kb_thread = None
 
+    # Decorator to check for missing or invalid session ID
+    def check_session_id(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            if not len(args):
+                response.status = 404
+                response.text = u"Please specify the session_id."
+                return response.text
+            if not KBSessionManager.has(args[0]):
+                response.status = 404
+                response.text = u"Session ID is not found or invalid."
+                return response.text
+            return func(self, *args, **kwargs)
+
+        return wrapper
+
     def kb_thread_handler(self, session_id):
         kb_session = KBSessionManager.get(session_id)
         kb_session.kb_status = 'RUNNING'
@@ -49,75 +66,41 @@ class KBController(object):
             kb_session.kb_status = 'ERROR'
 
     @expose(generic=True)
+    @check_session_id
     def status(self, *args):
-        if len(args):
-            session_id = args[0]
-        else:
-            response.status = 400
-            response.text = u"Please specify the session_id."
-            return response.text
-
-        if KBSessionManager.has(session_id):
-            status = KBSessionManager.get(session_id).kb_status
-            return status
-        else:
-            response.status = 404
-            response.text = u"Session ID is not found or invalid."
-            return response.text
+        session_id = args[0]
+        status = KBSessionManager.get(session_id).kb_status
+        return status
 
     @expose(generic=True)
+    @check_session_id
     def log(self, *args, **kwargs):
-        if len(args):
-            session_id = args[0]
-        else:
+        session_id = args[0]
+        offset = kwargs.get('offset', 0)
+        try:
+            offset = int(offset)
+        except ValueError:
             response.status = 400
-            response.text = u"Please specify the session_id."
+            response.text = u"Parameter 'offset' is invalid."
             return response.text
 
-        offset = 0
-        if 'offset' in kwargs:
-            try:
-                offset = int(kwargs['offset'])
-            except ValueError:
-                response.status = 400
-                response.text = u"Parameter 'offset' is invalid."
-                return response.text
-
-        if KBSessionManager.has(session_id):
-            kb_session = KBSessionManager.get(session_id)
-            plog = kb_session.kloudbuster.dump_logs(offset=offset)\
-                if kb_session.kloudbuster else ""
-            return json.dumps(plog)
-        else:
-            response.status = 404
-            response.text = u"Session ID is not found or invalid."
-            return response.text
+        kb_session = KBSessionManager.get(session_id)
+        plog = kb_session.kloudbuster.dump_logs(offset=offset)\
+            if kb_session.kloudbuster else ""
+        return json.dumps(plog)
 
     @expose(generic=True)
+    @check_session_id
     def report(self, *args, **kwargs):
-        if len(args):
-            session_id = args[0]
-        else:
-            response.status = 400
-            response.text = u"Please specify the session_id."
-            return response.text
-
-        final = False
-        if 'final' in kwargs:
-            final = True if kwargs['final'].lower() == 'true' else False
-
+        session_id = args[0]
         preport = None
-        if KBSessionManager.has(session_id):
-            kb_session = KBSessionManager.get(session_id)
-            if kb_session.kloudbuster and kb_session.kloudbuster.kb_runner:
-                preport = kb_session.kloudbuster.final_result\
-                    if final else kb_session.kloudbuster.kb_runner.report
+        final = True if kwargs.get('final', '').lower() == 'true' else False
+        kb_session = KBSessionManager.get(session_id)
+        if kb_session.kloudbuster and kb_session.kloudbuster.kb_runner:
+            preport = kb_session.kloudbuster.final_result\
+                if final else kb_session.kloudbuster.kb_runner.report
 
-            return json.dumps(preport)
-        else:
-            response.status = 404
-            response.text = u"Session ID is not found or invalid."
-            return response.text
+        return json.dumps(preport)
 
     @expose(generic=True)
     def version(self):
@@ -130,17 +113,9 @@ class KBController(object):
         return response.text
 
     @run.when(method='POST')
+    @check_session_id
     def run_POST(self, *args):
-        if len(args):
-            session_id = args[0]
-        else:
-            response.status = 400
-            response.text = u"Please specify the session_id."
-            return response.text
-        if not KBSessionManager.has(session_id):
-            response.status = 404
-            response.text = u"Session ID is not found or invalid."
-            return response.text
+        session_id = args[0]
         if KBSessionManager.get(session_id).kb_status == 'RUNNING':
             response.status = 403
             response.text = u"An instance of KloudBuster is already running."

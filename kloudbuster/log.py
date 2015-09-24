@@ -53,7 +53,9 @@ def setup(product_name, logfile=None):
         if os.path.exists(logfile):
             os.remove(logfile)
         CONF.log_file = logfile
+        fmt = logging.Formatter(fmt=CONF.logging_default_format_string)
         hdlr = logging.FileHandler(logfile)
+        hdlr.setFormatter(fmt)
         for name in oslogging._loggers:
             if name:
                 oslogging.getLogger(name).logger.addHandler(hdlr)

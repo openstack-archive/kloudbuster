@@ -220,7 +220,7 @@ class KBRunner(object):
 
     def run_http_test(self, active_range):
         func = {'cmd': 'run_http_test', 'active_range': active_range,
-                'parameter': self.config.http_tool_configs}
+                'parameter': dict(self.config.http_tool_configs)}
         self.send_cmd('EXEC', 'http', func)
         # Give additional 30 seconds for everybody to report results
         timeout = self.config.http_tool_configs.duration + 30
