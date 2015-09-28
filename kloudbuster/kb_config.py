@@ -71,7 +71,7 @@ class KBConfig(object):
         default_cfg = resource_string(__name__, "cfg.scale.yaml")
         # Read the configuration file
         self.config_scale = AttrDict(yaml.safe_load(default_cfg))
-        self.alt_config = None
+        self.alt_cfg = None
         self.cred_tested = None
         self.cred_testing = None
         self.server_cfg = None
@@ -94,7 +94,7 @@ class KBConfig(object):
                 LOG.info('Using %s as public key for all VMs' % (pub_key))
 
         if self.alt_cfg:
-            self.config_scale.update(self.alt_cfg)
+            self.config_scale = self.config_scale + AttrDict(self.alt_cfg)
 
         # Use the default image name for Glance
         # defaults to something like "kloudbuster_v3"

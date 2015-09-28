@@ -26,19 +26,22 @@ vm_version_mismatches = set()
 
 LOG = logging.getLogger(__name__)
 
-class KBVMUpException(Exception):
+class KBException(Exception):
     pass
 
-class KBSetStaticRouteException(Exception):
+class KBVMUpException(KBException):
     pass
 
-class KBHTTPServerUpException(Exception):
+class KBSetStaticRouteException(KBException):
     pass
 
-class KBHTTPBenchException(Exception):
+class KBHTTPServerUpException(KBException):
     pass
 
-class KBProxyConnectionException(Exception):
+class KBHTTPBenchException(KBException):
+    pass
+
+class KBProxyConnectionException(KBException):
     pass
 
 class KBRunner(object):
@@ -112,7 +115,8 @@ class KBRunner(object):
 
     def dispose(self):
         self.redis_obj.publish(self.report_chan_name, "STOP")
-        self.msg_thread.join()
+        if self.msg_thread.isAlive():
+            self.msg_thread.join()
         if self.pubsub:
             self.pubsub.unsubscribe()
             self.pubsub.close()
@@ -245,18 +249,19 @@ class KBRunner(object):
         for phy_host in self.host_stats:
             self.host_stats[phy_host] = http_tool.consolidate_results(self.host_stats[phy_host])
 
-    def single_run(self, active_range=None):
+    def single_run(self, active_range=None, http_test_only=False):
         try:
-            if self.single_cloud:
-                LOG.info("Setting up static route to reach tested cloud...")
-                self.setup_static_route(active_range)
+            if not http_test_only:
+                if self.single_cloud:
+                    LOG.info("Setting up static route to reach tested cloud...")
+                    self.setup_static_route(active_range)
 
-            LOG.info("Waiting for HTTP service to come up...")
-            self.check_http_service(active_range)
+                LOG.info("Waiting for HTTP service to come up...")
+                self.check_http_service(active_range)
 
-            if self.config.prompt_before_run:
-                print "Press enter to start running benchmarking tools..."
-                raw_input()
+                if self.config.prompt_before_run:
+                    print "Press enter to start running benchmarking tools..."
+                    raw_input()
 
             LOG.info("Running HTTP Benchmarking...")
             self.run_http_test(active_range)
@@ -273,21 +278,19 @@ class KBRunner(object):
             self.tool_result['total_server_vms'] = len(self.full_client_dict)
             # self.tool_result['host_stats'] = self.gen_host_stats()
         except KBSetStaticRouteException:
-            LOG.error("Could not set static route.")
-            self.dispose()
-            return False
+            raise KBException("Could not set static route.")
         except KBHTTPServerUpException:
-            LOG.error("HTTP service is not up in testing cloud.")
-            self.dispose()
-            return False
+            raise KBException("HTTP service is not up in testing cloud.")
         except KBHTTPBenchException:
-            LOG.error("Error while running HTTP benchmarking tool.")
-            self.dispose()
-            return False
+            raise KBException("Error while running HTTP benchmarking tool.")
 
-        return True
+    def run(self, http_test_only=False):
+        # Resources are already staged, just re-run the HTTP benchmarking tool
+        if http_test_only:
+            self.single_run(http_test_only=True)
+            yield self.tool_result
+            return
 
-    def run(self):
         try:
             LOG.info("Waiting for agents on VMs to come up...")
             self.wait_for_vm_up()
@@ -301,9 +304,7 @@ class KBRunner(object):
                              "this may cause some incompatibilities" %
                              (self.agent_version, self.expected_agent_version))
         except KBVMUpException:
-            LOG.error("Some VMs failed to start.")
-            self.dispose()
-            return
+            raise KBException("Some VMs failed to start.")
 
         if self.config.progression.enabled:
             start = self.config.progression.vm_start
@@ -344,9 +345,6 @@ class KBRunner(object):
                 self.tool_result['description'] = description
                 cur_stage += 1
                 yield self.tool_result
-
-            self.dispose()
         else:
-            if self.single_run():
-                yield self.tool_result
-            self.dispose()
+            self.single_run()
+            yield self.tool_result

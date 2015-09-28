@@ -27,12 +27,12 @@ import glanceclient.exc as glance_exception
 from glanceclient.v1 import client as glanceclient
 from kb_config import KBConfig
 from kb_res_logger import KBResLogger
+from kb_runner import KBException
 from kb_runner import KBRunner
 from kb_scheduler import KBScheduler
 import kb_vm_agent
 from keystoneclient.v2_0 import client as keystoneclient
 import log as logging
-from novaclient.exceptions import ClientException
 from oslo_config import cfg
 from pkg_resources import resource_string
 from tabulate import tabulate
@@ -339,112 +339,129 @@ class KloudBuster(object):
                 ins.boot_info['user_data'] = str(ins.user_data)
 
     def run(self):
+        try:
+            self.stage()
+            self.run_test()
+        except KBException as e:
+            LOG.error(e.message)
+        except Exception:
+            traceback.print_exc()
+        finally:
+            if self.server_cfg['cleanup_resources'] and self.client_cfg['cleanup_resources']:
+                self.cleanup()
+
+    def stage(self):
         """
-        The runner for KloudBuster Tests
+        Staging all resources for running KloudBuster Tests
         """
         vm_creation_concurrency = self.client_cfg.vm_creation_concurrency
-        cleanup_flag = True
         self.final_result = []
-        try:
-            tenant_quota = self.calc_tenant_quota()
-            self.kloud.create_resources(tenant_quota['server'])
-            self.testing_kloud.create_resources(tenant_quota['client'])
+        tenant_quota = self.calc_tenant_quota()
+        self.kloud.create_resources(tenant_quota['server'])
+        self.testing_kloud.create_resources(tenant_quota['client'])
 
-            # Setting up the KloudBuster Proxy node
-            client_list = self.testing_kloud.get_all_instances()
-            self.kb_proxy = client_list[-1]
-            client_list.pop()
+        # Setting up the KloudBuster Proxy node
+        client_list = self.testing_kloud.get_all_instances()
+        self.kb_proxy = client_list[-1]
+        client_list.pop()
 
-            self.kb_proxy.vm_name = 'KB-PROXY'
-            self.kb_proxy.user_data['role'] = 'KB-PROXY'
-            self.kb_proxy.boot_info['flavor_type'] = 'kb.proxy' if \
-                not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
-            if self.topology:
-                proxy_hyper = self.topology.clients_rack.split()[0]
-                self.kb_proxy.boot_info['avail_zone'] =\
-                    "%s:%s" % (self.testing_kloud.placement_az, proxy_hyper)\
-                    if self.testing_kloud.placement_az else "nova:%s" % (proxy_hyper)
+        self.kb_proxy.vm_name = 'KB-PROXY'
+        self.kb_proxy.user_data['role'] = 'KB-PROXY'
+        self.kb_proxy.boot_info['flavor_type'] = 'kb.proxy' if \
+            not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
+        if self.topology:
+            proxy_hyper = self.topology.clients_rack.split()[0]
+            self.kb_proxy.boot_info['avail_zone'] =\
+                "%s:%s" % (self.testing_kloud.placement_az, proxy_hyper)\
+                if self.testing_kloud.placement_az else "nova:%s" % (proxy_hyper)
 
-            self.kb_proxy.boot_info['user_data'] = str(self.kb_proxy.user_data)
-            self.testing_kloud.create_vm(self.kb_proxy)
+        self.kb_proxy.boot_info['user_data'] = str(self.kb_proxy.user_data)
+        self.testing_kloud.create_vm(self.kb_proxy)
 
-            self.kb_runner = KBRunner(client_list, self.client_cfg,
-                                      kb_vm_agent.get_image_version(),
-                                      self.single_cloud)
-            self.kb_runner.setup_redis(self.kb_proxy.fip_ip)
-            if self.client_cfg.progression['enabled']:
-                log_info = "Progression run is enabled, KloudBuster will schedule "\
-                    "multiple runs as listed:"
-                stage = 1
-                start = self.client_cfg.progression.vm_start
-                step = self.client_cfg.progression.vm_step
-                cur_vm_count = start
-                total_vm = self.get_tenant_vm_count(self.server_cfg) *\
-                    self.server_cfg['number_tenants']
-                while (cur_vm_count <= total_vm):
-                    log_info += "\n" + self.kb_runner.header_formatter(stage, cur_vm_count)
-                    cur_vm_count = start + stage * step
-                    stage += 1
-                LOG.info(log_info)
+        self.kb_runner = KBRunner(client_list, self.client_cfg,
+                                  kb_vm_agent.get_image_version(),
+                                  self.single_cloud)
+        self.kb_runner.setup_redis(self.kb_proxy.fip_ip)
+        if self.client_cfg.progression['enabled']:
+            log_info = "Progression run is enabled, KloudBuster will schedule "\
+                "multiple runs as listed:"
+            stage = 1
+            start = self.client_cfg.progression.vm_start
+            step = self.client_cfg.progression.vm_step
+            cur_vm_count = start
+            total_vm = self.get_tenant_vm_count(self.server_cfg) *\
+                self.server_cfg['number_tenants']
+            while (cur_vm_count <= total_vm):
+                log_info += "\n" + self.kb_runner.header_formatter(stage, cur_vm_count)
+                cur_vm_count = start + stage * step
+                stage += 1
+            LOG.info(log_info)
 
-            if self.single_cloud:
-                # Find the shared network if the cloud used to testing is same
-                # Attach the router in tested kloud to the shared network
-                shared_net = self.testing_kloud.get_first_network()
-                self.kloud.attach_to_shared_net(shared_net)
+        if self.single_cloud:
+            # Find the shared network if the cloud used to testing is same
+            # Attach the router in tested kloud to the shared network
+            shared_net = self.testing_kloud.get_first_network()
+            self.kloud.attach_to_shared_net(shared_net)
 
-            # Create VMs in both tested and testing kloud concurrently
-            self.client_vm_create_thread = threading.Thread(target=self.testing_kloud.create_vms,
-                                                            args=[vm_creation_concurrency])
-            self.server_vm_create_thread = threading.Thread(target=self.kloud.create_vms,
-                                                            args=[vm_creation_concurrency])
-            self.client_vm_create_thread.daemon = True
-            self.server_vm_create_thread.daemon = True
-            if self.single_cloud:
-                self.gen_user_data("Server")
-                self.server_vm_create_thread.start()
-                self.server_vm_create_thread.join()
-                self.gen_user_data("Client")
-                self.client_vm_create_thread.start()
-                self.client_vm_create_thread.join()
-            else:
-                self.gen_user_data("Server")
-                self.gen_user_data("Client")
-                self.server_vm_create_thread.start()
-                self.client_vm_create_thread.start()
-                self.server_vm_create_thread.join()
-                self.client_vm_create_thread.join()
+        # Create VMs in both tested and testing kloud concurrently
+        self.client_vm_create_thread = threading.Thread(target=self.testing_kloud.create_vms,
+                                                        args=[vm_creation_concurrency])
+        self.server_vm_create_thread = threading.Thread(target=self.kloud.create_vms,
+                                                        args=[vm_creation_concurrency])
+        self.client_vm_create_thread.daemon = True
+        self.server_vm_create_thread.daemon = True
+        if self.single_cloud:
+            self.gen_user_data("Server")
+            self.server_vm_create_thread.start()
+            self.server_vm_create_thread.join()
+            self.gen_user_data("Client")
+            self.client_vm_create_thread.start()
+            self.client_vm_create_thread.join()
+        else:
+            self.gen_user_data("Server")
+            self.gen_user_data("Client")
+            self.server_vm_create_thread.start()
+            self.client_vm_create_thread.start()
+            self.server_vm_create_thread.join()
+            self.client_vm_create_thread.join()
 
-            # Function that print all the provisioning info
-            self.print_provision_info()
+        # Function that print all the provisioning info
+        self.print_provision_info()
 
-            # Run the runner to perform benchmarkings
-            for run_result in self.kb_runner.run():
-                self.final_result.append(self.kb_runner.tool_result)
-            LOG.info('SUMMARY: %s' % self.final_result)
-        except KeyboardInterrupt:
-            traceback.format_exc()
-        except (ClientException, Exception):
-            traceback.print_exc()
+    def run_test(self, config=None, http_test_only=False):
+        self.final_result = []
+        if config:
+            self.kb_runner.config = config
+        # Run the runner to perform benchmarkings
+        for run_result in self.kb_runner.run(http_test_only):
+            self.final_result.append(self.kb_runner.tool_result)
+        LOG.info('SUMMARY: %s' % self.final_result)
 
+    def cleanup(self):
         # Cleanup: start with tested side first
         # then testing side last (order is important because of the shared network)
-        if self.server_cfg['cleanup_resources']:
+        if self.kb_runner:
             try:
-                cleanup_flag = self.kloud.delete_resources()
+                self.kb_runner.dispose()
             except Exception:
-                traceback.print_exc()
-                KBResLogger.dump_and_save('svr', self.kloud.res_logger.resource_list)
+                pass
+
+        cleanup_flag = False
+        try:
+            cleanup_flag = self.kloud.delete_resources()
+        except Exception:
+            traceback.print_exc()
+            KBResLogger.dump_and_save('svr', self.kloud.res_logger.resource_list)
         if not cleanup_flag:
             LOG.warn('Some resources in server cloud are not cleaned up properly.')
             KBResLogger.dump_and_save('svr', self.kloud.res_logger.resource_list)
 
-        if self.client_cfg['cleanup_resources']:
-            try:
-                cleanup_flag = self.testing_kloud.delete_resources()
-            except Exception:
-                traceback.print_exc()
-                KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
+        cleanup_flag = False
+        try:
+            cleanup_flag = self.testing_kloud.delete_resources()
+        except Exception:
+            traceback.print_exc()
+            KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
         if not cleanup_flag:
             LOG.warn('Some resources in client cloud are not cleaned up properly.')
             KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
@@ -457,7 +474,8 @@ class KloudBuster(object):
         return self.fp_logfile.read()
 
     def dispose(self):
-        self.fp_logfile.close()
+        if self.fp_logfile:
+            self.fp_logfile.close()
         logging.delete_logfile('kloudbuster')
 
     def get_tenant_vm_count(self, config):

@@ -14,9 +14,11 @@
 
 import functools
 import json
+import logging
 import os
 import sys
 import threading
+import traceback
 kb_main_path = os.path.split(os.path.abspath(__file__))[0] + "/../../../kloudbuster"
 sys.path.append(kb_main_path)
 
@@ -26,6 +28,8 @@ from kloudbuster import KloudBuster
 
 from pecan import expose
 from pecan import response
+
+LOG = logging.getLogger("kloudbuster")
 
 class KBController(object):
 
@@ -48,9 +52,9 @@ class KBController(object):
 
         return wrapper
 
-    def kb_thread_handler(self, session_id):
+    def kb_stage_thread_handler(self, session_id):
         kb_session = KBSessionManager.get(session_id)
-        kb_session.kb_status = 'RUNNING'
+        kb_session.kb_status = 'STAGING'
         kb_config = kb_session.kb_config
         try:
             kloudbuster = KloudBuster(
@@ -60,10 +64,36 @@ class KBController(object):
             kb_session.kloudbuster = kloudbuster
 
             if kloudbuster.check_and_upload_images():
-                kloudbuster.run()
-            kb_session.kb_status = 'READY'
+                kloudbuster.stage()
+            kb_session.kb_status = 'STAGED'
         except Exception:
+            LOG.warn(traceback.format_exc())
             kb_session.kb_status = 'ERROR'
+
+    def kb_run_test_thread_handler(self, session_id):
+        kb_session = KBSessionManager.get(session_id)
+        kb_session.kb_status = 'RUNNING'
+        kloudbuster = kb_session.kloudbuster
+        try:
+            kloudbuster.run_test(
+                config=kb_session.kb_config.client_cfg,
+                http_test_only=not kb_session.first_run)
+            kb_session.first_run = False
+            kb_session.kb_status = 'STAGED'
+        except Exception:
+            LOG.warn(traceback.format_exc())
+            kb_session.kb_status = 'ERROR'
+
+    def kb_cleanup_thread_handler(self, session_id):
+        kb_session = KBSessionManager.get(session_id)
+        kb_session.kb_status = 'CLEANING'
+        kloudbuster = kb_session.kloudbuster
+        try:
+            kloudbuster.cleanup()
+        except Exception:
+            pass
+
+        kb_session.kb_status = 'READY'
 
     @expose(generic=True)
     @check_session_id
@@ -107,21 +137,69 @@ class KBController(object):
         return kb_version
 
     @expose(generic=True)
-    def run(self, *args):
+    def stage(self, *args):
         response.status = 400
         response.text = u"Please POST to this resource."
         return response.text
 
-    @run.when(method='POST')
+    @stage.when(method='POST')
     @check_session_id
-    def run_POST(self, *args):
+    def stage_POST(self, *args):
         session_id = args[0]
-        if KBSessionManager.get(session_id).kb_status == 'RUNNING':
+        if KBSessionManager.get(session_id).kb_status != 'READY':
             response.status = 403
-            response.text = u"An instance of KloudBuster is already running."
+            response.text = u"Unable to stage resources when status is not READY."
             return response.text
 
-        self.kb_thread = threading.Thread(target=self.kb_thread_handler, args=[session_id])
+        self.kb_thread = threading.Thread(target=self.kb_stage_thread_handler, args=[session_id])
+        self.kb_thread.daemon = True
+        self.kb_thread.start()
+
+        return "OK!"
+
+    @expose(generic=True)
+    def run_test(self, *args):
+        response.status = 400
+        response.text = u"Please POST to this resource."
+        return response.text
+
+    @run_test.when(method='POST')
+    @check_session_id
+    def run_test_POST(self, *args):
+        session_id = args[0]
+        if KBSessionManager.get(session_id).kb_status != 'STAGED':
+            response.status = 403
+            response.text = u"Unable to start the tests when status is not STAGED."
+            return response.text
+
+        self.kb_thread = threading.Thread(target=self.kb_run_test_thread_handler, args=[session_id])
+        self.kb_thread.daemon = True
+        self.kb_thread.start()
+
+        return "OK!"
+
+    @expose(generic=True)
+    def cleanup(self, *args):
+        response.status = 400
+        response.text = u"Please POST to this resource."
+        return response.text
+
+    @cleanup.when(method='POST')
+    @check_session_id
+    def cleanup_POST(self, *args):
+        session_id = args[0]
+        allowed_status = ['STAGED', 'ERROR']
+        if KBSessionManager.get(session_id).kb_status == 'READY':
+            response.status = 403
+            response.text = u"No resources has been staged, cleanup is not needed."
+            return response.text
+        if KBSessionManager.get(session_id).kb_status not in allowed_status:
+            response.status = 403
+            response.text = u"The session you specified is busy, please wait until "\
+                "current operation is finished."
+            return response.text
+
+        self.kb_thread = threading.Thread(target=self.kb_cleanup_thread_handler, args=[session_id])
         self.kb_thread.daemon = True
         self.kb_thread.start()
 

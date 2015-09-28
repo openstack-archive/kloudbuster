@@ -102,13 +102,13 @@ paths:
                     description: |
                         Configuration of given session is updated successfully
                 400:
-                    description: Error while parsing the configuration file
+                    description: Invalid JSON or error while parsing the configuration file
                     schema:
                         type: string
                         description: Errors in details
                 403:
                     description: |
-                        Cannot update configuration if KloudBuster is not at READY
+                        Cannot update configuration if KloudBuster is busy or in error state
                 404:
                     description: The session_id is not found or invalid
         delete:
@@ -126,6 +126,8 @@ paths:
             responses:
                 200:
                     description: The session is terminated successfully
+                403:
+                    description: Session can be destroyed only if it is at READY
                 404:
                     description: The session_id is not found or invalid
 
@@ -220,7 +222,31 @@ paths:
                 404:
                     description: The session_id is not found or invalid
 
-    /kloudbuster/run/{session_id}:
+    /kloudbuster/stage/{session_id}:
+        post:
+            description: |
+                Stage all resources to run KloudBuster for a given session
+            parameters:
+                - name: session_id
+                  type: string
+                  format: md5sum
+                  in: path
+                  description: |
+                      The session to be staged
+                  required: true
+            tags:
+                - kloudbuster
+            responses:
+                200:
+                    description: |
+                        Successfully staged all resources for the given session
+                403:
+                    description: |
+                        Unable to stage resources when status is not at READY
+                404:
+                    description: The session_id is not found or invalid
+
+    /kloudbuster/run_tests/{session_id}:
         post:
             description: |
                 Run KloudBuster for a given session
@@ -239,7 +265,30 @@ paths:
                     description: Successfully start the given session
                 403:
                     description: |
-                        KloudBuster is already running on the given session
+                        Unable to start the tests when status is not at STAGED
+                404:
+                    description: The session_id is not found or invalid
+
+    /kloudbuster/cleanup/{session_id}:
+        post:
+            description: |
+                Cleanup KloudBuster for a given session
+            parameters:
+                - name: session_id
+                  type: string
+                  format: md5sum
+                  in: path
+                  description: |
+                      The session to be run
+                  required: true
+            tags:
+                - kloudbuster
+            responses:
+                200:
+                    description: Successfully cleaned up the given session
+                403:
+                    description: |
+                        No resources has been staged, or session is busy
                 404:
                     description: The session_id is not found or invalid
 

@@ -58,7 +58,8 @@ class ConfigController(object):
                 f.write(user_config['kb_cfg']['public_key_file'])
             kb_config.config_scale['public_key_file'] = pubkey_filename
 
-        kb_config.config_scale['prompt_before_run'] = False
+        kb_config.config_scale.client['prompt_before_run'] = False
+        kb_config.config_scale['cleanup_resources'] = False
 
         # Parsing the KloudBuster/topology/tenants configs from application input
         alt_config = AttrDict(user_config['kb_cfg']) if 'kb_cfg' in user_config else None
@@ -136,27 +137,52 @@ class ConfigController(object):
     def running_config_PUT(self, *args, **kwargs):
         session_id = args[0]
         status = KBSessionManager.get(session_id).kb_status
-        if status == "READY":
+        try:
+            user_config = json.loads(kwargs['arg'])
+            allowed_status = ['READY']
+        except Exception as e:
+            response.status = 400
+            response.text = u"Invalid JSON: \n%s" % (e.message)
+            return response.text
+
+        # http_tool_configs for client VMs is allowed to changed under "STAGED" status
+        if ('kb_cfg' in user_config and len(user_config['kb_cfg']) == 1) and \
+           ('client' in user_config['kb_cfg'] and len(user_config['kb_cfg']['client']) == 1) and \
+           ('http_tool_configs' in user_config['kb_cfg']['client']):
+            allowed_status.append('STAGED')
+
+        if status in allowed_status:
             # Expectation:
             # {
             #   'kb_cfg': {<USER_OVERRIDED_CONFIGS>},
             #   'topo_cfg': {<TOPOLOGY_CONFIGS>}
             #   'tenants_cfg': {<TENANT_AND_USER_LISTS_FOR_REUSING>}
             # }
-            kb_config = KBSessionManager.get(session_id).kb_config
-            user_config = json.loads(kwargs['arg'])
-            self.update_config(kb_config, user_config)
-            return "OK!"
+            try:
+                kb_config = KBSessionManager.get(session_id).kb_config
+                self.update_config(kb_config, user_config)
+            except Exception:
+                response.status = 400
+                response.text = u"Error while parsing configurations: \n%s" %\
+                    (traceback.format_exc())
+                return response.text
         else:
             response.status = 403
             response.text = u"Cannot update configuration if KloudBuster is not at READY."
             return response.text
+
+        return "OK!"
 
     @running_config.when(method='DELETE')
     @check_session_id
     def running_config_DELETE(self, *args):
         session_id = args[0]
         kb_session = KBSessionManager.get(session_id)
+        status = kb_session.kb_status
+        if status != "READY":
+            response.status = 403
+            response.text = u"Session can be destroyed only if it is at READY."
+            return response.text
         if kb_session.kloudbuster:
             kb_session.kloudbuster.dispose()
         KBSessionManager.delete(session_id)

@@ -49,5 +49,6 @@ class KBSessionManager(object):
 class KBSession(object):
     def __init__(self):
         self.kb_status = 'READY'
+        self.first_run = True
         self.kb_config = None
         self.kloudbuster = None
