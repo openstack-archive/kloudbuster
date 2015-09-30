@@ -59,6 +59,7 @@ class Kloud(object):
         self.reusing_tenants = reusing_tenants
         self.keystone, self.auth_url = create_keystone_client(cred)
         self.flavor_to_use = None
+        self.vm_up_count = 0
         self.res_logger = KBResLogger()
         if testing_side:
             self.prefix = 'KBc'
@@ -190,7 +191,8 @@ class Kloud(object):
 
     def create_vms(self, vm_creation_concurrency):
         tpool = ThreadPool(processes=vm_creation_concurrency)
-        tpool.map(self.create_vm, self.get_all_instances())
+        for _ in tpool.imap(self.create_vm, self.get_all_instances()):
+            self.vm_up_count += 1
 
 
 class KloudBuster(object):

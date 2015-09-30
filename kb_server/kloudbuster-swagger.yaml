@@ -161,6 +161,7 @@ paths:
                     description: OK
                     schema:
                         type: string
+                        format: json
                         description: The status of the given session
                 404:
                     description: The session_id is not found or invalid

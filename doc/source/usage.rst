@@ -52,9 +52,9 @@ Advanced Features
 Control the VM Placement
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default, VMs are placed by NOVA using its own scheduling logic. However, traffic can be shaped precisely to fill the appropriate network links by using specific configuration settings. KloudBuster can change that behavior, and force NOVA to place VMs on desired hypervisors as we defined by by supplying the topology file. 
+By default, VMs are placed by NOVA using its own scheduling logic. However, traffic can be shaped precisely to fill the appropriate network links by using specific configuration settings. KloudBuster can change that behavior, and force NOVA to place VMs on desired hypervisors as we defined by by supplying the topology file.
 
-The format of the topology file is relatively simple, and group into two sections. See file "cfg.topo.yaml" for an example. 
+The format of the topology file is relatively simple, and group into two sections. See file "cfg.topo.yaml" for an example.
 
 The "servers_rack" section contains the hypervisors that the server side VMs will be spawned on, and the "clients_rack" section contains the hypervisors that the client side VMs will be spawned on. The hypervisor names can be obtained from Horizon dashboard, or via "*nova hypervisor-list*". Note that the name in the config files must exactly match the name shown in Horizon dashboard or NOVA API output.
 

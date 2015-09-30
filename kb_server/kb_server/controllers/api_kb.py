@@ -99,8 +99,14 @@ class KBController(object):
     @check_session_id
     def status(self, *args):
         session_id = args[0]
-        status = KBSessionManager.get(session_id).kb_status
-        return status
+        kb_session = KBSessionManager.get(session_id)
+        status = kb_session.kb_status
+        kloudbuster = kb_session.kloudbuster
+        status_dict = {'status': status}
+        if status == "STAGING":
+            status_dict['server_vm_count'] = kloudbuster.kloud.vm_up_count
+            status_dict['client_vm_count'] = kloudbuster.testing_kloud.vm_up_count
+        return json.dumps(status_dict)
 
     @expose(generic=True)
     @check_session_id
@@ -123,8 +129,8 @@ class KBController(object):
     @check_session_id
     def report(self, *args, **kwargs):
         session_id = args[0]
-        preport = None
         final = True if kwargs.get('final', '').lower() == 'true' else False
+        preport = [] if final else None
         kb_session = KBSessionManager.get(session_id)
         if kb_session.kloudbuster and kb_session.kloudbuster.kb_runner:
             preport = kb_session.kloudbuster.final_result\
