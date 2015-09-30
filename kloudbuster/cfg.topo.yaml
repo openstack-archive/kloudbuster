@@ -1,8 +1,8 @@
 # Compute host topology file template for running KloudBuster
 # Usage: Pass to KloudBuster using -t <path>
 #
-# A typical use of this topology file is to shape traffic in order to maximize
-# inter-rack L3 traffic.
+# A typical use of this topology file is to shape traffic in order
+# to maximize inter-rack L3 traffic.
 #
 # With 2 racks, simply place each rack node name in each group.
 # With more than 2 racks, separate the racks in 2 groups.

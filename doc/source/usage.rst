@@ -1,55 +1,84 @@
-========
+=====
 Usage
-========
+=====
 
 Quick Start Guide
 -----------------
 
 This guide will allow you to run KloudBuster on your OpenStack cloud using the default scale settings which is generally safe to run on any cloud, small or large (it should also work on an all-in-one devstack cloud installation).
 
-Minimal pre-requisites
-^^^^^^^^^^^^^^^^^^^^^^
+The minimal pre-requisites to run KloudBuster:
+    * Admin access to the cloud under test
+    * 3 available floating IPs
 
-	* install KloudBuster (see instructions in the Installation section)
-	* admin access to the cloud under test
-	* download an admin rc file from the cloud under test using Horizon dashboard 
-	* 3 available floating IPs
+Step 1
+^^^^^^
 
-Download an admin rc file::
-	Login to the Horizon dashboard of the cloud under test as admin, then go to the Projects, Access and Security, API Access.
-	Click on the "Download OpenStack RC File" button and note down where that file is downloaded by your browser.
+Download the openrc file from OpenStack Dashboard, and saved it to your local file system. (In Horizon dashboard: Project|Acces&Security!Api Access|Download OpenStack RC File)
 
-The default scale settings can be displayed from the command line using the --show-config option. 
-By default KloudBuster will run on a single cloud and create:
+Step 2
+^^^^^^
 
-* 1 tenant, 1 user, 2 routers, 1 network, 1 VM running as an HTTP server
-* 1 VM running the Redis server (for orchestration)
-* 1 VM running the HTTP traffic generator with 1000 connections and a total of 500 requests per second for 30 seconds
+Run KloudBuster with the default configuration. The default scale settings can be displayed from the command line using *--show-config* option.
 
-Once done, all resources will be cleaned up and results will be displayed.
-In this minimal test, VMs are placed by Nova using its own scheduling logic. In more advanced usages, traffic can be shaped precisely to fill the appropriate network links by using specific configuration settings.
+By default KloudBuster will run on a single cloud mode and create:
+    * 2 tenants, 2 users, and 2 routers;
+    * 1 shared network for both servers and clients tenants
+    * 1 VM running as an HTTP server
+    * 1 VM running the Redis server (for orchestration)
+    * 1 VM running the HTTP traffic generator (default to 1000 connections, 1000 requests per second, and 30 seconds duration)
 
-Start KloudBuster
-^^^^^^^^^^^^^^^^^
+Run kloudbuster with the following options::
 
-To list all command line options, pass --help.
+    kloudbuster --tested-rc <path_to_the_admin_rc_file> --tested-passwd <admin_password>
 
-Run kloudbuster with the following options:
+The run should take couple of minutes (depending on how fast of the cloud to create resources) and you should see the actions taken by KloudBuster displayed on the console. Once the test is done, all resources will be cleaned up and results will be displayed.
 
-.. code::
-	
-	kloudbuster --tested-rc <path of the admin rc file> --tested-passwd <admin password>
-
-The run should take around a minute (depending on how fast is the cloud to create resources) and you should see the actions taken by KloudBuster displayed on the console, followed by the scale results.
-
-Once this minimal scale test passes you can tackle more elaborate scale testing by increasing the scale numbers or providing various traffic shaping options.
+.. note:: Once this minimal scale test passes, you can tackle more elaborate scale testing by increasing the scale numbers or providing various traffic shaping options. See below sections for more details.
 
 
-Configuration File
-------------------
-The default configuration can be displayed on the command line console using the --show-config option.
-It is easy to have a custom configuration by redirecting the output to a custom file, modifying that
-file and passing it to the KlousBuster command line using the --config option.
+Configure KloudBuster
+---------------------
+
+The default configuration can be displayed on the command line console using the *--show-config* option. It is easy to have a custom configuration by redirecting the output to a custom file, modifying that
+file and passing it to the KlousBuster command line using the *--config* option.
+
 Note that the default configuration is always loaded by KloudBuster and any default option can be overriden by providing a custom configuration file that only contains modified options.
 
 
+Advanced Features
+-----------------
+
+Control the VM Placement
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, VMs are placed by NOVA using its own scheduling logic. However, traffic can be shaped precisely to fill the appropriate network links by using specific configuration settings. KloudBuster can change that behavior, and force NOVA to place VMs on desired hypervisors as we defined by by supplying the topology file. 
+
+The format of the topology file is relatively simple, and group into two sections. See file "cfg.topo.yaml" for an example. 
+
+The "servers_rack" section contains the hypervisors that the server side VMs will be spawned on, and the "clients_rack" section contains the hypervisors that the client side VMs will be spawned on. The hypervisor names can be obtained from Horizon dashboard, or via "*nova hypervisor-list*". Note that the name in the config files must exactly match the name shown in Horizon dashboard or NOVA API output.
+
+A typical use case is to place all server VMs on one rack, and all client VMs on the other rack to test Rack-to-Rack performance. Similarly, all server VMs on one host, and all client VMs on the other host to test the Host-to-Host performance.
+
+To use this feature, just pass *-t <path_to_topo_file>* to the kloudbuster command line.
+
+.. note:: Admin access is required to use this feature.
+
+
+Running KloudBuster without admin access
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When there is no admin access to the cloud under test, KloudBuster does support to run and reused the existing tenant and user for running tests. You have to ask the cloud admin one time to create the resources in advance, and KloudBuster will create the resources using the pre-created tenant/user.
+
+When running under the tenant/user reusing mode:
+    * Only one tenant will be used for hosting both server cloud and client cloud resources;
+    * Only two users will be used for creating resources, and each cloud has its own user;
+
+And also there are some limitations that you should aware:
+    * The VM placement feature will not be supported;
+    * The flavor configs will be ignored, and the KloudBuster will automatically pick the closest flavor settings from the existing list;
+    * KloudBuster will not automatically adjust the tenant quota, and give warnings when quota exceeded;
+
+See file "cfg.tenants.yaml" for an example. Modify the settings to match your cloud.
+
+To use this feature, just pass *-l <path_to_tenants_file>* to the kloudbuster command line.
