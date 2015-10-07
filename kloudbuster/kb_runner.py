@@ -323,7 +323,7 @@ class KBRunner(object):
                 if target_vm_count > len(self.full_client_dict):
                     break
                 if self.tool_result:
-                    err = self.tool_result['http_sock_err'] / self.tool_result['http_total_req']
+                    err = self.tool_result['http_sock_err']
                     pert_dict = dict(self.tool_result['latency_stats'])
                     if limit[1] in pert_dict.keys():
                         timeout_at_percentile = pert_dict[limit[1]] // 1000000
@@ -339,8 +339,7 @@ class KBRunner(object):
                     self.client_dict[vm_list[idx]] = self.full_client_dict[vm_list[idx]]
                 description = "-- %s --" % self.header_formatter(cur_stage, len(self.client_dict))
                 LOG.info(description)
-                if not self.single_run(active_range=[0, target_vm_count - 1]):
-                    break
+                self.single_run(active_range=[0, target_vm_count - 1])
                 LOG.info('-- Stage %s: %s --' % (cur_stage, str(self.tool_result)))
                 self.tool_result['description'] = description
                 cur_stage += 1

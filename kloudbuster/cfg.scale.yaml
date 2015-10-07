@@ -107,20 +107,21 @@ client:
         vm_start: 1
         # The steping for the VM count for each stage
         vm_step: 1
+
         # The stop condition, it is used for KloudBuster to determine when to
         # stop the progression, and do the cleanup if needed. It defines as:
-        # [err_count(%%), percentile_of_packet_not_timeout(%%)]
+        # [number_of_err_packets, percentile_of_packet_not_timeout(%%)]
         #
-        # e.g. [0, 99.99] means, KloudBuster will continue the progression run
+        # e.g. [50, 99.99] means, KloudBuster will continue the progression run
         #   only if *ALL* below conditions are satisfied:
-        #   (1) The error count of packets are less or equal than 0%%; (no errors)
+        #   (1) The error count of packets are less or equal than 50;
         #   (2) 99.99%% of the packets are within the timeout range;
         #
         # Note:
         #   (1) The timeout value is defined in the client:http_tool_config section;
         #   (2) The percentile of packets must be in the below list:
         #       [50, 75, 90, 99, 99.9, 99.99, 99.999]
-        stop_limit: [0, 99.99]
+        stop_limit: [50, 99.99]
 
     # Assign floating IP for every client side test VM
     # Default: no floating IP (only assign internal fixed IP)

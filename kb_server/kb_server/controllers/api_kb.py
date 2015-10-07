@@ -93,6 +93,7 @@ class KBController(object):
         except Exception:
             pass
 
+        kb_session.first_run = True
         kb_session.kb_status = 'READY'
 
     @expose(generic=True)

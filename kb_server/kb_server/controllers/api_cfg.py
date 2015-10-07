@@ -113,9 +113,8 @@ class ConfigController(object):
             kb_config = KBConfig()
             session_id = hashlib.md5(str(cred_config)).hexdigest()
             if KBSessionManager.has(session_id):
-                response.status = 403
-                response.text = u"Session is already existed."
-                return response.text
+                response.status = 200
+                return str(session_id)
         except Exception:
             response.status = 400
             response.text = u"Error while parsing configurations: \n%s" % (traceback.format_exc())
@@ -130,6 +129,7 @@ class ConfigController(object):
         kb_session.kb_config = kb_config
         KBSessionManager.add(session_id, kb_session)
 
+        response.status = 201
         return str(session_id)
 
     @running_config.when(method='PUT')

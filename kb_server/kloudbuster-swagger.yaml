@@ -43,6 +43,12 @@ paths:
                 - config
             responses:
                 200:
+                    description: Session is already existed
+                    schema:
+                        type: string
+                        format: md5sum
+                        description: The existed session ID
+                201:
                     description: Session is created successfully
                     schema:
                         type: string
@@ -53,8 +59,6 @@ paths:
                     schema:
                         type: string
                         description: Errors in details
-                403:
-                    description: Session is already existed
 
     /config/running_config/{session_id}:
         get:
@@ -247,7 +251,7 @@ paths:
                 404:
                     description: The session_id is not found or invalid
 
-    /kloudbuster/run_tests/{session_id}:
+    /kloudbuster/run_test/{session_id}:
         post:
             description: |
                 Run KloudBuster for a given session

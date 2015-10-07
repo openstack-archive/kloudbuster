@@ -357,7 +357,6 @@ class KloudBuster(object):
         Staging all resources for running KloudBuster Tests
         """
         vm_creation_concurrency = self.client_cfg.vm_creation_concurrency
-        self.final_result = []
         tenant_quota = self.calc_tenant_quota()
         self.kloud.create_resources(tenant_quota['server'])
         self.testing_kloud.create_resources(tenant_quota['client'])
