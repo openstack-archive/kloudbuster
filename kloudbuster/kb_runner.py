@@ -59,7 +59,7 @@ class KBRunner(object):
         self.tool_result = {}
         self.expected_agent_version = expected_agent_version
         self.agent_version = None
-        self.report = {'seq': 0, 'report': None}
+        self.report = None
 
         # Redis
         self.redis_obj = None
@@ -264,6 +264,7 @@ class KBRunner(object):
                     raw_input()
 
             LOG.info("Running HTTP Benchmarking...")
+            self.report = {'seq': 0, 'report': None}
             self.run_http_test(active_range)
 
             # Call the method in corresponding tools to consolidate results
@@ -274,8 +275,8 @@ class KBRunner(object):
                 len(self.client_dict) * self.config.http_tool_configs.rate_limit
             self.tool_result['total_connections'] =\
                 len(self.client_dict) * self.config.http_tool_configs.connections
-            self.tool_result['total_client_vms'] = len(self.full_client_dict)
-            self.tool_result['total_server_vms'] = len(self.full_client_dict)
+            self.tool_result['total_client_vms'] = active_range[1] - active_range[0] + 1
+            self.tool_result['total_server_vms'] = self.tool_result['total_client_vms']
             # self.tool_result['host_stats'] = self.gen_host_stats()
         except KBSetStaticRouteException:
             raise KBException("Could not set static route.")

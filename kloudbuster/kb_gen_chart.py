@@ -23,6 +23,7 @@ import argparse
 import json
 import os
 import os.path
+import re
 import sys
 import webbrowser
 
@@ -36,7 +37,7 @@ def get_formatted_num(value):
     return '{:,}'.format(value)
 
 # table column names
-col_names = ['<i class="glyphicon glyphicon-file"></i> File',
+col_names = ['<i class="glyphicon glyphicon-file"></i> Description',
              '<i class="glyphicon glyphicon-random"></i> Connections',
              '<i class="glyphicon glyphicon-book"></i> Server VMs',
              '<i class="glyphicon glyphicon-transfer"></i> Requests',
@@ -83,7 +84,7 @@ class KbReport(object):
 
     def add_latency_stats(self, run_results):
         # init a column list
-        column = [run_results['filename']]
+        column = [run_results['description']]
         for latency_pair in run_results['latency_stats']:
             # convert from usec to msec
             latency_ms = latency_pair[1] / 1000
@@ -101,7 +102,7 @@ class KbReport(object):
             rps_max = run_res['http_rate_limit']
             rx_tp = float(run_res['http_throughput_kbytes'])
             rx_tp = round(rx_tp * 8 / (1024 * 1024), 1)
-            cells = [run_res['filename'],
+            cells = [run_res['description'],
                      get_formatted_num(run_res['total_connections']),
                      get_formatted_num(run_res['total_server_vms']),
                      get_formatted_num(run_res['http_total_req']),
@@ -159,8 +160,13 @@ def gen_chart(file_list, chart_dest, browser, line_rate):
             sys.exit(1)
         with open(res_file) as data_file:
             results = json.load(data_file)
-            results['filename'] = get_display_file_name(res_file)
-            data_list.append(results)
+            for run in results:
+                des_str = get_display_file_name(res_file)
+                if 'description' in run:
+                    stage = re.search(r'Stage (\d+)\:', run['description']).group(1)
+                    des_str += ': Stage ' + stage
+                run['description'] = str(des_str)
+                data_list.append(run)
     if not line_rate:
         line_rate = guess_line_rate(data_list)
         print 'Guessed line rate: %s Gbps.' % line_rate
