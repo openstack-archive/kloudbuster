@@ -275,7 +275,9 @@ class KBRunner(object):
                 len(self.client_dict) * self.config.http_tool_configs.rate_limit
             self.tool_result['total_connections'] =\
                 len(self.client_dict) * self.config.http_tool_configs.connections
-            self.tool_result['total_client_vms'] = active_range[1] - active_range[0] + 1
+            vm_count = active_range[1] - active_range[0] + 1\
+                if active_range else len(self.full_client_dict)
+            self.tool_result['total_client_vms'] = vm_count
             self.tool_result['total_server_vms'] = self.tool_result['total_client_vms']
             # self.tool_result['host_stats'] = self.gen_host_stats()
         except KBSetStaticRouteException:
@@ -286,26 +288,22 @@ class KBRunner(object):
             raise KBException("Error while running HTTP benchmarking tool.")
 
     def run(self, http_test_only=False):
-        # Resources are already staged, just re-run the HTTP benchmarking tool
-        if http_test_only:
-            self.single_run(http_test_only=True)
-            yield self.tool_result
-            return
-
-        try:
-            LOG.info("Waiting for agents on VMs to come up...")
-            self.wait_for_vm_up()
-            if not self.agent_version:
-                self.agent_version = "0"
-            if (LooseVersion(self.agent_version) != LooseVersion(self.expected_agent_version)):
-                # only warn once for each unexpected VM version
-                if self.expected_agent_version not in vm_version_mismatches:
+        if not http_test_only:
+            # Resources are already staged, just re-run the HTTP benchmarking tool
+            try:
+                LOG.info("Waiting for agents on VMs to come up...")
+                self.wait_for_vm_up()
+                if not self.agent_version:
+                    self.agent_version = "0"
+                if (LooseVersion(self.agent_version) != LooseVersion(self.expected_agent_version))\
+                    and (self.expected_agent_version not in vm_version_mismatches):
+                    # only warn once for each unexpected VM version
                     vm_version_mismatches.add(self.expected_agent_version)
                     LOG.warn("The VM image you are running (%s) is not the expected version (%s) "
                              "this may cause some incompatibilities" %
                              (self.agent_version, self.expected_agent_version))
-        except KBVMUpException:
-            raise KBException("Some VMs failed to start.")
+            except KBVMUpException:
+                raise KBException("Some VMs failed to start.")
 
         if self.config.progression.enabled:
             start = self.config.progression.vm_start
@@ -323,7 +321,7 @@ class KBRunner(object):
                 target_vm_count = start + (cur_stage - 1) * step
                 if target_vm_count > len(self.full_client_dict):
                     break
-                if self.tool_result:
+                if self.tool_result and 'latency_stats' in self.tool_result:
                     err = self.tool_result['http_sock_err']
                     pert_dict = dict(self.tool_result['latency_stats'])
                     if limit[1] in pert_dict.keys():
@@ -340,11 +338,12 @@ class KBRunner(object):
                     self.client_dict[vm_list[idx]] = self.full_client_dict[vm_list[idx]]
                 description = "-- %s --" % self.header_formatter(cur_stage, len(self.client_dict))
                 LOG.info(description)
-                self.single_run(active_range=[0, target_vm_count - 1])
+                self.single_run(active_range=[0, target_vm_count - 1],
+                                http_test_only=http_test_only)
                 LOG.info('-- Stage %s: %s --' % (cur_stage, str(self.tool_result)))
                 self.tool_result['description'] = description
                 cur_stage += 1
                 yield self.tool_result
         else:
-            self.single_run()
+            self.single_run(http_test_only=http_test_only)
             yield self.tool_result

@@ -84,6 +84,7 @@ class WrkTool(PerfTool):
 
     @staticmethod
     def consolidate_results(results):
+        err_flag = False
         all_res = {'tool': 'wrk2'}
         total_count = len(results)
         if not total_count:
@@ -103,12 +104,19 @@ class WrkTool(PerfTool):
             all_res['latency_stats'] = []
             histogram = HdrHistogram(1, 24 * 3600 * 1000 * 1000, 2)
             for item in results:
-                histogram.decode_and_add(item['results']['latency_stats'])
+                if 'latency_stats' in item['results']:
+                    histogram.decode_and_add(item['results']['latency_stats'])
+                else:
+                    err_flag = True
             perc_list = [50, 75, 90, 99, 99.9, 99.99, 99.999]
             latency_dict = histogram.get_percentile_to_value_dict(perc_list)
             for key, value in latency_dict.iteritems():
                 all_res['latency_stats'].append([key, value])
             all_res['latency_stats'].sort()
+
+        if err_flag:
+            LOG.warn('Unable to find latency_stats from the result dictionary, this '
+                     'may indicate that the test application on VM exited abnormally.')
 
         return all_res
 
