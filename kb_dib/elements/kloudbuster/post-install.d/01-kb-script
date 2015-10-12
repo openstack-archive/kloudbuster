@@ -61,30 +61,23 @@ sed -i "s/^exit\s0/python \/kb_test\/kb_vm_agent.py \&\n\0/g" /etc/rc.local
 # python redis client
 pip install redis
 
-# Download cmake
-cd /tmp
-wget http://www.cmake.org/files/v3.3/cmake-3.3.0-Linux-x86_64.tar.gz
-tar xzf cmake-3.3.0-Linux-x86_64.tar.gz
-
 # Install HdrHistorgram_c
+cd /tmp
 git clone git://github.com/HdrHistogram/HdrHistogram_c.git
 cd HdrHistogram_c
-/tmp/cmake-3.3.0-Linux-x86_64/bin/cmake .
+cmake .
 make install
-cd -
-
-# Remove cmake and HdrHistogram_c builds
-rm /tmp/cmake-3.3.0-Linux-x86_64.tar.gz
-rm -rf /tmp/cmake-3.3.0-Linux-x86_64
-rm -rf /tmp/HdrHistogram_c
 
 # Install the http traffic generator
+cd /tmp
 git clone git://github.com/yicwang/wrk2.git
 cd wrk2
 make
 mv wrk /usr/local/bin/wrk2
-cd ..
-rm -rf wrk2
+
+# Remove HdrHistogram_c and wrk2 builds
+rm -rf /tmp/HdrHistogram_c
+rm -rf /tmp/wrk2
 
 # Move the HdrHistogram library to /usr/lib
 mv /usr/local/lib/libhdr_histogram.so /usr/lib/
@@ -93,5 +86,6 @@ mv /usr/local/lib/libhdr_histogram.so /usr/lib/
 apt-get -y --purge remove git
 apt-get -y --purge remove python-pip
 apt-get -y --purge remove build-essential
+apt-get -y --purge remove cmake
 apt-get -y --purge autoremove
 apt-get -y autoclean

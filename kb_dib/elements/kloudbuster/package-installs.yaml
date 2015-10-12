@@ -6,5 +6,4 @@ python-pip:
 git:
 build-essential:
 libssl-dev:
-
-
+cmake:
