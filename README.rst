@@ -53,8 +53,8 @@ openstack-dev@lists.openstack.org with a '[kloudbuster]' tag in the subject.
 Licensing
 ---------
 
-KloudBuster is licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
+KloudBuster is licensed under the Apache License, Version 2.0 (the "License").
+You may not use this tool except in compliance with the License.
 You may obtain a copy of the License at `<http://www.apache.org/licenses/LICENSE-2.0>`_
 
 Unless required by applicable law or agreed to in writing, software
@@ -63,7 +63,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-KloudBuster VM images contain multi-open source license components
+KloudBuster VM images contain multiple open source license components:
+
+* nginx: BSD License (http://nginx.org/LICENSE)
+* wrk2: Apache License 2.0 (https://raw.githubusercontent.com/giltene/wrk2/master/LICENSE)
+* redis: BSD License (http://redis.io/topics/license)
 
 
 Links

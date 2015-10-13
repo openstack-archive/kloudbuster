@@ -99,7 +99,7 @@ server:
 client:
     # Progression testing configuration
     # If enabled, KloudBuster will give multiple runs (progression) on the cloud,
-    # unless it reaches the scale defined in the below sections, or the stop limit.
+    # unless it reaches the scale defined in the upper sections, or the stop limit.
     progression:
         # Enable/Disable the progression
         enabled: False
@@ -107,7 +107,6 @@ client:
         vm_start: 1
         # The steping for the VM count for each stage
         vm_step: 1
-
         # The stop condition, it is used for KloudBuster to determine when to
         # stop the progression, and do the cleanup if needed. It defines as:
         # [number_of_err_packets, percentile_of_packet_not_timeout(%%)]
@@ -163,9 +162,9 @@ client:
         # This number also corresponds to the number of HTTP users
         # connected at any time to the matching HTTP server
         connections: 1000
-        # Rate limit in RPS per client (0 for unlimit)
+        # Rate limit in RPS per client (0 for unlimited)
         rate_limit: 1000
-        # Timeout for HTTP requests
+        # Timeout for socket connections
         timeout: 5
         # Connection Type: "Keep-alive", "New"
         # Keep-alive: the TCP connection is reused across requests
