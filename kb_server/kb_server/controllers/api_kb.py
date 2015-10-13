@@ -84,6 +84,17 @@ class KBController(object):
             LOG.warn(traceback.format_exc())
             kb_session.kb_status = 'ERROR'
 
+    def kb_stop_test_thread_handler(self, session_id):
+        kb_session = KBSessionManager.get(session_id)
+        kb_session.kb_status = 'STOPPING'
+        kloudbuster = kb_session.kloudbuster
+        try:
+            kloudbuster.stop_test()
+            kb_session.kb_status = 'STAGED'
+        except Exception:
+            LOG.warn(traceback.format_exc())
+            kb_session.kb_status = 'ERROR'
+
     def kb_cleanup_thread_handler(self, session_id):
         kb_session = KBSessionManager.get(session_id)
         kb_session.kb_status = 'CLEANING'
@@ -176,10 +187,32 @@ class KBController(object):
         session_id = args[0]
         if KBSessionManager.get(session_id).kb_status != 'STAGED':
             response.status = 403
-            response.text = u"Unable to start the tests when status is not STAGED."
+            response.text = u"Unable to start the tests when status is not at STAGED."
             return response.text
 
         self.kb_thread = threading.Thread(target=self.kb_run_test_thread_handler, args=[session_id])
+        self.kb_thread.daemon = True
+        self.kb_thread.start()
+
+        return "OK!"
+
+    @expose(generic=True)
+    def stop_test(self, *args):
+        response.status = 400
+        response.text = u"Please POST to this resource."
+        return response.text
+
+    @stop_test.when(method='POST')
+    @check_session_id
+    def stop_test_POST(self, *args):
+        session_id = args[0]
+        if KBSessionManager.get(session_id).kb_status != 'RUNNING':
+            response.status = 403
+            response.text = u"Unable to stop the tests when status is not at RUNNING."
+            return response.text
+
+        self.kb_thread = threading.Thread(target=self.kb_stop_test_thread_handler,
+                                          args=[session_id])
         self.kb_thread.daemon = True
         self.kb_thread.start()
 

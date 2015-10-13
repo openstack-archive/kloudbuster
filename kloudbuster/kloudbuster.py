@@ -226,10 +226,12 @@ class KloudBuster(object):
         else:
             self.tenants_list = {'server': None, 'client': None}
         # TODO(check on same auth_url instead)
-        if server_cred == client_cred:
-            self.single_cloud = True
-        else:
-            self.single_cloud = False
+        self.single_cloud = True if server_cred == client_cred else False
+        # Automatically enable the floating IP for server cloud under dual-cloud mode
+        if not self.single_cloud and not self.server_cfg['use_floatingip']:
+            self.server_cfg['use_floatingip'] = True
+            LOG.info('Automatically setting "use_floatingip" to True for server cloud...')
+
         self.kloud = Kloud(server_cfg, server_cred, self.tenants_list['server'])
         self.testing_kloud = Kloud(client_cfg, client_cred,
                                    self.tenants_list['client'],
@@ -437,6 +439,10 @@ class KloudBuster(object):
         for run_result in self.kb_runner.run(http_test_only):
             self.final_result.append(self.kb_runner.tool_result)
         LOG.info('SUMMARY: %s' % self.final_result)
+
+    def stop_test(self):
+        self.kb_runner.stop()
+        LOG.info('Testing is stopped by request.')
 
     def cleanup(self):
         # Cleanup: start with tested side first

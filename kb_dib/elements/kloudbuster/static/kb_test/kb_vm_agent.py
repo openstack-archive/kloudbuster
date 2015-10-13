@@ -31,6 +31,8 @@ import redis
 # are added to the agent VM
 __version__ = '4'
 
+# TODO(Logging on Agent)
+
 def get_image_name():
     '''Return the versioned VM image name that corresponds to this
     agent code. This string must match the way DIB names the kloudbuster image.
@@ -61,7 +63,6 @@ class KB_Instance(object):
         if if_name:
             debug_msg += " and %s" % if_name
             cmd += " dev %s" % if_name
-        # TODO(Logging on Agent)
         print debug_msg
         return cmd
 
@@ -89,7 +90,6 @@ class KB_Instance(object):
             else:
                 debug_msg = "with next hop %s" % if_name
             cmd += " dev %s" % if_name
-        # TODO(Logging on Agent)
         print debug_msg
         return cmd
 
@@ -121,6 +121,7 @@ class KB_VM_Agent(object):
         self.orches_chan_name = "kloudbuster_orches"
         self.report_chan_name = "kloudbuster_report"
         self.last_cmd = None
+        self.last_process = None
 
     def setup_channels(self):
         # Check for connections to redis server
@@ -151,6 +152,7 @@ class KB_VM_Agent(object):
         cmds = ['bash', '-c']
         cmds.append(cmd)
         p = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.last_process = p
         (stdout, stderr) = p.communicate()
 
         return (p.returncode, stdout, stderr)
@@ -162,6 +164,7 @@ class KB_VM_Agent(object):
         cmds.append(cmd)
         p_output = ''
         p = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.last_process = p
 
         lines_iterator = iter(p.stdout.readline, b"")
         for line in lines_iterator:
@@ -180,6 +183,23 @@ class KB_VM_Agent(object):
 
         stderr = p.communicate()[1]
         return (p.returncode, p_output, stderr)
+
+
+    def work(self):
+        for item in self.pubsub.listen():
+            if item['type'] != 'message':
+                continue
+            # Convert the string representation of dict to real dict obj
+            message = eval(item['data'])
+            if message['cmd'] == 'ABORT':
+                try:
+                    self.last_process.kill()
+                except Exception:
+                    pass
+            else:
+                work_thread = threading.Thread(target=agent.process_cmd, args=[message])
+                work_thread.daemon = True
+                work_thread.start()
 
     def process_cmd(self, message):
         if message['cmd'] == 'ACK':
@@ -205,21 +225,9 @@ class KB_VM_Agent(object):
                         "stderr": str(exc)
                     }
                 self.report('DONE', message['client-type'], cmd_res_dict)
-        elif message['cmd'] == 'ABORT':
-            # TODO(Add support to abort a session)
-            pass
         else:
             # Unexpected
-            # TODO(Logging on Agent)
             print 'ERROR: Unexpected command received!'
-
-    def work(self):
-        for item in self.pubsub.listen():
-            if item['type'] != 'message':
-                continue
-            # Convert the string representation of dict to real dict obj
-            message = eval(item['data'])
-            self.process_cmd(message)
 
     def exec_setup_static_route(self):
         self.last_cmd = KB_Instance.get_static_route(self.user_data['target_subnet_ip'])
@@ -273,7 +281,6 @@ if __name__ == "__main__":
         with open('user-data', 'r') as f:
             user_data = eval(f.read())
     except Exception as e:
-        # TODO(Logging on Agent)
         print e.message
         sys.exit(1)
 

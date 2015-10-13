@@ -274,6 +274,29 @@ paths:
                 404:
                     description: The session_id is not found or invalid
 
+    /kloudbuster/stop_test/{session_id}:
+        post:
+            description: |
+                Stop the KloudBuster tests for a given session
+            parameters:
+                - name: session_id
+                  type: string
+                  format: md5sum
+                  in: path
+                  description: |
+                      The session to be stopped
+                  required: true
+            tags:
+                - kloudbuster
+            responses:
+                200:
+                    description: Scheduled to stop the tests for the given session
+                403:
+                    description: |
+                        Unable to stop the tests when status is not at RUNNING
+                404:
+                    description: The session_id is not found or invalid
+
     /kloudbuster/cleanup/{session_id}:
         post:
             description: |

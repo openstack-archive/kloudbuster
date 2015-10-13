@@ -121,7 +121,8 @@ client:
         #   (1) The timeout value is defined in the client:http_tool_config section;
         #   (2) The percentile of packets must be in the below list:
         #       [50, 75, 90, 99, 99.9, 99.99, 99.999]
-        stop_limit: [50, 99.99]
+        #   (3) Sets percentile to 0 to disable timeout checks;
+        stop_limit: [50, 0]
 
     # Assign floating IP for every client side test VM
     # Default: no floating IP (only assign internal fixed IP)

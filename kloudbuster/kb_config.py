@@ -92,6 +92,9 @@ class KBConfig(object):
             if os.path.isfile(pub_key):
                 self.config_scale['public_key_file'] = pub_key
                 LOG.info('Using %s as public key for all VMs' % (pub_key))
+            else:
+                LOG.warn('No public key is found or specified to instantiate VMs. '
+                         'You will not be able to access the VMs spawned by KloudBuster.')
 
         if self.alt_cfg:
             self.config_scale = self.config_scale + AttrDict(self.alt_cfg)

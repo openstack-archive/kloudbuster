@@ -319,6 +319,7 @@ class KBRunner(object):
             while True:
                 cur_vm_count = len(self.client_dict)
                 target_vm_count = start + (cur_stage - 1) * step
+                timeout_at_percentile = 0
                 if target_vm_count > len(self.full_client_dict):
                     break
                 if self.tool_result and 'latency_stats' in self.tool_result:
@@ -326,8 +327,7 @@ class KBRunner(object):
                     pert_dict = dict(self.tool_result['latency_stats'])
                     if limit[1] in pert_dict.keys():
                         timeout_at_percentile = pert_dict[limit[1]] // 1000000
-                    else:
-                        timeout_at_percentile = 0
+                    elif limit[1] != 0:
                         LOG.warn('Percentile %s%% is not a standard statistic point.' % limit[1])
                     if err > limit[0] or timeout_at_percentile > timeout:
                         LOG.warn('KloudBuster is stopping the iteration because the result '
@@ -347,3 +347,6 @@ class KBRunner(object):
         else:
             self.single_run(http_test_only=http_test_only)
             yield self.tool_result
+
+    def stop(self):
+        self.send_cmd('ABORT', 'http', None)
