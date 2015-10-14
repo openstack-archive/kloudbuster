@@ -1,0 +1,8 @@
+Verified+2: Jenkins
+Code-Review+2: Yichen Wang <yicwang@cisco.com>
+Workflow+1: Yichen Wang <yicwang@cisco.com>
+Submitted-by: Jenkins
+Submitted-at: Wed, 14 Oct 2015 00:31:51 +0000
+Reviewed-on: https://review.openstack.org/234481
+Project: openstack/kloudbuster
+Branch: refs/heads/master
