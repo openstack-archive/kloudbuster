@@ -33,6 +33,7 @@ from kb_scheduler import KBScheduler
 import kb_vm_agent
 from keystoneclient.v2_0 import client as keystoneclient
 import log as logging
+from novaclient.client import Client as novaclient
 from oslo_config import cfg
 from pkg_resources import resource_string
 from tabulate import tabulate
@@ -242,6 +243,22 @@ class KloudBuster(object):
         self.client_vm_create_thread = None
         self.kb_runner = None
         self.fp_logfile = None
+
+    def get_hypervisor_list(self, cred):
+        creden_nova = {}
+        ret_list = []
+        cred_dict = cred.get_credentials()
+        creden_nova['username'] = cred_dict['username']
+        creden_nova['api_key'] = cred_dict['password']
+        creden_nova['auth_url'] = cred_dict['auth_url']
+        creden_nova['project_id'] = cred_dict['tenant_name']
+        creden_nova['version'] = 2
+        nova_client = novaclient(**creden_nova)
+        for hypervisor in nova_client.hypervisors.list():
+            if vars(hypervisor)['status'] == 'enabled':
+                ret_list.append(vars(hypervisor)['hypervisor_hostname'])
+
+        return ret_list
 
     def check_and_upload_images(self, retry_count=150):
         retry = 0

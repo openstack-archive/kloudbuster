@@ -28,8 +28,11 @@ from kb_session import KBSessionManager
 import log as logging
 
 from kb_config import KBConfig
+from kloudbuster import KloudBuster
 from pecan import expose
 from pecan import response
+
+LOG = logging.getLogger("kloudbuster")
 
 class ConfigController(object):
 
@@ -76,6 +79,34 @@ class ConfigController(object):
     def default_config(self):
         kb_config = KBConfig()
         return json.dumps(dict(kb_config.config_scale))
+
+    @expose(generic=True)
+    @check_session_id
+    def hypervisor_list(self, *args):
+        session_id = args[0]
+        kb_session = KBSessionManager.get(session_id)
+        kb_config = kb_session.kb_config
+
+        if not kb_session.kloudbuster:
+            try:
+                kb_session.kloudbuster = KloudBuster(
+                    kb_config.cred_tested, kb_config.cred_testing,
+                    kb_config.server_cfg, kb_config.client_cfg,
+                    kb_config.topo_cfg, kb_config.tenants_list)
+            except Exception:
+                LOG.warn(traceback.format_exc())
+                kb_session.kb_status = 'ERROR'
+                response.status = 400
+                response.text = u"Cannot get the hypervisor list."
+                return response.text
+
+        kloudbuster = kb_session.kloudbuster
+        ret_dict = {}
+        ret_dict['server'] = kloudbuster.get_hypervisor_list(kloudbuster.server_cred)
+        if not kloudbuster.single_cloud:
+            ret_dict['client'] = kloudbuster.get_hypervisor_list(kloudbuster.client_cred)
+
+        return json.dumps(ret_dict)
 
     @expose(generic=True)
     @check_session_id

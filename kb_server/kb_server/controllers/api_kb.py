@@ -57,14 +57,13 @@ class KBController(object):
         kb_session.kb_status = 'STAGING'
         kb_config = kb_session.kb_config
         try:
-            kloudbuster = KloudBuster(
-                kb_config.cred_tested, kb_config.cred_testing,
-                kb_config.server_cfg, kb_config.client_cfg,
-                kb_config.topo_cfg, kb_config.tenants_list)
-            kb_session.kloudbuster = kloudbuster
-
-            if kloudbuster.check_and_upload_images():
-                kloudbuster.stage()
+            if not kb_session.kloudbuster:
+                kb_session.kloudbuster = KloudBuster(
+                    kb_config.cred_tested, kb_config.cred_testing,
+                    kb_config.server_cfg, kb_config.client_cfg,
+                    kb_config.topo_cfg, kb_config.tenants_list)
+            if kb_session.kloudbuster.check_and_upload_images():
+                kb_session.kloudbuster.stage()
             kb_session.kb_status = 'STAGED'
         except Exception:
             LOG.warn(traceback.format_exc())
@@ -79,17 +78,6 @@ class KBController(object):
                 config=kb_session.kb_config.client_cfg,
                 http_test_only=not kb_session.first_run)
             kb_session.first_run = False
-            kb_session.kb_status = 'STAGED'
-        except Exception:
-            LOG.warn(traceback.format_exc())
-            kb_session.kb_status = 'ERROR'
-
-    def kb_stop_test_thread_handler(self, session_id):
-        kb_session = KBSessionManager.get(session_id)
-        kb_session.kb_status = 'STOPPING'
-        kloudbuster = kb_session.kloudbuster
-        try:
-            kloudbuster.stop_test()
             kb_session.kb_status = 'STAGED'
         except Exception:
             LOG.warn(traceback.format_exc())
@@ -211,10 +199,13 @@ class KBController(object):
             response.text = u"Unable to stop the tests when status is not at RUNNING."
             return response.text
 
-        self.kb_thread = threading.Thread(target=self.kb_stop_test_thread_handler,
-                                          args=[session_id])
-        self.kb_thread.daemon = True
-        self.kb_thread.start()
+        kb_session = KBSessionManager.get(session_id)
+        kb_session.kb_status = 'STOPPING'
+        try:
+            kb_session.kloudbuster.stop_test()
+        except Exception:
+            LOG.warn(traceback.format_exc())
+            kb_session.kb_status = 'ERROR'
 
         return "OK!"
 

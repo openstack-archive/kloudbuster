@@ -28,6 +28,30 @@ paths:
                         type: string
                         format: json
 
+    /config/hypervisor_list/{session_id}:
+        get:
+            description: |
+                Get the available hypervisor list
+            parameters:
+                - name: session_id
+                  type: string
+                  format: md5sum
+                  in: path
+                  description: The session to be queried
+                  required: true
+            tags:
+                - config
+            responses:
+                200:
+                    description: |
+                        The available hypervisors for the session
+                    schema:
+                        $ref: '#/definitions/Hypervisor_List'
+                400:
+                    description: Cannot get the hypervisor list
+                404:
+                    description: The session_id is not found or invalid
+
     /config/running_config:
         post:
             description: |
@@ -322,6 +346,9 @@ paths:
 
 definitions:
     Configuration_New:
+        required:
+            - credentials
+            - kb_cfg
         properties:
             credentials:
                 type: string
@@ -353,3 +380,17 @@ definitions:
                 type: string
                 format: json
                 description: Tenant and User list for reusing
+    Hypervisor_List:
+        properties:
+            server:
+                type: array
+                items:
+                    type: string
+                format: json
+                description: Available hypervisors for server cloud
+            client:
+                type: array
+                items:
+                    type: string
+                format: json
+                description: Available hypervisors for client cloud
