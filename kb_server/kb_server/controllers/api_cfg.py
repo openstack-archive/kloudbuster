@@ -110,6 +110,13 @@ class ConfigController(object):
 
     @expose(generic=True)
     @check_session_id
+    def topology_config(self, *args):
+        session_id = args[0]
+        kb_config_obj = KBSessionManager.get(session_id).kb_config
+        return json.dumps(kb_config_obj.topo_cfg)
+
+    @expose(generic=True)
+    @check_session_id
     def running_config(self, *args):
         session_id = args[0]
         kb_config_obj = KBSessionManager.get(session_id).kb_config

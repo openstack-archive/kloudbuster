@@ -84,6 +84,27 @@ paths:
                         type: string
                         description: Errors in details
 
+    /config/topology_config/{session_id}:
+        get:
+            description: |
+                Get the topology configuration of a KloudBuster session
+            parameters:
+                - name: session_id
+                  type: string
+                  format: md5sum
+                  in: path
+                  description: The session to be queried
+                  required: true
+            tags:
+                - config
+            responses:
+                200:
+                    description: The topology configuration
+                    schema:
+                        $ref: '#/definitions/Topology_Config'
+                404:
+                    description: The session_id is not found or invalid
+
     /config/running_config/{session_id}:
         get:
             description: |
@@ -394,3 +415,17 @@ definitions:
                     type: string
                 format: json
                 description: Available hypervisors for client cloud
+    Topology_Config:
+        properties:
+            servers_rack:
+                type: array
+                items:
+                    type: string
+                format: json
+                description: Hypervisors to hold server VMs
+            clients_rack:
+                type: array
+                items:
+                    type: string
+                format: json
+                description: Hypervisors to hold client VMs
