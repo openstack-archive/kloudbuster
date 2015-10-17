@@ -14,20 +14,62 @@ The minimal pre-requisites to run KloudBuster:
     * Admin access to the cloud under test
     * 3 available floating IPs
 
-Step 1
-^^^^^^
+There are total of three ways of running KloudBuster, and the easiest way
+to start is using the **Web UI**. It offers the most friendly interface, and
+also needs the least learning to get started. **CLI** is the traditional way
+to run applications. It has the most comprehensive feature sets when compared
+to the other two ways, and also it is pretty much the only choice if you don't
+have a GUI enabled environment. **Rest API** gives another way to access
+and control KloudBuster. All APIs provided are well documented, and the
+built-in web UI is fully implemented on top of these APIs.
 
-Download the openrc file from OpenStack Dashboard, and saved it to your local
-file system. (In Horizon dashboard: Project|Acces&Security!Api Access|
-Download OpenStack RC File)
+.. _run_kloudbuster_with_web_ui:
 
-Step 2
-^^^^^^
+Running KloudBuster with Web UI
+-------------------------------
 
-Run KloudBuster with the default configuration. The default scale settings can
-be displayed from the command line using *--show-config* option.
+.. note::
 
-By default KloudBuster will run on a single cloud mode and create:
+    As of now, the Web UI can only be started when KloudBuster is using
+    GitHub/OpenStack Repository based installation. Availability of running
+    under PyPI based installation is working in progress.
+
+KloudBuster integrates a Python based web server
+`Pecan <http://www.pecanpy.org/>`_ to host the KloudBuster front-end
+website, which listens to localhost:8080 by default.
+
+From the root of the KloudBuster repository, go to kb_server directory.
+If this is the first time to start the server, run below command once
+to setup the environment::
+
+    $ python setup.py develop
+
+Then start the server by doing::
+
+    $ pecan serve config.py
+
+Idealy, you should see a message like below, which indicates the server
+is up running::
+
+    Starting server in PID 26431
+    serving on 0.0.0.0:8080, view at http://127.0.0.1:8080
+
+Open your browser, and type the below address to start using it::
+
+    http://127.0.0.1:8080/public/ui
+
+
+Running KloudBuster with CLI
+----------------------------
+
+KloudBuster needs the access info and the credentials to the cloud uner test,
+and these information can be downloaded from a Horizon dashboard
+(Project|Acces&Security!Api Access|Download OpenStack RC File). Save it to
+your local filesystem for future use.
+
+KloudBuster is ready to run with the default configuration, which can be
+displayed from the command line using *--show-config* option. By default,
+KloudBuster will run on a single cloud mode and create:
 
     * 2 tenants, 2 users, and 2 routers;
     * 1 shared network for both servers and clients tenants
@@ -35,6 +77,7 @@ By default KloudBuster will run on a single cloud mode and create:
     * 1 VM running the Redis server (for orchestration)
     * 1 VM running the HTTP traffic generator (default to 1000 connections,
       1000 requests per second, and 30 seconds duration)
+
 
 Run kloudbuster with the following options::
 
@@ -47,16 +90,16 @@ cleaned up and results will be displayed.
 
 Once this minimal scale test passes, you can tackle more elaborate scale
 testing by increasing the scale numbers or providing various traffic shaping
-options. See below sections for more details.
+options. See below sections for more details about configuring KloudBuster.
 
 
 Configure KloudBuster
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
-The default configuration can be displayed on the command line console using
-the *--show-config* option. It is easy to have a custom configuration by
-redirecting the output to a custom file, modifying that file and passing
-it to the KlousBuster command line using the *--config* option.
+Usually, we can create our own configuration file based on the default
+by redirecting the output of *--show-config* to a new file. Modify
+the new file to satisfy our own needs, and pass it to the KlousBuster
+command line using the *--config*.
 
 .. note::
 
@@ -166,10 +209,10 @@ Some other values which are self-explained, and you can change them as needed.
 
 
 Advanced Features
------------------
+^^^^^^^^^^^^^^^^^
 
 Control the VM Placement
-^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""
 
 By default, VMs are placed by NOVA using its own scheduling logic. However,
 traffic can be shaped precisely to fill the appropriate network links by using
@@ -199,7 +242,7 @@ command line.
 
 
 Running KloudBuster without admin access
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 When there is no admin access to the cloud under test, KloudBuster does
 support to run and reused the existing tenant and user for running tests.
@@ -229,7 +272,7 @@ command line.
 
 
 Examples of running KloudBuster
--------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Assuming the OpenStack RC file is stored at ~/admin_openrc.sh, and the
 password is "admin". Running the program is relatively easy, some examples
@@ -243,7 +286,7 @@ are given to help get started quickly.
 
 
 Example 1: Single-cloud Mode
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""
 
 Kloudbuster will create both server VMs and client VMs in the same cloud if
 only one RC file is provided::
@@ -252,7 +295,7 @@ only one RC file is provided::
 
 
 Example 2: Dual-cloud Mode, Save results
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 Assume the cloud for server VMs is ~/admin_openrc1.sh, and the cloud for
 client VMs is ~/admin_openrc2.sh. The password for both clouds is "admin".
@@ -262,7 +305,7 @@ Also save the results to a JSON file once the run is finished::
 
 
 Example 3: Single-cloud Mode, Customized VM placements
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. code::
 
@@ -270,7 +313,7 @@ Example 3: Single-cloud Mode, Customized VM placements
 
 
 Interpret the Results
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 KloudBuster does come with a good Web UI to display the results in a pretty
 graphical way. However, in the case if you are not using the Web UI,
@@ -284,3 +327,20 @@ Check::
     $ kb_gen_chart -h
 
 for more options.
+
+
+Running with Rest API
+---------------------
+
+All Rest APIs are well documented using `Swagger <http://swagger.io/>`_. In
+order to view them in a nice format, copy the entire contents of file
+kb_server/kloudbuster-swagger.yaml, and paste into the left panel of
+http://editor.swagger.io. Then you will see the specification of all Rest
+APIs in the right panel of the web page.
+
+Similar to running with Web UI, the Rest API server is hosted by Pecan as
+well. So refer to :ref:`above section <run_kloudbuster_with_web_ui>` for
+detailed documentations on how to start the Pecan server.
+
+Once the server is started, you can use different HTTP methods
+(GET/PUT/POST/DELETE) to interactive with KloudBuster.
