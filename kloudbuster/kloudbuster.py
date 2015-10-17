@@ -233,10 +233,6 @@ class KloudBuster(object):
             self.server_cfg['use_floatingip'] = True
             LOG.info('Automatically setting "use_floatingip" to True for server cloud...')
 
-        self.kloud = Kloud(server_cfg, server_cred, self.tenants_list['server'])
-        self.testing_kloud = Kloud(client_cfg, client_cred,
-                                   self.tenants_list['client'],
-                                   testing_side=True)
         self.kb_proxy = None
         self.final_result = []
         self.server_vm_create_thread = None
@@ -375,6 +371,9 @@ class KloudBuster(object):
         """
         Staging all resources for running KloudBuster Tests
         """
+        self.kloud = Kloud(self.server_cfg, self.server_cred, self.tenants_list['server'])
+        self.testing_kloud = Kloud(self.client_cfg, self.client_cred,
+                                   self.tenants_list['client'], testing_side=True)
         vm_creation_concurrency = self.client_cfg.vm_creation_concurrency
         tenant_quota = self.calc_tenant_quota()
         self.kloud.create_resources(tenant_quota['server'])
@@ -462,14 +461,15 @@ class KloudBuster(object):
         LOG.info('Testing is stopped by request.')
 
     def cleanup(self):
-        # Cleanup: start with tested side first
-        # then testing side last (order is important because of the shared network)
+        # Stop the runner, shutdown the redis thread
         if self.kb_runner:
             try:
                 self.kb_runner.dispose()
             except Exception:
                 pass
 
+        # Cleanup: start with tested side first
+        # then testing side last (order is important because of the shared network)
         cleanup_flag = False
         try:
             cleanup_flag = self.kloud.delete_resources()
@@ -489,6 +489,10 @@ class KloudBuster(object):
         if not cleanup_flag:
             LOG.warn('Some resources in client cloud are not cleaned up properly.')
             KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
+
+        # Set the kloud to None
+        self.kloud = None
+        self.testing_kloud = None
 
     def dump_logs(self, offset=0):
         if not self.fp_logfile:
