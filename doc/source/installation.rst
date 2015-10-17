@@ -20,13 +20,13 @@ Ubuntu/Debian based:
 
 .. code-block:: bash
 
-    $ sudo apt-get install build-essential libyaml-dev python-dev python-pip python-virtualenv
+    $ sudo apt-get install python-dev python-pip python-virtualenv
 
 RHEL/Fedora/CentOS based:
 
 .. code-block:: bash
 
-    $ sudo yum install gcc libyaml-devel python-devel python-pip python-virtualenv
+    $ sudo yum install gcc python-devel python-pip python-virtualenv
 
 MacOSX:
 
@@ -81,7 +81,6 @@ Super quick installation on Ubuntu/Debian
 .. code-block:: bash
 
     $ sudo apt-get install python-dev python-virtualenv git git-review qemu-utils
-    $ sudo apt-get install libxml2-dev libxslt-dev libffi-dev libz-dev libyaml-dev libssl-dev
     $ # create a virtual environment
     $ virtualenv ./vkb
     $ source ./vkb/bin/activate
@@ -95,7 +94,6 @@ Super quick installation on RHEL/Fedora/CentOS
 .. code-block:: bash
 
     $ sudo yum install python-devel python-virtualenv git qemu-img
-    $ sudo yum install libxml2-devel libxslt-devel libffi-devel libyaml-devel openssl-devel
     $ # create a virtual environment
     $ virtualenv ./vkb
     $ source ./vkb/bin/activate
