@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import sys
+
 import base_compute
 import base_network
 from cinderclient.v2 import client as cinderclient
@@ -135,17 +137,24 @@ class User(object):
     def check_resources_quota(self):
         # Flavor check
         flavor_manager = base_compute.Flavor(self.nova_client)
-        flavor_to_use = None
+        find_flag = False
+        fcand = {'vcpus': sys.maxint, 'ram': sys.maxint, 'disk': sys.maxint}
         for flavor in flavor_manager.list():
             flavor = vars(flavor)
             if flavor['vcpus'] < 1 or flavor['ram'] < 1024 or flavor['disk'] < 10:
                 continue
-            flavor_to_use = flavor
-            break
-        if flavor_to_use:
-            LOG.info('Automatically selects flavor %s to instantiate VMs.' %
-                     (flavor_to_use['name']))
-            self.tenant.kloud.flavor_to_use = flavor_to_use['name']
+            if flavor['vcpus'] < fcand['vcpus']:
+                fcand = flavor
+            if flavor['vcpus'] == fcand['vcpus'] and flavor['ram'] < fcand['ram']:
+                fcand = flavor
+            if flavor['vcpus'] == fcand['vcpus'] and flavor['ram'] == fcand['ram'] and\
+                flavor['disk'] < fcand['disk']:
+                fcand = flavor
+            find_flag = True
+
+        if find_flag:
+            LOG.info('Automatically selects flavor %s to instantiate VMs.' % fcand['name'])
+            self.tenant.kloud.flavor_to_use = fcand['name']
         else:
             LOG.error('Cannot find a flavor which meets the minimum '
                       'requirements to instantiate VMs.')

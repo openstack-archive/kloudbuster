@@ -97,7 +97,7 @@ for line in $KEYPAIR_LIST; do
     nova keypair-delete "$line"
 done;
 
-if [ "$FLOATINGIP_LIST" == "" ]; then
+if [ "$FLOATINGIP_LIST" == "" ] && [ "$1" == "" ]; then
     echo -e "`neutron floatingip-list | grep -E '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'`" | while read line; do
         fid=`echo $line | cut -d'|' -f2 | xargs`
         portid=`echo $line | cut -d'|' -f5 | xargs`
