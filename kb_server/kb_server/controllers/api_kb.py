@@ -63,6 +63,7 @@ class KBController(object):
                     kb_config.server_cfg, kb_config.client_cfg,
                     kb_config.topo_cfg, kb_config.tenants_list)
             if kb_session.kloudbuster.check_and_upload_images():
+                kb_session.sync_cfg(["server_cfg", "client_cfg", "topo_cfg", "tenants_list"])
                 kb_session.kloudbuster.stage()
             kb_session.kb_status = 'STAGED'
         except Exception:
@@ -74,9 +75,8 @@ class KBController(object):
         kb_session.kb_status = 'RUNNING'
         kloudbuster = kb_session.kloudbuster
         try:
-            kloudbuster.run_test(
-                config=kb_session.kb_config.client_cfg,
-                http_test_only=not kb_session.first_run)
+            kb_session.sync_cfg(["client_cfg"])
+            kloudbuster.run_test(http_test_only=not kb_session.first_run)
             kb_session.first_run = False
             kb_session.kb_status = 'STAGED'
         except Exception:

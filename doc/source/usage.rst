@@ -56,7 +56,7 @@ is up running::
 
 Open your browser, and type the below address to start using it::
 
-    http://127.0.0.1:8080/public/ui
+    http://127.0.0.1:8080/ui/index.html
 
 
 Running KloudBuster with CLI

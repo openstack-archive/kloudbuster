@@ -52,3 +52,13 @@ class KBSession(object):
         self.first_run = True
         self.kb_config = None
         self.kloudbuster = None
+
+    def sync_cfg(self, par_list):
+        if 'server_cfg' in par_list:
+            self.kloudbuster.server_cfg = self.kb_config.server_cfg
+        if 'client_cfg' in par_list:
+            self.kloudbuster.client_cfg = self.kb_config.client_cfg
+        if 'topo_cfg' in par_list and self.kb_config.topo_cfg:
+            self.kloudbuster.topology = self.kb_config.topo_cfg
+        if 'tenants_list' in par_list and self.kb_config.tenants_list:
+            self.kloudbuster.tenants_list = self.kb_config.tenants_list

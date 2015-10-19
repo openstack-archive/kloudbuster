@@ -52,7 +52,7 @@ class ConfigController(object):
 
         return wrapper
 
-    def update_config(self, kb_config, user_config):
+    def fix_config(self, kb_config, user_config):
         # Parsing server and client configs from application input
         # Save the public key into a temporary file
         if 'public_key' in user_config['kb_cfg']:
@@ -161,7 +161,7 @@ class ConfigController(object):
         logging.setup("kloudbuster", logfile="/tmp/kb_log_%s" % session_id)
         kb_config.init_with_rest_api(cred_tested=cred_tested,
                                      cred_testing=cred_testing)
-        self.update_config(kb_config, user_config)
+        self.fix_config(kb_config, user_config)
 
         kb_session = KBSession()
         kb_session.kb_config = kb_config
@@ -198,7 +198,7 @@ class ConfigController(object):
             # }
             try:
                 kb_config = KBSessionManager.get(session_id).kb_config
-                self.update_config(kb_config, user_config)
+                self.fix_config(kb_config, user_config)
             except Exception:
                 response.status = 400
                 response.text = u"Error while parsing configurations: \n%s" %\
