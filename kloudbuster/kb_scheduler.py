@@ -38,9 +38,9 @@ class KBScheduler(object):
             avail_zone = "nova"
 
         if role == "Server":
-            host_list = topology.servers_rack.split()
+            host_list = topology.servers_rack
         else:
-            host_list = topology.clients_rack.split()
+            host_list = topology.clients_rack
         host_count = len(host_list)
 
         if algorithm == "Round-robin":

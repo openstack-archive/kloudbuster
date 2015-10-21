@@ -19,9 +19,11 @@
 # Grouping for placing all the server side VMs
 # Do not change the group name, you can add as many hosts as needed
 servers_rack:
-    hh23-5
+    - hh23-5
+    - hh23-6
 
 # Grouping for placing all the client side VMs
 # Do not change the group name, you can add as many hosts as needed
 clients_rack:
-    hh23-6
+    - hh23-7
+    - hh23-8

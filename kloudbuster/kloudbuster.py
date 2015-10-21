@@ -389,7 +389,7 @@ class KloudBuster(object):
         self.kb_proxy.boot_info['flavor_type'] = 'kb.proxy' if \
             not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
         if self.topology:
-            proxy_hyper = self.topology.clients_rack.split()[0]
+            proxy_hyper = self.topology.clients_rack[0]
             self.kb_proxy.boot_info['avail_zone'] =\
                 "%s:%s" % (self.testing_kloud.placement_az, proxy_hyper)\
                 if self.testing_kloud.placement_az else "nova:%s" % (proxy_hyper)
