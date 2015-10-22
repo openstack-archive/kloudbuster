@@ -1,0 +1,193 @@
+<!--<alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)" style="background-color:#ffcc99;color:white">{{alert.msg}}</alert>-->
+
+<div style="text-align:right;">
+  <div class="btn-group">
+    <a href="" class="btn btn-default" ng-click="CleanUp()" ng-disabled="setUnstage">Unstage</a>
+    <a herf="" class="btn btn-default" ng-click="setConfig()" ng-disabled="setStatus">Save Settings</a>
+    <a href="" class="btn btn-default" ng-click="scaleTest()" ng-disabled="runStatus">{{runButton}}</a>
+  </div>
+  <!--<button type="submit" class="btn btn-default" ng-click="CleanUp()">Unstage</button>-->
+  <!--<button type="submit" class="btn btn-warning" ng-click="setConfig()" ng-disabled="setStatus">Save Settings</button>-->
+  <!--<button type="submit" class="btn btn-primary" ng-click="scaleTest()" ng-disabled="runStatus">{{runButton}}</button>-->
+</div>
+
+
+<div class="supercontainer">
+  <div class="container">
+    <div id="sidebar">
+      <div class="">
+        <accordion close-others="oneAtATime">
+          <accordion-group heading="" is-open="status1.open">
+            <accordion-heading>
+              Staging Settings <i class="pull-right glyphicon"
+                                  ng-class="{'glyphicon-chevron-down': !status1.open, 'glyphicon-chevron-up': status1.open}"></i>
+            </accordion-heading>
+            <div class="col-lg-14" id="stagingConfig">
+              <form class="bs-component">
+                <div class="input-group col-sm-11" style="margin:0 auto">
+                  <span class="input-group-addon">Tenants:</span>
+                  <input type="number" min="1" max="10000" step="1" class="form-control" id="number_tenants"
+                         ng-model="config.server.number_tenants"/>
+                </div>
+                <br/>
+
+                <div class="input-group col-sm-11" style="margin:0 auto">
+                  <span class="input-group-addon">Routers/Tenant:</span>
+                  <input type="number" min="1" max="1000" step="1" class="form-control" id="server_routers_per_tenant"
+                         ng-model="config.server.routers_per_tenant"/>
+                </div>
+                <br/>
+
+                <div class="input-group col-sm-11" style="margin:0 auto">
+                  <span class="input-group-addon">Networks/Router:</span>
+                  <input type="number" min="1" max="1000" step="1" class="form-control" id="server_networks_per_router"
+                         ng-model="config.server.networks_per_router"/>
+                </div>
+                <br/>
+
+                <div class="input-group col-sm-11" style="margin:0 auto">
+                  <span class="input-group-addon">VMs/Network:</span>
+                  <input type="number" min="1" max="1000" step="1" class="form-control" id="server_vms_per_network"
+                         ng-model="config.server.vms_per_network"/>
+                </div>
+                <br/>
+
+                <div class="input-group col-sm-11" style="margin:0 auto">
+                  <span class="input-group-addon">Secgroups/Network:</span>
+                  <input type="number" min="1" max="1000" step="1" class="form-control"
+                         id="server_secgroups_per_network" ng-model="config.server.secgroups_per_network"/>
+                </div>
+              </form>
+            </div>
+            <!--Run-->
+          </accordion-group>
+          <accordion-group is-open="status2.open">
+            <accordion-heading>
+              Run Settings <i class="pull-right glyphicon"
+                              ng-class="{'glyphicon-chevron-down': !status2.open, 'glyphicon-chevron-up': status2.open}"></i>
+            </accordion-heading>
+            <div class="col-lg-14" id="runningConfig">
+              <form class="bs-component">
+                <!--<div class="input-group col-sm-11"  style="margin:0 auto">-->
+                <!--<span class="input-group-addon">connection Type:</span>-->
+                <!--<input type="text" class="form-control" id="client_connection_type" ng-model="config.client.http_tool_configs.connection_type"/>-->
+                <!--</div>-->
+                <!--<br/>-->
+                <div class="input-group col-sm-11" style="margin:0 auto">
+                  <span class="input-group-addon">Duration/Run (sec):</span>
+                  <input type="number" min="1" max="" step="1" class="form-control" id="client_uduration"
+                         ng-model="config.client.http_tool_configs.duration"/>
+                </div>
+                <br/>
+
+                <div class="input-group col-sm-11" style="margin:0 auto">
+                  <span class="input-group-addon">Reporting Interval (sec):</span>
+                  <input type="number" min="1" max="" step="1" class="form-control" id="report_interval"
+                         ng-model="config.client.http_tool_configs.report_interval"/>
+                </div>
+                <br/>
+
+                <div class="input-group col-sm-11" style="margin:0 auto">
+                  <span class="input-group-addon">Rate Limit/VM:</span>
+                  <input type="number" min="0" max="" step="1000" class="form-control" id="client_rate_limit"
+                         ng-model="config.client.http_tool_configs.rate_limit"/>
+                </div>
+                <br/>
+
+                <div class="input-group col-sm-11" style="margin:0 auto">
+                  <span class="input-group-addon">Connections/VM:</span>
+                  <input type="number" min="0" max="" step="1000" min="0" max="" step="10" class="form-control"
+                         id="client_connections" ng-model="config.client.http_tool_configs.connections"/>
+                </div>
+                <!--<br/>-->
+                <!--<div class="input-group col-sm-11"  style="margin:0 auto">-->
+                <!--<span class="input-group-addon">Threads:</span>-->
+                <!--<input type="number"  min="0" max="" step="10" class="form-control" id="client_threads" ng-model="config.client.http_tool_configs.threads"/>-->
+                <!--</div>-->
+                <!--<br/>-->
+                <!--<div class="input-group col-sm-11"  style="margin:0 auto">-->
+                <!--<span class="input-group-addon">Timeout:</span>-->
+                <!--<input type="number"  min="0" max="" step="5" class="form-control" id="client_timeout" ng-model="config.client.http_tool_configs.timeout"/>-->
+                <!--</div>-->
+                <!--<br/>-->
+                <!--<div class="input-group col-sm-11"  style="margin:0 auto">-->
+                <!--<span class="input-group-addon">Polling Interval:</span>-->
+                <!--<input type="number"  min="0" max="" step="5" class="form-control" id="client_polling_interval" ng-model="config.client.polling_interval"/>-->
+                <!--</div>-->
+              </form>
+            </div>
+          </accordion-group>
+        </accordion>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="swipe-area"></div>
+      <a href="" data-toggle=".container" id="sidebar-toggle" style="text-decoration:none">
+        <!--<span class="bar"></span>-->
+        <!--<span class="bar"></span>-->
+        <!--<span class="bar"></span>-->
+        <span id="littleglyph1" class="bar glyphicon glyphicon-triangle-right" style="color:white"></span>
+      </a>
+
+      <div class="content" id="content">
+
+        <div class="row">
+          <div class="">
+
+            <h6>Latency(ms)</h6>
+            <linechart data="data" options="options" mode="" width="" height="500"></linechart>
+            <!--<h6 style="float:right; text-align: right; line-height: 30%">Percentile</h6>-->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row" style="text-align:right;margin: 0 5%">
+  <button type="submit" class="btn btn-default btn-xs" ng-click="saveResult()">Save Result</button>
+  <button type="submit" class="btn btn-default btn-xs" ng-click="initChart()">Clear Chart</button>
+</div>
+<br/>
+
+<div class="navbar navbar-default navbar-fixed-bottom" role="navigation">
+  <div style="margin: 0 8%;vertical-align: middle;">
+    <h5>
+      <div class="row">
+        <div class="" style="float:left;background: white; width: 35px;height: 35px;border-radius: 50%;">
+          <div class='loading spin-1'>
+            <div class='loading spin-2'>
+              <div class='loading spin-3'>
+                <div class='loading spin-4'>
+                  <div class='loading spin-5'>
+                    <div class='loading spin-6'></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-2" style="line-height:40px; height:40px;color:white;">Status:
+          <button class="btn btn-default btn-xs" ng-click="checkStatus()">{{status}}</button>
+        </div>
+
+        <div class="col-md-3" style="line-height:40px; height:40px;color:white;">Created Server VM(s):
+          <button class="btn btn-default btn-xs" ng-click="checkStatus()">{{server_vm_count}}</button>
+        </div>
+        <div class="col-md-3" style="line-height:40px; height:40px;color:white;">Created Client VM(s):
+          <button class="btn btn-default btn-xs" ng-click="checkStatus()">{{client_vm_count}}</button>
+        </div>
+        <div class="col-md-3" style="line-height:40px; height:40px;  color:white;">
+          <!--<div class="loader" style="float:left;">Loading...</div>-->
+
+          {{info}}
+        </div>
+      </div>
+
+      <!--sessionID: <button class="btn btn-info btn-xs" disabled>{{sessionID}}</button>-->
+      <!--<button style="float:right;" type="submit" class="btn btn-default btn-xs" ng-click="deleteSession()" popover="Session can be destroyed only if it is at READY." popover-trigger="mouseenter">Del Ses</button>-->
+    </h5>
+  </div>
+</div>

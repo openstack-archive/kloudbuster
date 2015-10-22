@@ -1,0 +1,221 @@
+<!--<img class="background" src="images/back.jpg">-->
+<div class="row">
+<div style="float:right;" id="getButton">
+  <input type="button" value="Default/Reset" class="btn btn-default btn-sm" ng-click="getDefaultConfig()"></input>
+  <!--<button type="submit" class="btn btn-default btn-sm" ng-click="getRunConfig()">Get Current Config</button>-->
+  <input type="button" value="Save" class="btn btn-primary btn-sm" ng-click="changeConfig()"></button>
+</div>
+</div>
+<br/>
+
+<div class="row-fluid" id="stagingConfig2">
+  <div id="dashboard_links" class="col-md-3">
+    <ul class="nav nav-pills nav-stacked">
+      <li class="{{dashstatus1}}" ng-click="setDashStatus(1)"><a href="" class="tab-link">GENERAL CONFIGURATION</a></li>
+      <li class="{{dashstatus2}}" ng-click="setDashStatus(2)"><a href="" class="tab-link">SERVER SIDE CONFIG OPTIONS</a></li>
+      <li class="{{dashstatus3}}" ng-click="setDashStatus(3)"><a href="" class="tab-link">CLIENT SIDE CONFIG OPTIONS</a></li>
+    </ul>
+  </div>
+  <div id="dashboard_tabs" class="col-md-8">
+    <!--Start Dashboard Tab 1-->
+    <div id="dashboard-general" class="row" ng-show="dashstatus1vis">
+
+      <h4 class="page-header" style="margin-top: 5px">GENERAL CONFIGURATION</h4>
+
+      <form class="bs-component">
+        <div class="input-group col-sm-11"  style="margin:0 auto;">
+          <span class="input-group-addon">VM Creation Concurrency:</span>
+          <input type="number"  min="0" max="1000" step="1" class="form-control" id="vm_creation_concurrency" ng-model="config.vm_creation_concurrency"/>
+        </div>
+        <br/>
+        <!--<div class="input-group col-sm-11"  style="margin:0 auto">-->
+          <!--<span class="input-group-addon">Public Key File:</span>-->
+          <!--<input type="text" class="form-control" id="public_key_file" ng-model="config.public_key_file"/>-->
+        <!--</div>-->
+        <!--<br/>-->
+        <!--<div class="input-group col-sm-11"  style="margin:0 auto">-->
+          <!--<input type="checkbox" id="server_use_floatingip" ng-model="config.server.use_floatingip" ng-change="config.client.use_floatingip=config.server.use_floatingip" /> use floating IP for client and server VMs-->
+        <!--</div>-->
+
+        <hr>
+
+        <!--<div class="text-center">-->
+          <h4 style="margin-top: 5px">VM PLACEMENT</h4><br/>
+        <!--</div>-->
+
+        <div class="radio">
+          <label>
+            <input type="radio" ng-model="availability_zone" value="1" ng-change="changeTopology()">
+            Let Nova Decide
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input type="radio" ng-model="availability_zone" value="2" ng-change="changeTopology()">
+            Available Zone
+          </label>
+        </div>
+
+        <div class="row" ng-show="availability_zone==2;">
+          <div class="col-md-6">
+            <div class="input-group"  style="margin:0 auto">
+              <span class="input-group-addon">For Server:</span>
+              <input type="text" class="form-control" ng-model="config.server.availability_zone"/>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="input-group"  style="margin:0 auto">
+              <span class="input-group-addon">For Client:</span>
+              <input type="text" class="form-control" ng-model="config.client.availability_zone"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="radio" id="topology">
+          <label>
+            <input type="radio" ng-model="availability_zone" value="3" ng-change="changeTopology()">
+            Use Topology
+            <small> -- customized <cite title="Source Title">VM placement</cite></small>
+
+          </label>
+        </div>
+
+        <div class="row" ng-show="availability_zone==3;">
+          <div class="col-md-3">
+            <div class="list-group" id="list3">
+                <span class="list-group-item active">Server Pool
+                 <input title="Toggle all" ng-click="toggleC()" ng-model="toggle" type="checkbox" class="pull-right">
+                </span>
+
+                <span ng-repeat="user in listC">
+                  <span class="list-group-item">{{user.firstName}}
+                    <input ng-click="selectC(user.id)" name="selectedC[]" value="{{user.id}}" ng-checked="selectedC.indexOf(user.id) > -1" type="checkbox" class="pull-right">
+                  </span>
+                </span>
+            </div>
+          </div>
+
+
+          <div class="col-md-1 v-center text-center">
+            <div class="btn-group-sm">
+              <button title="Send to list 1" class="btn btn-default btn-sm" ng-click="cToA()" style="margin:10px 0"><i class="glyphicon glyphicon-chevron-right"></i></button>
+              <button title="Send to list 3" class="btn btn-default btn-sm" ng-click="aToC()"><i class="glyphicon glyphicon-chevron-left"></i></button>
+            </div>
+          </div>
+
+
+          <div class="col-md-4">
+            <div class="list-group" id="list1">
+                <span class="list-group-item active">Available Hypervisors
+                 <input title="Toggle all" ng-click="toggleA()" ng-model="toggle" type="checkbox" class="pull-right">
+                </span>
+
+                <span ng-repeat="user in listA">
+                  <span class="list-group-item">{{user.firstName}}
+                    <input ng-click="selectA(user.id)" name="selectedA[]" value="{{user.id}}" ng-checked="selectedA.indexOf(user.id) > -1" type="checkbox" class="pull-right">
+                  </span>
+                </span>
+            </div>
+          </div>
+          <div class="col-md-1 v-center text-center"  style="margin:0px 0px">
+            <div class="btn-group-sm">
+              <button title="Send to list 1" class="btn btn-default btn-sm" ng-click="bToA()" style="margin:10px 0"><i class="glyphicon glyphicon-chevron-left"></i></button>
+              <button title="Send to list 2" class="btn btn-default btn-sm" ng-click="aToB()"><i class="glyphicon glyphicon-chevron-right"></i></button>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="list-group" id="list2">
+                <span class="list-group-item active">Client Pool
+                  <input title="Toggle all" ng-click="toggleB()" ng-model="toggle" type="checkbox" class="pull-right">
+                </span>
+                <span ng-repeat="user in listB">
+                  <span class="list-group-item">{{user.firstName}}
+                    <input ng-click="selectB(user.id)" name="selectedB[]" value="{{user.id}}" ng-checked="selectedB.indexOf(user.id) > -1" type="checkbox" class="pull-right">
+                  </span>
+                </span>
+            </div>
+          </div>
+        </div>
+
+      </form>
+
+    </div>
+    <!--End Dashboard Tab 1-->
+    <!--Start Dashboard Tab 2-->
+    <div id="dashboard-server" class="row" ng-show="dashstatus2vis">
+      <h4 class="page-header" style="margin-top: 5px">SERVER SIDE CONFIG OPTIONS</h4>
+
+      <div class="form-group">
+        <div class="input-group col-sm-11"  style="margin:0 auto">
+          <span class="input-group-addon">Html Payload Size:</span>
+          <input type="number"  min="0"  step="1024" class="form-control" id="html_size" ng-model="config.server.http_server_configs.html_size"/>
+        </div>
+        <br/>
+        <div class="well bs-component">
+          <form class="form-horizontal">
+            <fieldset>
+              <legend>flavor</legend>
+              <div class="input-group col-sm-11"  style="margin:0 auto">
+                <span class="input-group-addon">vCPUs:</span>
+                <input type="number"  min="0" max="1000" step="1" class="form-control" id="server_vcpus" ng-model="config.server.flavor.vcpus"/>
+              </div>
+              <br/>
+              <div class="input-group col-sm-11"  style="margin:0 auto">
+                <span class="input-group-addon">RAM (KB):</span>
+                <input type="number"  min="0" max="" step="128" class="form-control" id="server_ram" ng-model="config.server.flavor.ram"/>
+              </div>
+              <br/>
+              <div class="input-group col-sm-11"  style="margin:0 auto">
+                <span class="input-group-addon">Disk (GB):</span>
+                <input type="number"  min="0" max="" step="" class="form-control" id="server_disk" ng-model="config.server.flavor.disk"/>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+      <!--<div class="input-group col-sm-11"  style="margin:0 auto">-->
+        <!--<span class="input-group-addon">Availability Zone:</span>-->
+        <!--<input type="text" class="form-control" id="availability_zone" ng-model="config.server.availability_zone"/>-->
+      <!--</div>-->
+
+    </div>
+    <!--End Dashboard Tab 2-->
+    <!--Start Dashboard Tab 3-->
+    <div id="dashboard-client" class="row" ng-show="dashstatus3vis">
+      <h4 class="page-header" style="margin-top: 5px">CLIENT SIDE CONFIG OPTIONS</h4>
+
+      <div class="form-group">
+        <div class="well bs-component">
+          <form class="form-horizontal">
+            <fieldset>
+              <legend>flavor</legend>
+              <div class="input-group col-sm-11"  style="margin:0 auto">
+                <span class="input-group-addon">vCPUs:</span>
+                <input type="number"  min="0" max="1000" step="1" class="form-control" id="client_vcpus" ng-model="config.client.flavor.vcpus"/>
+              </div>
+              <br/>
+              <div class="input-group col-sm-11"  style="margin:0 auto">
+                <span class="input-group-addon">RAM (KB):</span>
+                <input type="number"  min="0" max="" step="128" class="form-control" id="client_ram" ng-model="config.client.flavor.ram"/>
+              </div>
+              <br/>
+              <div class="input-group col-sm-11"  style="margin:0 auto">
+                <span class="input-group-addon">Disk (GB):</span>
+                <input type="number"  min="0" max="" step="" class="form-control" id="client_disk zone" ng-model="config.client.flavor.disk"/>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+
+      <!--<div class="input-group col-sm-11"  style="margin:0 auto">-->
+        <!--<span class="input-group-addon">Availability Zone:</span>-->
+        <!--<input type="text" class="form-control" id="availability_zone" ng-model="config.client.availability_zone"/>-->
+      <!--</div>-->
+
+    </div>
+    <!--End Dashboard Tab 3-->
+  </div>
+</div>
+
+

@@ -1,0 +1,443 @@
+.browsehappy {
+  margin: 0.2em 0;
+  background: #ccc;
+  color: #000;
+  padding: 0.2em 0;
+}
+
+/*body {*/
+  /*padding: 0;*/
+/*}*/
+body {
+  padding-top: 60px;
+  padding-bottom: 40px;
+}
+
+
+.background {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  opacity: 0.1;
+}
+
+
+/* Everything but the jumbotron gets side spacing for mobile first views */
+.header,
+.marketing,
+.footer {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+/* Custom page header */
+.header {
+  border-bottom: 1px solid #e5e5e5;
+  margin-bottom: 10px;
+}
+/* Make the masthead heading the same height as the navigation */
+.header h3 {
+  margin-top: 0;
+  margin-bottom: 0;
+  line-height: 40px;
+  padding-bottom: 19px;
+}
+
+/* Custom page footer */
+.footer {
+  padding-top: 19px;
+  color: #777;
+  border-top: 1px solid #e5e5e5;
+}
+
+.container-narrow > hr {
+  margin: 30px 0;
+}
+
+/* Main marketing message and sign up button */
+.jumbotron {
+  text-align: center;
+  border-bottom: 1px solid #e5e5e5;
+}
+.jumbotron .btn {
+  font-size: 21px;
+  padding: 14px 24px;
+}
+
+/* Supporting marketing content */
+.marketing {
+  margin: 40px 0;
+}
+.marketing p + h4 {
+  margin-top: 28px;
+}
+
+/* Responsive: Portrait tablets and up */
+@media screen and (min-width: 768px) {
+  .container {
+    max-width: 1152px;
+  }
+
+  /* Remove the padding we set earlier */
+  .header,
+  .marketing,
+  .footer {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  /* Space out the masthead */
+  .header {
+    margin-bottom: 30px;
+  }
+  /* Remove the bottom border on the jumbotron for visual effect */
+  .jumbotron {
+    border-bottom: 0;
+  }
+}
+
+input {
+  text-align:center;
+}
+.input-group-addon {
+  min-width:150px;
+}
+/*--------------------------top loading bar----------------------------*/
+#loading-bar-spinner {
+  top: 70px;
+}
+#loading-bar .bar {
+  top: 60px;
+  height: 5px;
+}
+#loading-bar-spinner .spinner-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/*--------------------------------pause--------------------------------*/
+.pause {
+  -webkit-animation-play-state: paused !important;
+  -moz-animation-play-state: paused !important;
+  -o-animation-play-state: paused !important;
+  animation-play-state: paused !important;
+}
+
+
+
+/*--------------------------------side bar---------------------------------*/
+body, html {
+  /*height: 100%;*/
+  /*margin: 0;*/
+  /*overflow:hidden;*/
+  /*font-family: helvetica;*/
+  font-weight: 100;
+}
+.container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  left: 0;
+  -webkit-transition:  left 0.4s ease-in-out;
+  -moz-transition:  left 0.4s ease-in-out;
+  -ms-transition:  left 0.4s ease-in-out;
+  -o-transition:  left 0.4s ease-in-out;
+  transition:  left 0.4s ease-in-out;
+}
+.container .open-sidebar {
+  left: 300px;
+}
+
+.swipe-area {
+  position: absolute;
+  width: 50px;
+  left: 0;
+  top: 0;
+  height: 100%;
+  /*background: #f3f3f3;*/
+  z-index: 0;
+}
+#sidebar {
+  /*background: #DF314D;*/
+  position: absolute;
+  width: 300px;
+  height: 100%;
+  left: -300px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+}
+#sidebar ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+#sidebar ul li {
+  margin: 0;
+}
+#sidebar ul li a {
+  padding: 15px 20px;
+  font-size: 16px;
+  font-weight: 100;
+  color: white;
+  text-decoration: none;
+  display: block;
+  /*border-bottom: 1px solid #C9223D;*/
+  -webkit-transition:  background 0.3s ease-in-out;
+  -moz-transition:  background 0.3s ease-in-out;
+  -ms-transition:  background 0.3s ease-in-out;
+  -o-transition:  background 0.3s ease-in-out;
+  transition:  background 0.3s ease-in-out;
+}
+#sidebar ul li:hover a {
+  /*background: #C9223D;*/
+}
+
+#content.content-smaller {
+  width: 70%;
+  height: 100%;
+}
+
+.main-content {
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  position: relative;
+}
+.main-content .content{
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  padding-left: 60px;
+  width: 100%;
+}
+.main-content .content h1{
+  font-weight: 100;
+}
+.main-content .content p{
+  width: 100%;
+  line-height: 160%;
+}
+.main-content #sidebar-toggle {
+  background: #DF314D;
+  border-radius: 3px;
+  display: block;
+  position: relative;
+  padding: 10px 7px;
+  float: left;
+}
+.main-content #sidebar-toggle .bar{
+  display: block;
+  /*width: 18px;*/
+  /*margin-bottom: 3px;*/
+  /*height: 2px;*/
+  /*background-color: #fff;*/
+  /*border-radius: 1px;*/
+}
+/*.main-content #sidebar-toggle .bar:last-child{*/
+  /*margin-bottom: 0;*/
+/*}*/
+
+.supercontainer {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  left: 0;
+  overflow: hidden;
+}
+
+
+
+/*------------------------------loading bar---------------------------*/
+
+.loader,
+.loader:before,
+.loader:after {
+  background: #ffffff;
+  -webkit-animation: load1 1s infinite ease-in-out;
+  animation: load1 1s infinite ease-in-out;
+  width: 1em;
+  height: 4em;
+}
+.loader:before,
+.loader:after {
+  position: absolute;
+  top: 0;
+  content: '';
+}
+.loader:before {
+  left: -1.5em;
+  -webkit-animation-delay: -0.32s;
+  animation-delay: -0.32s;
+}
+.loader {
+  text-indent: -9999em;
+  margin: 6px auto;
+  position: relative;
+  font-size: 3px;
+  -webkit-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-animation-delay: -0.16s;
+  animation-delay: -0.16s;
+}
+.loader:after {
+  left: 1.5em;
+}
+@-webkit-keyframes load1 {
+  0%,
+  80%,
+  100% {
+    box-shadow: 0 0 #ffffff;
+    height: 4em;
+  }
+  40% {
+    box-shadow: 0 -2em #ffffff;
+    height: 5em;
+  }
+}
+@keyframes load1 {
+  0%,
+  80%,
+  100% {
+    box-shadow: 0 0 #ffffff;
+    height: 4em;
+  }
+  40% {
+    box-shadow: 0 -2em #ffffff;
+    height: 5em;
+  }
+}
+
+/*------------------------------loading bar a---------------------------*/
+.loadera:before,
+.loadera:after,
+.loadera {
+  border-radius: 50%;
+  width: 2.5em;
+  height: 2.5em;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+  -webkit-animation: load7 1.8s infinite ease-in-out;
+  animation: load7 1.8s infinite ease-in-out;
+}
+.loadera {
+  font-size: 2px;
+  margin: 15px 5px;
+  position: relative;
+  text-indent: -9999em;
+  -webkit-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-animation-delay: -0.16s;
+  animation-delay: -0.16s;
+}
+.loadera:before {
+  left: -3.5em;
+  -webkit-animation-delay: -0.32s;
+  animation-delay: -0.32s;
+}
+.loadera:after {
+  left: 3.5em;
+}
+.loadera:before,
+.loadera:after {
+  content: '';
+  position: absolute;
+  top: 0;
+}
+@-webkit-keyframes load7 {
+  0%,
+  80%,
+  100% {
+    box-shadow: 0 2.5em 0 -1.3em #ffffff;
+  }
+  40% {
+    box-shadow: 0 2.5em 0 0 #ffffff;
+  }
+}
+@keyframes load7 {
+  0%,
+  80%,
+  100% {
+    box-shadow: 0 2.5em 0 -1.3em #ffffff;
+  }
+  40% {
+    box-shadow: 0 2.5em 0 0 #ffffff;
+  }
+}
+
+
+/*---------------------loading spinner---------------------*/
+@keyframes loading {
+  0% {
+    transform: rotate(0deg);
+  }
+  25%{
+    transform: rotate(160deg);
+  }
+  50%{
+    transform: rotate(0deg);
+  }
+  75%{
+    transform: rotate(160deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.loading {
+  background-color: transparent;
+  border-radius: 50%;
+  margin: 2px auto;
+  animation: loading 5s infinite linear;
+}
+
+.spin-1{
+  border: 1px solid #c00353 ;
+  border-top: 1px solid transparent;
+  border-left: 1px solid transparent;
+  width: 32px;
+  height: 32px;
+}
+.spin-2{
+  border: 1px solid #05bbc3 ;
+  border-top: 1px solid transparent;
+  border-left: 1px solid transparent;
+  width: 26px;
+  height: 26px;
+  animation-delay: 1s;
+}
+.spin-3{
+  border: 1px solid #d2d947 ;
+  border-top: 1px solid transparent;
+  border-left: 1px solid transparent;
+  width: 20px;
+  height: 20px;
+  animation-delay: 1s;
+}
+.spin-4{
+  border: 1px solid #f2a342 ;
+  border-top: 1px solid transparent;
+  border-left: 1px solid transparent;
+  width: 14px;
+  height: 14px;
+  animation-delay: 1s;
+}
+.spin-5{
+  border: 1px solid #f34d51 ;
+  border-top: 1px solid transparent;
+  border-left: 1px solid transparent;
+  width: 8px;
+  height: 8px;
+  animation-delay: 1s;
+}
+.spin-6{
+  border: 1px solid #000000 ;
+  width: 2px;
+  height: 2px;
+  animation-delay: 1s;
+}
