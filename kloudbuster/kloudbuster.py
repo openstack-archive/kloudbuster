@@ -227,7 +227,8 @@ class KloudBuster(object):
         else:
             self.tenants_list = {'server': None, 'client': None}
         # TODO(check on same auth_url instead)
-        self.single_cloud = True if server_cred == client_cred else False
+        self.single_cloud = True\
+            if server_cred.get_credentials() == client_cred.get_credentials() else False
         # Automatically enable the floating IP for server cloud under dual-cloud mode
         if not self.single_cloud and not self.server_cfg['use_floatingip']:
             self.server_cfg['use_floatingip'] = True
