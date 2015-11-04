@@ -1,3 +1,17 @@
+//Copyright 2015 Cisco Systems, Inc. All rights reserved.
+//
+//Licensed under the Apache License, Version 2.0 (the "License"); you may
+//not use this file except in compliance with the License. You may obtain
+//a copy of the License at
+//
+//http://www.apache.org/licenses/LICENSE-2.0
+//
+//Unless required by applicable law or agreed to in writing, software
+//distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+//WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+//License for the specific language governing permissions and limitations
+//under the License.
+
 'use strict';
 
 /**
@@ -8,29 +22,96 @@
  * Controller of the kbWebApp
  */
 angular.module('kbWebApp')
-  .controller('AboutCtrl', function ($scope,$http,$location,kbHttp,kbCookie) {
+  .controller('AboutCtrl', function ($scope, $http, $location, kbHttp, kbCookie, locationChange) {
     this.awesomeThings = [
       'HTML5 Boilerplate',
       'AngularJS',
       'Karma'
     ];
+
+
+    //---------------------------------top navigation bar---------------------------------
+    $(window).on('hashchange', locationChange.change());
+
+
     //---------------------------------get version---------------------------------
     kbHttp.getMethod("/kloudbuster/version")
       .then(
-      function(response) {  //  .resolve
-        $scope.version =response.data;
+      function (response) {  //  .resolve
+        $scope.version = response.data;
       },
-      function(response) {  //  .reject
+      function (response) {  //  .reject
         console.log("get version error:");
         console.log(response);
       }
     );
 
   })
-  .service('kbHttp', function($http,$q) {
+  .service('locationChange', function () {
+    var loc;
+    this.change = function () {
+      loc = $(location).attr('hash');
+
+      removeAllNav();
+      $("#scaletestname").text('Scale Test');
+      $("#loginname").text('Log Out');
+
+      switch (loc) {
+        case "#/InteractiveMode":
+          //alert("scaletest");
+          activeNav("scaletestnav");
+          activeNav("interactivenav");
+          $("#scaletestname").text('Interactive Mode');
+          break;
+        case "#/MonitoringMode":
+          //alert("interval");
+          activeNav("scaletestnav");
+          activeNav("monitoringnav");
+          $("#scaletestname").text('Monitoring Mode');
+          break;
+        case "#/Config":
+          //alert("config");
+          activeNav("confignav");
+
+          break;
+        case "#/Log":
+          //alert("log");
+          activeNav("lognav");
+
+          break;
+        case "#/Login":
+          //alert("login");
+          activeNav("loginnav");
+          $("#loginname").text('Log In');
+          break;
+        case "#/About":
+          //alert("about");
+          activeNav("aboutnav");
+          break;
+        default:
+          break;
+      }
+    };
+
+    function activeNav(toShow) {
+      $("#" + toShow).addClass("active");
+    }
+    function removeAllNav() {
+      $("#" + "scaletestnav").removeClass("active");
+      $("#" + "interactivenav").removeClass("active");
+      $("#" + "monitoringnav").removeClass("active");
+      $("#" + "confignav").removeClass("active");
+      $("#" + "lognav").removeClass("active");
+      $("#" + "loginnav").removeClass("active");
+      $("#" + "aboutnav").removeClass("active");
+    }
+
+
+  })
+  .service('kbHttp', function ($http, $q) {
     var backendUrl = "http://127.0.0.1:8080/api";
 
-    this.getMethod = function(url) {
+    this.getMethod = function (url) {
       var deferred = $q.defer(); // declaration
       $http.get(backendUrl + url)
         .then(function (data) {
@@ -42,9 +123,9 @@ angular.module('kbWebApp')
       return deferred.promise;   // return promise(API)
     };
 
-    this.getMethod2 = function(url) {//not show the processing bar
+    this.getMethod2 = function (url) {//not show the processing bar
       var deferred = $q.defer();
-      $http.get(backendUrl + url,{
+      $http.get(backendUrl + url, {
         ignoreLoadingBar: true
       })
         .then(function (data) {
@@ -56,10 +137,10 @@ angular.module('kbWebApp')
       return deferred.promise;
     };
 
-    this.putMethod = function(url, arg) {
+    this.putMethod = function (url, arg) {
       var deferred = $q.defer(); // 声明延后执行，表示要去监控后面的执行
       $http.defaults.headers.put['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';
-      $http.put(backendUrl + url, "arg=" +  encodeURIComponent(JSON.stringify(arg)))
+      $http.put(backendUrl + url, "arg=" + encodeURIComponent(JSON.stringify(arg)))
         .then(function (data) {
           deferred.resolve(data);  // 声明执行成功，即http请求数据成功，可以返回数据了
         },
@@ -69,9 +150,9 @@ angular.module('kbWebApp')
       return deferred.promise;   // 返回承诺，这里并不是最终数据，而是访问最终数据的API
     };
 
-    this.postMethod = function(url, arg) {
+    this.postMethod = function (url, arg) {
       var deferred = $q.defer(); // 声明延后执行，表示要去监控后面的执行
-      if(arg) {
+      if (arg) {
         $http.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';
         $http.post(backendUrl + url, "arg=" + encodeURIComponent(JSON.stringify(arg)))
           .then(function (data) {
@@ -82,8 +163,7 @@ angular.module('kbWebApp')
           });
         return deferred.promise;   // 返回承诺，这里并不是最终数据，而是访问最终数据的API
       }
-      else
-      {
+      else {
         $http.post(backendUrl + url)
           .then(function (data) {
             deferred.resolve(data);  // 声明执行成功，即http请求数据成功，可以返回数据了
@@ -96,7 +176,7 @@ angular.module('kbWebApp')
       }
     };
 
-    this.delMethod = function(url) {
+    this.delMethod = function (url) {
       var deferred = $q.defer(); // 声明延后执行，表示要去监控后面的执行
       $http.delete(backendUrl + url)
         .then(function (data) {
@@ -110,79 +190,80 @@ angular.module('kbWebApp')
 
 
   })
-  .service('kbCookie', function() {
+  .service('kbCookie', function () {
     //var self = this;
-    this.init = function(){
+    this.init = function () {
       sessionID = "";
       status = "";
       config = "";
       credentials = "";
       topology = "";
       logOffset = 0;
-      isOneCloud="";
+      isOneCloud = "";
       topology = "";
       logOffset = 0;
     };
 
     var sessionID = "";
-    this.getSessionID = function(){
+
+    this.getSessionID = function () {
       return sessionID;
     };
-    this.setSessionID = function(session){
+    this.setSessionID = function (session) {
       sessionID = session;
       return sessionID;
     };
 
     var status = "";
-    this.getStatus = function(){
+    this.getStatus = function () {
       return status;
     };
-    this.setStatus = function(sta){
+    this.setStatus = function (sta) {
       status = sta;
       return status;
     };
 
     var config = "";
-    this.getConfig = function(){
+    this.getConfig = function () {
       return config;
     };
-    this.setConfig = function(con){
+    this.setConfig = function (con) {
       config = con;
       return config;
     };
 
     var credentials = "";
-    this.getCredentials = function(){
+    this.getCredentials = function () {
       return credentials;
     };
-    this.setCredentials = function(cred){
+    this.setCredentials = function (cred) {
       credentials = cred;
       return credentials;
     };
 
     var isOneCloud = "";
-    this.getIsOneCloud = function(){
+    this.getIsOneCloud = function () {
       return isOneCloud;
     };
-    this.setIsOneCloud = function(one){
+    this.setIsOneCloud = function (one) {
       isOneCloud = one;
       return isOneCloud;
     };
 
     var topology = "";
-    this.getTopology = function(){
+    this.getTopology = function () {
       return topology;
     };
-    this.setTopology = function(top){
+    this.setTopology = function (top) {
       topology = top;
       return topology;
     };
 
     var logOffset = 0;
-    this.getLogOffset = function(){
+    this.getLogOffset = function () {
       return logOffset;
     };
-    this.setLogOffset = function(offset){
+    this.setLogOffset = function (offset) {
       logOffset = offset;
       return logOffset;
     };

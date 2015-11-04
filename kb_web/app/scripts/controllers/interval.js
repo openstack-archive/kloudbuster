@@ -1,10 +1,24 @@
+//Copyright 2015 Cisco Systems, Inc. All rights reserved.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may
+//not use this file except in compliance with the License. You may obtain
+//a copy of the License at
+//
+//http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+//WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+//License for the specific language governing permissions and limitations
+//under the License.
+
 /**
  * Created by xiyu3 on 9/8/15.
  */
 'use strict';
 
 angular.module('kbWebApp')
-  .controller('IntervalCtrl', function ($scope, $http, kbHttp, $q, $location, kbCookie, monitorMode) {
+  .controller('IntervalCtrl', function ($scope, $http, kbHttp, $q, $location, kbCookie, monitorMode, locationChange) {
     this.awesomeThings = [
       'HTML5 Boilerplate',
       'AngularJS',
@@ -12,7 +26,8 @@ angular.module('kbWebApp')
     ];
 
     if(kbCookie.getSessionID()==="") $location.path('/Login');
-
+    //---------------------------------top navigation bar---------------------------------
+    $(window).on('hashchange', locationChange.change());
 
 
     $("[data-toggle='.container']").click(function() {
@@ -440,10 +455,10 @@ angular.module('kbWebApp')
         y: {type: 'log', ticksFormat: 'd', innerTicks: true, grid: true}
       },
       series: [
-        {y: "val_6", label: "99.999%", type: "area", color: "#084594", dotSize: "0", thickness: "2px"},
-        {y: "val_5", label: "99.99%", type: "area", color: "#2171b5", dotSize: "0", thickness: "2px",visible:false},
-        {y: "val_4", label: "99.9%", type: "area", color: "#4292c6", dotSize: "0", thickness: "2px",visible:false},
-        {y: "val_3", label: "99%", type: "area", color: "#6baed6", dotSize: "0", thickness: "2px"},
+        {y: "val_6", label: "99.999%", type: "area", color: "#2e4174", dotSize: "0", thickness: "2px",visible:false},
+        {y: "val_5", label: "99.99%", type: "area", color: "#084594", dotSize: "0", thickness: "2px",visible:false},
+        {y: "val_4", label: "99.9%", type: "area", color: "#0074D9", dotSize: "0", thickness: "2px"},
+        {y: "val_3", label: "99%", type: "area", color: "#79afe1", dotSize: "0", thickness: "2px"},
         {y: "val_2", label: "90%", type: "area", color: "#9ecae1", dotSize: "0", thickness: "2px"},
         {y: "val_1", label: "75%", type: "area", color: "#c6dbef", dotSize: "0", thickness: "2px",visible:false},
         {y: "val_0", label: "50%", type: "area", color: "#eff3ff", dotSize: "0", thickness: "2px"}

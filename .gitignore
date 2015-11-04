@@ -54,6 +54,8 @@ ChangeLog
 *cscope*
 .ropeproject/
 
+.DS_store
+
 # KloudBuster
 kb*.log
 *.json

@@ -1,3 +1,17 @@
+<!--Copyright 2015 Cisco Systems, Inc. All rights reserved.-->
+
+<!--Licensed under the Apache License, Version 2.0 (the "License"); you may-->
+<!--not use this file except in compliance with the License. You may obtain-->
+<!--a copy of the License at-->
+
+<!--http://www.apache.org/licenses/LICENSE-2.0-->
+
+<!--Unless required by applicable law or agreed to in writing, software-->
+<!--distributed under the License is distributed on an "AS IS" BASIS, WITHOUT-->
+<!--WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the-->
+<!--License for the specific language governing permissions and limitations-->
+<!--under the License.-->
+
 <!--<alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)" style="background-color:#ffcc99;color:white">{{alert.msg}}</alert>-->
 
 <!--<h6></h6>-->
@@ -220,7 +234,7 @@
 
 <table ng-table="tableParams" class="table table-responsive table-condensed table-bordered table-striped">
   <tr ng-repeat="row in tableParams.data" style="text-align:center;">
-    <td title="cols[0].title" sortable="cols[0].field" ng-if="cols[0].show">
+    <td title="cols[0].title" ng-if="cols[0].show">
       <input type="checkbox" class="btn btn-default" ng-click="">
         <span style="background-color:{{row.color}};margin:1px 1px" popover="{{row.description}}"
               popover-trigger="mouseenter"> &nbsp; &nbsp; &nbsp;&nbsp;
@@ -228,13 +242,13 @@
         </span>
       </input>
     </td>
-    <td title="cols[1].title" sortable="cols[1].field" ng-if="cols[1].show">{{row.connection}}</td>
-    <td title="cols[2].title" sortable="cols[2].field" ng-if="cols[2].show">{{row.server_vms}}</td>
-    <td title="cols[3].title" sortable="cols[3].field" ng-if="cols[3].show">{{row.requests}}</td>
-    <td title="cols[4].title" sortable="cols[4].field" ng-if="cols[4].show">{{row.sock_err}}</td>
-    <td title="cols[5].title" sortable="cols[5].field" ng-if="cols[5].show">{{row.rps}}</td>
-    <td title="cols[6].title" sortable="cols[6].field" ng-if="cols[6].show">{{row.rate_limit}}</td>
-    <td title="cols[7].title" sortable="cols[7].field" ng-if="cols[7].show">{{row.throughput}} Gbps</td>
+    <td title="cols[1].title" data-sortable="cols[1].field" ng-if="cols[1].show">{{row.connection}}</td>
+    <td title="cols[2].title" data-sortable="cols[2].field" ng-if="cols[2].show">{{row.server_vms}}</td>
+    <td title="cols[3].title" data-sortable="cols[3].field" ng-if="cols[3].show">{{row.requests}}</td>
+    <td title="cols[4].title" data-sortable="cols[4].field" ng-if="cols[4].show">{{row.sock_err}}</td>
+    <td title="cols[5].title" data-sortable="cols[5].field" ng-if="cols[5].show">{{row.rps}}</td>
+    <td title="cols[6].title" data-sortable="cols[6].field" ng-if="cols[6].show">{{row.rate_limit}}</td>
+    <td title="cols[7].title" data-sortable="cols[7].field" ng-if="cols[7].show">{{row.throughput}} Gbps</td>
     <td title="cols[8].title" ng-if="cols[8].show" width="80px">
 
       <!--{{$index}}-->
@@ -284,3 +298,4 @@
     </h5>
   </div>
 </div>
+

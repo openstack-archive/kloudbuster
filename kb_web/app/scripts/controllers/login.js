@@ -1,3 +1,17 @@
+//Copyright 2015 Cisco Systems, Inc. All rights reserved.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may
+//not use this file except in compliance with the License. You may obtain
+//a copy of the License at
+//
+//http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+//WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+//License for the specific language governing permissions and limitations
+//under the License.
+
 /**
  * Created by xiyu3 on 10/12/15.
  */
@@ -6,13 +20,16 @@
 
 
 angular.module('kbWebApp')
-  .controller('LoginCtrl', function ($scope,$http,$location,kbHttp,kbCookie) {
+  .controller('LoginCtrl', function ($scope,$http,$location,kbHttp,kbCookie,locationChange) {
     this.awesomeThings = [
       'HTML5 Boilerplate',
       'AngularJS',
       'Karma'
     ];
     //if(kbCookie.getSessionID()!="") $location.path('/');
+    //---------------------------------top navigation bar---------------------------------
+    $(window).on('hashchange', locationChange.change());
+
 
     $scope.deleteSession = function(){
         kbHttp.delMethod("/config/running_config/" + $scope.sessionID)
@@ -92,6 +109,22 @@ angular.module('kbWebApp')
     document.getElementById('file2').addEventListener('change', readFile2, false);
 
 
+    $("#inputPassword1").keydown(function(e){
+      var curKey = e.which;
+      if(curKey == 13){
+        $scope.setConfig();
+      }
+    });
+
+    $("#inputPassword2").keydown(function(e){
+      var curKey = e.which;
+      if(curKey == 13){
+        $scope.setConfig();
+      }
+    });
+
+
+
     $scope.setConfig = function() {
       if($scope.samecloud===true){
         kbCookie.setIsOneCloud(true);
@@ -104,7 +137,6 @@ angular.module('kbWebApp')
 
       //no sessionID but have cred
       $scope.runCon = {"credentials":{},kb_cfg:""};
-
       console.log($scope.credentials);
       $scope.runCon.credentials = $scope.credentials;
 

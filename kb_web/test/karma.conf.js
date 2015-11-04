@@ -34,7 +34,6 @@ module.exports = function(config) {
       'bower_components/bootstrap/dist/js/bootstrap.js',
       'bower_components/d3/d3.js',
       'bower_components/moment/moment.js',
-      'bower_components/n3-line-chart/build/line-chart.js',
       'bower_components/ng-table/dist/ng-table.min.js',
       'bower_components/angular-loading-bar/build/loading-bar.js',
       'bower_components/jquery-touchswipe/jquery.touchSwipe.js',
