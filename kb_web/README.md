@@ -1,14 +1,10 @@
 # KloudBuster Web UI
 
-***
-
 KloudBuster integrates a Python based web server to host the KloudBuster front-end website.
 
 If you want to change the UI code, you need to install NodeJS, npm, grunt and bower.
 
 ## Installation
-
-***
 
 ### NodeJS & npm
 
@@ -36,8 +32,6 @@ Then execute the `bower install` command to install all of the packages which sp
 
 
 ## Build & development
-
-***
 
 Run  `grunt serve` for preview UI.
 
