@@ -128,13 +128,12 @@ angular.module('kbWebApp')
     $scope.setConfig = function() {
       if($scope.samecloud===true){
         kbCookie.setIsOneCloud(true);
-        $scope.credentials = { "tested-passwd": $scope.inputPassword1, "tested-rc": test_rc, "testing-passwd":"", "testing-rc":""};
+        $scope.credentials = { "tested-passwd": $scope.inputPassword1, "tested-rc": test_rc};
       }
       else{
         kbCookie.setIsOneCloud(false);
         $scope.credentials = { "tested-passwd": $scope.inputPassword1, "tested-rc": test_rc, "testing-passwd":inputPassword2, "testing-rc":test_rc2};
       }
-
       //no sessionID but have cred
       $scope.runCon = {"credentials":{},kb_cfg:""};
       console.log($scope.credentials);

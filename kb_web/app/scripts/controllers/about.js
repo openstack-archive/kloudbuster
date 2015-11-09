@@ -106,10 +106,10 @@ angular.module('kbWebApp')
       $("#" + "aboutnav").removeClass("active");
     }
 
-
   })
   .service('kbHttp', function ($http, $q) {
-    var backendUrl = "http://127.0.0.1:8080/api";
+    var backendUrl = $(location).attr('protocol') +"//" + $(location).attr('host') + "/api";
+    //var backendUrl = "http://127.0.0.1:8080/api";
 
     this.getMethod = function (url) {
       var deferred = $q.defer(); // declaration
@@ -138,54 +138,54 @@ angular.module('kbWebApp')
     };
 
     this.putMethod = function (url, arg) {
-      var deferred = $q.defer(); // 声明延后执行，表示要去监控后面的执行
+      var deferred = $q.defer(); // declaration
       $http.defaults.headers.put['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';
       $http.put(backendUrl + url, "arg=" + encodeURIComponent(JSON.stringify(arg)))
         .then(function (data) {
-          deferred.resolve(data);  // 声明执行成功，即http请求数据成功，可以返回数据了
+          deferred.resolve(data);  // success
         },
         function (data) {
-          deferred.reject(data);   // 声明执行失败，即服务器返回错误
+          deferred.reject(data);   // error
         });
-      return deferred.promise;   // 返回承诺，这里并不是最终数据，而是访问最终数据的API
+      return deferred.promise;   // return promise(API)
     };
 
     this.postMethod = function (url, arg) {
-      var deferred = $q.defer(); // 声明延后执行，表示要去监控后面的执行
+      var deferred = $q.defer(); // declaration
       if (arg) {
         $http.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';
         $http.post(backendUrl + url, "arg=" + encodeURIComponent(JSON.stringify(arg)))
           .then(function (data) {
-            deferred.resolve(data);  // 声明执行成功，即http请求数据成功，可以返回数据了
+            deferred.resolve(data);  // success
           },
           function (data) {
-            deferred.reject(data);   // 声明执行失败，即服务器返回错误
+            deferred.reject(data);   // error
           });
-        return deferred.promise;   // 返回承诺，这里并不是最终数据，而是访问最终数据的API
+        return deferred.promise;   // return promise(API)
       }
       else {
         $http.post(backendUrl + url)
           .then(function (data) {
-            deferred.resolve(data);  // 声明执行成功，即http请求数据成功，可以返回数据了
+            deferred.resolve(data);  // success
           },
           function (data) {
-            deferred.reject(data);   // 声明执行失败，即服务器返回错误
+            deferred.reject(data);   // error
           });
-        return deferred.promise;   // 返回承诺，这里并不是最终数据，而是访问最终数据的API
+        return deferred.promise;   // return promise(API)
 
       }
     };
 
     this.delMethod = function (url) {
-      var deferred = $q.defer(); // 声明延后执行，表示要去监控后面的执行
+      var deferred = $q.defer(); // declaration
       $http.delete(backendUrl + url)
         .then(function (data) {
-          deferred.resolve(data);  // 声明执行成功，即http请求数据成功，可以返回数据了
+          deferred.resolve(data);  // success
         },
         function (data) {
-          deferred.reject(data);   // 声明执行失败，即服务器返回错误
+          deferred.reject(data);   // error
         });
-      return deferred.promise;   // 返回承诺，这里并不是最终数据，而是访问最终数据的API
+      return deferred.promise;   // return promise(API)
     };
 
 
