@@ -57,7 +57,6 @@ sed -i "s/^exit\s0/python \/kb_test\/kb_vm_agent.py \&\n\0/g" /etc/rc.local
 # ======
 # Client
 # ======
-
 # python redis client
 pip install redis
 
@@ -75,16 +74,43 @@ cd wrk2
 make
 mv wrk /usr/local/bin/wrk2
 
+# Move the HdrHistogram library to /usr/lib
+mv /usr/local/lib/libhdr_histogram.so /usr/lib/
+
+
+# =================
+# KloudBuster Proxy
+# =================
+cd /kb_test
+git clone git://github.com/openstack/kloudbuster.git
+cd kloudbuster
+pip install -r requirements.txt
+cd kb_web
+npm install -g grunt-cli bower
+npm install
+bower install --allow-root --config.interactive=false --force
+grunt build
+rm -rf ../kb_server/public/ui/*
+mv dist/* ../kb_server/public/ui
+
+
+# =======
+# Cleanup
+# =======
+
 # Remove HdrHistogram_c and wrk2 builds
 rm -rf /tmp/HdrHistogram_c
 rm -rf /tmp/wrk2
 
-# Move the HdrHistogram library to /usr/lib
-mv /usr/local/lib/libhdr_histogram.so /usr/lib/
+# Remove KloudBuster Web UI builds
+rm -rf /kb_test/kloudbuster/kb_web/node_modules
+rm -rf /kb_test/kloudbuster/kb_web/bower_components
+rm -rf /kb_test/kloudbuster/kb_web/.tmp
 
 # Uninstall unneeded packages
 apt-get -y --purge remove git
 apt-get -y --purge remove python-pip
+apt-get -y --purge remove python-dev
 apt-get -y --purge remove build-essential
 apt-get -y --purge remove cmake
 apt-get -y --purge autoremove

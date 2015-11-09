@@ -29,7 +29,7 @@ import redis
 #
 # This version must be incremented if the interface changes or if new features
 # are added to the agent VM
-__version__ = '4'
+__version__ = '5d1'
 
 # TODO(Logging on Agent)
 
@@ -43,6 +43,12 @@ def get_image_name():
 
 def get_image_version():
     return __version__
+
+def exec_command(cmd):
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (stdout, stderr) = p.communicate()
+
+    return p.returncode
 
 class KB_Instance(object):
 
@@ -107,7 +113,7 @@ class KB_Instance(object):
         return cmd
 
 
-class KB_VM_Agent(object):
+class KBA_Client(object):
 
     def __init__(self, user_data):
         host = user_data['redis_server']
@@ -184,7 +190,6 @@ class KB_VM_Agent(object):
         stderr = p.communicate()[1]
         return (p.returncode, p_output, stderr)
 
-
     def work(self):
         for item in self.pubsub.listen():
             if item['type'] != 'message':
@@ -251,50 +256,55 @@ class KB_VM_Agent(object):
             **http_tool_configs)
         return self.exec_command_report(self.last_cmd)
 
-def exec_command(cmd):
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (stdout, stderr) = p.communicate()
 
-    return p.returncode
+class KBA_Server(object):
 
-def start_redis_server():
-    cmd = ['sudo', 'service', 'redis-server', 'start']
-    return exec_command(cmd)
+    def __init__(self, user_data):
+        self.user_data = user_data
 
-def config_nginx_server(http_server_configs):
-    # Generate the HTML file with specified size
-    html_size = http_server_configs['html_size']
-    cmd_str = 'dd if=/dev/zero of=/data/www/index.html bs=%s count=1' % html_size
-    cmd = cmd_str.split()
-    return False if exec_command(cmd) else True
+    def config_nginx_server(self):
+        # Generate the HTML file with specified size
+        html_size = self.user_data['http_server_configs']['html_size']
+        cmd_str = 'dd if=/dev/zero of=/data/www/index.html bs=%s count=1' % html_size
+        cmd = cmd_str.split()
+        return False if exec_command(cmd) else True
 
-def start_nuttcp_server():
-    cmd = ['/usr/bin/nuttcp', '-P5002', '-S', '--single-threaded']
-    return exec_command(cmd)
+    def start_nginx_server(self):
+        cmd = ['sudo', 'service', 'nginx', 'start']
+        return exec_command(cmd)
 
-def start_nginx_server():
-    cmd = ['sudo', 'service', 'nginx', 'start']
-    return exec_command(cmd)
+    # def start_nuttcp_server(self):
+    #     cmd = ['/usr/bin/nuttcp', '-P5002', '-S', '--single-threaded']
+    #     return exec_command(cmd)
+
+class KBA_Proxy(object):
+
+    def __init__(self):
+        pass
+
+    def start_redis_server(self):
+        cmd = ['sudo', 'service', 'redis-server', 'start']
+        return exec_command(cmd)
+
 
 if __name__ == "__main__":
     try:
         with open('user-data', 'r') as f:
-            user_data = eval(f.read())
+            user_data = dict(eval(f.read()))
     except Exception as e:
-        print e.message
-        sys.exit(1)
+        # KloudBuster starts without user-data
+        config_file = 'kloudbuster/kb_server/config.py'
+        cmd = ['pecan', 'serve', config_file]
+        sys.exit(exec_command(cmd))
 
-    if 'role' not in user_data:
-        sys.exit(1)
-
-    if user_data['role'] == 'KB-PROXY':
-        sys.exit(start_redis_server())
-    if user_data['role'] == 'Server':
-        # rc = start_nuttcp_server()
-        if config_nginx_server(user_data['http_server_configs']):
-            sys.exit(start_nginx_server())
-    elif user_data['role'] == 'Client':
-        agent = KB_VM_Agent(user_data)
+    if user_data.get('role') == 'KB-PROXY':
+        agent = KBA_Proxy()
+        sys.exit(agent.start_redis_server())
+    if user_data.get('role') == 'Server':
+        agent = KBA_Server(user_data)
+        sys.exit(agent.start_nginx_server())
+    elif user_data.get('role') == 'Client':
+        agent = KBA_Client(user_data)
         agent.setup_channels()
         agent.hello_thread = threading.Thread(target=agent.send_hello)
         agent.hello_thread.daemon = True
