@@ -279,7 +279,8 @@ class KloudBuster(object):
 
             # Trying to upload images
             kb_image_name = kb_vm_agent.get_image_name() + '.qcow2'
-            image_url = 'http://storage.apps.openstack.org/images/%s' % kb_image_name
+            # image_url = 'http://storage.apps.openstack.org/images/%s' % kb_image_name
+            image_url = 'http://172.29.172.152/downloads/scale_image/%s' % kb_image_name
             LOG.info("Image is not found in %s, uploading from OpenStack App Store..." % kloud)
             try:
                 img = glance_client.images.create(name=img_name_dict[kloud],

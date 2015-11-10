@@ -294,7 +294,7 @@ if __name__ == "__main__":
     except Exception as e:
         # KloudBuster starts without user-data
         cwd = 'kloudbuster/kb_server'
-        cmd = ['python', 'config.py', 'develop']
+        cmd = ['python', 'setup.py', 'develop']
         rc = exec_command(cmd, cwd=cwd)
         if not rc:
             cmd = ['pecan', 'serve', 'config.py']
