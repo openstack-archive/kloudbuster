@@ -91,13 +91,13 @@ npm install
 bower install --allow-root --config.interactive=false --force
 grunt build
 rm -rf ../kb_server/public/ui/*
+mkdir -p ../kb_server/public/ui
 mv dist/* ../kb_server/public/ui
 
 
 # =======
 # Cleanup
 # =======
-
 # Remove HdrHistogram_c and wrk2 builds
 rm -rf /tmp/HdrHistogram_c
 rm -rf /tmp/wrk2
@@ -108,7 +108,7 @@ rm -rf /kb_test/kloudbuster/kb_web/bower_components
 rm -rf /kb_test/kloudbuster/kb_web/.tmp
 
 # Uninstall unneeded packages
-apt-get -y --purge remove git
+apt-get -y --purge remove libyaml-dev
 apt-get -y --purge remove python-pip
 apt-get -y --purge remove python-dev
 apt-get -y --purge remove build-essential

@@ -3,6 +3,7 @@ cmake:
 git:
 iperf:
 libssl-dev:
+libyaml-dev:
 nginx:
 nodejs:
 nodejs-legacy:

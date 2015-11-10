@@ -20,13 +20,13 @@ Ubuntu/Debian based:
 
 .. code-block:: bash
 
-    $ sudo apt-get install python-dev python-pip python-virtualenv
+    $ sudo apt-get install python-dev python-pip python-virtualenv libyaml-dev
 
 RHEL/Fedora/CentOS based:
 
 .. code-block:: bash
 
-    $ sudo yum install gcc python-devel python-pip python-virtualenv
+    $ sudo yum install gcc python-devel python-pip python-virtualenv libyaml-devel
 
 MacOSX:
 

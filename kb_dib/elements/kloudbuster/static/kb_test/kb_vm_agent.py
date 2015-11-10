@@ -44,8 +44,8 @@ def get_image_name():
 def get_image_version():
     return __version__
 
-def exec_command(cmd):
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+def exec_command(cmd, cwd=None):
+    p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = p.communicate()
 
     return p.returncode
@@ -293,9 +293,12 @@ if __name__ == "__main__":
             user_data = dict(eval(f.read()))
     except Exception as e:
         # KloudBuster starts without user-data
-        config_file = 'kloudbuster/kb_server/config.py'
-        cmd = ['pecan', 'serve', config_file]
-        sys.exit(exec_command(cmd))
+        cwd = 'kloudbuster/kb_server'
+        cmd = ['python', 'config.py', 'develop']
+        rc = exec_command(cmd, cwd=cwd)
+        if not rc:
+            cmd = ['pecan', 'serve', 'config.py']
+            sys.exit(exec_command(cmd, cwd=cwd))
 
     if user_data.get('role') == 'KB-PROXY':
         agent = KBA_Proxy()
