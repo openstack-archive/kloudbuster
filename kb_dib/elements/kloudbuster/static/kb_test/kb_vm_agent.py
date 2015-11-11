@@ -29,7 +29,7 @@ import redis
 #
 # This version must be incremented if the interface changes or if new features
 # are added to the agent VM
-__version__ = '5d1'
+__version__ = '5'
 
 # TODO(Logging on Agent)
 
@@ -297,7 +297,7 @@ if __name__ == "__main__":
         cmd = ['python', 'setup.py', 'develop']
         rc = exec_command(cmd, cwd=cwd)
         if not rc:
-            cmd = ['pecan', 'serve', 'config.py']
+            cmd = ['/usr/local/bin/pecan', 'serve', 'config.py']
             sys.exit(exec_command(cmd, cwd=cwd))
 
     if user_data.get('role') == 'KB-PROXY':

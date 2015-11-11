@@ -51,7 +51,7 @@ sed -i 's/start-stop-daemon\ --start/ulimit\ \-n\ 102400\n\t\0/g' /etc/init.d/ng
 # Auto start the KloudBuster Agent, with user-data
 sed -i "s/^exit\s0/cd \/kb_test\n\0/g" /etc/rc.local
 sed -i "s/^exit\s0/if wget http\:\/\/169.254.169.254\/latest\/user-data; then \:; fi\n\0/g" /etc/rc.local
-sed -i "s/^exit\s0/python \/kb_test\/kb_vm_agent.py \&\n\0/g" /etc/rc.local
+sed -i "s/^exit\s0/python kb_vm_agent.py \&\n\0/g" /etc/rc.local
 
 
 # ======
