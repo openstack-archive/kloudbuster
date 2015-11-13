@@ -94,5 +94,6 @@ You need to comment out the secure_path option in your /etc/sudoers file (use
 
     #Defaults   secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
+.. _build_web_ui:
 
 .. include:: ../../kb_web/README.rst

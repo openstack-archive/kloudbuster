@@ -2,19 +2,28 @@
 Installation
 ============
 
-There are two ways to install and run KloudBuster tool. Users of KloudBuster should use regular PyPI based installation, while developers of KloudBuster should use GitHub/OpenStack Repository based installation. Normally, PyPI based installation will satisfy most of use cases, and it is the recommended way for running KloudBuster under production environments, or through an automated or scheduled job. A git repository based installation gives more flexibility, and it is a must for developers of KloudBuster.
+There are two ways to install and run KloudBuster tool. Users of KloudBuster
+should use regular PyPI based installation, while developers of KloudBuster
+should use GitHub/OpenStack Repository based installation. Normally, PyPI
+based installation will satisfy most of use cases, and it is the recommended
+way for running KloudBuster under production environments, or through an
+automated or scheduled job. A git repository based installation gives more
+flexibility, and it is a must for developers of KloudBuster.
 
 .. note:: Installation from PyPI will only have the latest stable version.
 
 PyPI based Installation
 -----------------------
 
-This is the recommended way to install KloudBuster for non-development use, and KloudBuster is available in the Python Package Index (PyPI): `KloudBuster PyPI <https://pypi.python.org/pypi/KloudBuster>`_
+This is the recommended way to install KloudBuster for non-development use,
+and KloudBuster is available in the Python Package Index (PyPI):
+`KloudBuster PyPI <https://pypi.python.org/pypi/KloudBuster>`_
 
 Step 1
 ^^^^^^
 
-You will need to have python 2.7, pip, and some dependencies installed before installing KloudBuster, run the command based on your distro.
+You will need to have python 2.7, pip, and some dependencies installed
+before installing KloudBuster, run the command based on your distro.
 
 Ubuntu/Debian based:
 
@@ -48,7 +57,8 @@ Create a virtual environment for Python, and install KloudBuster:
     $ source vkb/bin/activate
     $ pip install kloudbuster
 
-Alternatively, if you have `virtualenvwrapper <https://virtualenvwrapper.readthedocs.org>`_ installed:
+Alternatively, if you have
+`virtualenvwrapper <https://virtualenvwrapper.readthedocs.org>`_ installed:
 
 .. code-block:: bash
 
@@ -56,7 +66,9 @@ Alternatively, if you have `virtualenvwrapper <https://virtualenvwrapper.readthe
     $ pip install kloudbuster
 
 .. note::
-    "A Virtual Environment is a tool to keep the dependencies required by different projects in separate places, by creating virtual Python environments for them." It is optional but recommended. We could use::
+    "A Virtual Environment is a tool to keep the dependencies required by
+    different projects in separate places, by creating virtual Python
+    environments for them." It is optional but recommended. We could use::
 
     $ sudo pip install kloudbuster
 
@@ -72,7 +84,8 @@ To verify kloudbuster is installed, just type::
 GitHub/OpenStack Repository based Installation
 ----------------------------------------------
 
-It is recommended to run KloudBuster inside a virtual environment. However, it can be skipped if installed in a dedicated VM.
+It is recommended to run KloudBuster inside a virtual environment. However,
+it can be skipped if installed in a dedicated VM.
 
 
 Super quick installation on Ubuntu/Debian
@@ -104,7 +117,8 @@ Super quick installation on RHEL/Fedora/CentOS
 Super quick installation on MacOSX
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-KloudBuster can run natively on MacOSX. These instructions have been verified to work on MacOSX 10.10 (Yosemite).
+KloudBuster can run natively on MacOSX. These instructions have been verified
+to work on MacOSX 10.10 (Yosemite).
 
 First, download XCode from App Store, then execute below commands:
 
@@ -132,27 +146,46 @@ To verify kloudbuster is installed, just type:
 
     $ python kloudbuster/kloudbuster.py --help
 
+.. _upload_kb_image:
 
-Upload VM Image
----------------
+Upload KloudBuster Image
+-------------------------
 
 .. note::
 
-    If your OpenStack Glance can access the Internet, you can skip this section and you are done with the installation.
+    If your OpenStack Glance is able to access the Internet, and you don't
+    need to access the KloudBuster UI from the pre-built image, you can skip
+    this section and you are done with the installation.
 
-KloudBuster needs one "universal" test VM image (referred to as "KloudBuster image") that contains the necessary test software. The KloudBuster image is then instantiated in potentially large number of VMs by the KloudBuster application using the appropriate role (HTTP server, HTTP traffic generator...).
+KloudBuster needs one "universal" test VM image (referred to as "KloudBuster
+image") that contains the necessary test software. The KloudBuster image is
+then instantiated in potentially large number of VMs by the KloudBuster
+application using the appropriate role (HTTP server, HTTP traffic generator,
+etc.).
 
-Pre-built images are available for download from the `OpenStack App Catalog <http://apps.openstack.org>`_ (preferred method). For whatever reason the pre-built version doesn't work for you, the image can be re-built from MacOSX using Vagrant or from any Linux server. See :ref:`here <build_vm_image>` for more details.
-
+Pre-built images are available for download from the
+`OpenStack App Catalog <http://apps.openstack.org>`_ (preferred method). For
+whatever reason the pre-built version doesn't work for you, the image can be
+re-built from MacOSX using Vagrant or from any Linux server. See
+:ref:`here <build_vm_image>` for more details.
 
 Manual upload of the KloudBuster VM image
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If Glance does not have access to http://storage.apps.openstack.org on the Internet, the KloudBuster VM image must be downloaded from the OpenStack App Catalog to an intermediate location then uploaded to Glance using either a Glance CLI command or via Horizon dashboard.
+In order to upload the KloudBuster Image to the cloud under test, the image
+must be downloaded from the OpenStack App Catalog to an intermediate location,
+e.g. the jump host which has the access to both Internet and the cloud under
+test, then uploaded to Glance using either a Glance CLI command or via Horizon
+dashboard.
 
-The KloudBuster VM image can be downloaded from `<http://apps.openstack.org/#tab=glance-images>`_. Look for an image named with the "kloudbuster_v" prefix and download the one that has the latest version.
+KloudBuster VM images are qcow2 images named "kloudbuster_v<version>.qcow2"
+(e.g. "kloudbuster_v3.qcow2"). The image can be downloaded from
+`<http://apps.openstack.org/#tab=glance-images>`_. Look for an image named
+with the "kloudbuster_v" prefix and download the latest version from the list.
 
-KloudBuster VM images are qcow2 images named "kloudbuster_v<version>.qcow2" (e.g. "kloudbuster_v3.qcow2"). The name of the image in Glance must match exactly the image name in the App Catalog (without the .qcow2 extension), for example to upload the image from a local copy of that image:
+The name of the image in Glance must match exactly the image name in the App
+Catalog (without the .qcow2 extension), for example to upload the image from
+a local copy of that image:
 
 .. code-block:: bash
 

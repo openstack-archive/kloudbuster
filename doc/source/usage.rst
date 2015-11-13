@@ -2,18 +2,6 @@
 Usage
 =====
 
-Quick Start Guide
------------------
-
-This guide will allow you to run KloudBuster on your OpenStack cloud using
-the default scale settings which is generally safe to run on any cloud, small
-or large (it should also work on an all-in-one devstack cloud installation).
-
-The minimal pre-requisites to run KloudBuster:
-
-    * Admin access to the cloud under test
-    * 3 available floating IPs
-
 There are total of three ways of running KloudBuster, and the easiest way
 to start is using the **Web UI**. It offers the most friendly interface, and
 also needs the least learning to get started. **CLI** is the traditional way
@@ -23,40 +11,47 @@ have a GUI enabled environment. **Rest API** gives another way to access
 and control KloudBuster. All APIs provided are well documented, and the
 built-in web UI is fully implemented on top of these APIs.
 
-.. _run_kloudbuster_with_web_ui:
+The default scale settings of KloudBuster is at minimal scale, which is
+generally safe to run on any cloud, small or large. It should also work on
+an all-in-one devstack cloud installation as well. The minimal pre-requisites
+to run KloudBuster:
+
+    * Admin access to the cloud under test
+    * 3 available floating IPs
+
 
 Running KloudBuster with Web UI
 -------------------------------
 
-.. note::
+The Web UI is developed using AngularJS framework, which needs to be built
+before serving. If you want the web app to run on localhost, you have to
+build it from source, and start the KloudBuster server. Refer to
+:ref:`here <build_web_ui>` for the steps to build the web app, and refer to
+:ref:`below section <start_kloudbuster_server>` for the steps to start the
+KloudBuster server.
 
-    As of now, the Web UI can only be started when KloudBuster is using
-    GitHub/OpenStack Repository based installation. Availability of running
-    under PyPI based installation is working in progress.
+An easier and better way is to use the KloudBuster image. The KloudBuster
+image has the Web UI built-in, and it is ready to use once up running. It
+is as easy as create a new regular VM with OpenStack in OpenStack. Here
+are the steps for get the KloudBuster Web UI running from scratch:
 
-KloudBuster integrates a Python based web server
-`Pecan <http://www.pecanpy.org/>`_ to host the KloudBuster front-end
-website, which listens to localhost:8080 by default.
+1. Follow the steps :ref:`here <upload_kb_image>` to upload the KloudBuster
+   image to the cloud uder test;
 
-From the root of the KloudBuster repository, go to kb_server directory.
-If this is the first time to start the server, run below command once
-to setup the environment::
+2. Create and configure the Routers, Networks for holding a new VM;
 
-    $ python setup.py develop
+3. Create a new security group, which allows the ingress TCP traffic on
+   port 8080;
 
-Then start the server by doing::
+4. Launch an instance using the KloudBuster image，with the security group
+   we just created, and connect to the network we just created. Leave the
+   Key Pair as blank, as we don't need the SSH access to this VM;
 
-    $ pecan serve config.py
+5. Associate a floating IP to the newly created VM;
 
-Idealy, you should see a message like below, which indicates the server
-is up running::
+6. Open your browser, and type the below address to get started::
 
-    Starting server in PID 26431
-    serving on 0.0.0.0:8080, view at http://127.0.0.1:8080
-
-Open your browser, and type the below address to start using it::
-
-    http://127.0.0.1:8080/ui/index.html
+    http://<floating_ip>:8080/ui/index.html
 
 
 Running KloudBuster with CLI
@@ -77,7 +72,6 @@ KloudBuster will run on a single cloud mode and create:
     * 1 VM running the Redis server (for orchestration)
     * 1 VM running the HTTP traffic generator (default to 1000 connections,
       1000 requests per second, and 30 seconds duration)
-
 
 Run kloudbuster with the following options::
 
@@ -332,15 +326,60 @@ for more options.
 Running with Rest API
 ---------------------
 
+.. note::
+
+    As of now, the Web UI can only be started when KloudBuster is using
+    GitHub/OpenStack Repository based installation.
+
 All Rest APIs are well documented using `Swagger <http://swagger.io/>`_. In
 order to view them in a nice format, copy the entire contents of file
 kb_server/kloudbuster-swagger.yaml, and paste into the left panel of
 http://editor.swagger.io. Then you will see the specification of all Rest
 APIs in the right panel of the web page.
 
-Similar to running with Web UI, the Rest API server is hosted by Pecan as
-well. So refer to :ref:`above section <run_kloudbuster_with_web_ui>` for
-detailed documentations on how to start the Pecan server.
+.. _start_kloudbuster_server:
+
+KloudBuster integrates a Python based web server
+`Pecan <http://www.pecanpy.org/>`_ to host both the KloudBuster Rest API
+server and the KloudBuster front-end website, which listens to
+localhost:8080 by default.
+
+From the root of the KloudBuster repository, go to kb_server directory.
+If this is the first time to start the server, run below command once
+to setup the environment::
+
+    $ python setup.py develop
+
+Then start the server by doing::
+
+    $ pecan serve config.py
+
+Idealy, you should see a message like below, which indicates the server
+is up running::
+
+    Starting server in PID 26431
+    serving on 0.0.0.0:8080, view at http://127.0.0.1:8080
 
 Once the server is started, you can use different HTTP methods
 (GET/PUT/POST/DELETE) to interactive with KloudBuster.
+
+
+KloudBuster Standard Profiling
+------------------------------
+
+KloudBuster is able to perform the scale testing using different cominations
+of configurations. There are multiple factors which can impact the final
+results (VM count, number of connections per VM, number of requests per
+seconds per VM, timeout, etc.). So KloudBuster is defining a specific set of
+configurations among all cominations as a standard run.
+
+In the standard run, the number of connections per VM will be set to 1000,
+the number of requests per seconds per VM is set to 1000, the HTTP request
+timeout is set to 5 seconds. The stop limit for progression runs will be error
+packets greater than 50. Above configurations are all set by default.
+
+In order to perform the standard run, set the max VM counts for the tests,
+and enable the rogression runs. KloudBuster will start the iteration until
+reaching the stop limit or the max scale. Eventually, once the KloudBuster run
+is finished, the cloud performance can be told by looking at how many VMs
+KloudBuster can run to.
