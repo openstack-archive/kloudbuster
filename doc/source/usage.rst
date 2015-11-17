@@ -376,10 +376,15 @@ configurations among all cominations as a standard run.
 In the standard run, the number of connections per VM will be set to 1000,
 the number of requests per seconds per VM is set to 1000, the HTTP request
 timeout is set to 5 seconds. The stop limit for progression runs will be error
-packets greater than 50. Above configurations are all set by default.
+packets greater than 50. The size of the HTML page in the server VMs will be
+32768 Bytes. Above configurations are all set by default.
 
 In order to perform the standard run, set the max VM counts for the tests,
 and enable the rogression runs. KloudBuster will start the iteration until
-reaching the stop limit or the max scale. Eventually, once the KloudBuster run
-is finished, the cloud performance can be told by looking at how many VMs
+reaching the stop limit or the max scale. Eventually, once the KloudBuster
+run is finished, the cloud performance can be told by looking at how many VMs
 KloudBuster can run to.
+
+As a reference, for a Kilo OpenStack deployment (LinuxBridge + VLAN) with
+Packstack, using an 10GE NIC card for data plane traffic, KloudBuster can run
+up to 18 VMs and achieve approximately 5 GBps throughput.
