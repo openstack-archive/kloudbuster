@@ -311,8 +311,7 @@ class KBRunner(object):
             limit = self.config.progression.stop_limit
             timeout = self.config.http_tool_configs.timeout
             vm_list = self.full_client_dict.keys()
-            vm_list.sort()
-
+            vm_list.sort(cmp=lambda x, y: cmp(int(x[x.rfind('I') + 1:]), int(y[y.rfind('I') + 1:])))
             self.client_dict = {}
             cur_stage = 1
 
@@ -323,7 +322,7 @@ class KBRunner(object):
                 if target_vm_count > len(self.full_client_dict):
                     break
                 if self.tool_result and 'latency_stats' in self.tool_result:
-                    err = self.tool_result['http_sock_err']
+                    err = self.tool_result['http_sock_err'] + self.tool_result['http_sock_timeout']
                     pert_dict = dict(self.tool_result['latency_stats'])
                     if limit[1] in pert_dict.keys():
                         timeout_at_percentile = pert_dict[limit[1]] // 1000000

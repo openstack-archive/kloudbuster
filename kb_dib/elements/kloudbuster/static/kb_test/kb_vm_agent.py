@@ -305,7 +305,10 @@ if __name__ == "__main__":
         sys.exit(agent.start_redis_server())
     if user_data.get('role') == 'Server':
         agent = KBA_Server(user_data)
-        sys.exit(agent.start_nginx_server())
+        if agent.config_nginx_server():
+            sys.exit(agent.start_nginx_server())
+        else:
+            sys.exit(1)
     elif user_data.get('role') == 'Client':
         agent = KBA_Client(user_data)
         agent.setup_channels()
