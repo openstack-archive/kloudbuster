@@ -197,7 +197,7 @@ class User(object):
         creden['tenant_name'] = self.tenant.tenant_name
 
         # Create the neutron client to be used for all operations
-        self.neutron_client = neutronclient.Client(**creden)
+        self.neutron_client = neutronclient.Client(endpoint_type='publicURL', **creden)
 
         # Create a new nova and cinder client for this User with correct credentials
         creden_nova = {}
@@ -207,8 +207,8 @@ class User(object):
         creden_nova['project_id'] = self.tenant.tenant_name
         creden_nova['version'] = 2
 
-        self.nova_client = Client(**creden_nova)
-        self.cinder_client = cinderclient.Client(**creden_nova)
+        self.nova_client = Client(endpoint_type='publicURL', **creden_nova)
+        self.cinder_client = cinderclient.Client(endpoint_type='publicURL', **creden_nova)
 
         if self.tenant.kloud.reusing_tenants:
             self.check_resources_quota()

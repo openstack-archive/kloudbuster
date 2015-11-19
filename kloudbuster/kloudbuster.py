@@ -50,7 +50,7 @@ def create_keystone_client(creds):
     Return the keystone client and auth URL given a credential
     """
     creds = creds.get_credentials()
-    return (keystoneclient.Client(**creds), creds['auth_url'])
+    return (keystoneclient.Client(endpoint_type='publicURL', **creds), creds['auth_url'])
 
 class Kloud(object):
     def __init__(self, scale_cfg, cred, reusing_tenants, testing_side=False):

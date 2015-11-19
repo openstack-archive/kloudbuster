@@ -44,12 +44,7 @@ class Tenant(object):
             LOG.info("Using tenant: " + self.tenant_name)
             # Only admin can retrive the object via Keystone API
             self.tenant_object = None
-            try:
-                # Try to see if we have the admin access to retrive the tenant id using
-                # tenant name directly from keystone
-                self.tenant_id = self.kloud.keystone.tenants.find(name=self.tenant_name).id
-            except Exception:
-                self.tenant_id = self.kloud.keystone.tenant_id
+            self.tenant_id = self.kloud.keystone.tenant_id
 
         self.tenant_quota = tenant_quota
         self.reusing_users = reusing_users
