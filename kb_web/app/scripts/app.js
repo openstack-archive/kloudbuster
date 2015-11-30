@@ -31,6 +31,8 @@ angular
     'ngSanitize',
     'ngTouch',
     'ngTable',
+    'ngMessages',
+    'ngMaterial',
 
     'ui.bootstrap',
     'angular-loading-bar',

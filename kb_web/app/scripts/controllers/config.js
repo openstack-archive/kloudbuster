@@ -22,7 +22,7 @@
  * Controller of the kbWebApp
  */
 angular.module('kbWebApp')
-  .controller('ConfigCtrl', function ($scope,$http,$location,kbHttp,kbCookie, locationChange) {
+  .controller('ConfigCtrl', function ($scope, $http, $location, showAlert, kbHttp, kbCookie, locationChange) {
     this.awesomeThings = [
       'HTML5 Boilerplate',
       'AngularJS',
@@ -247,8 +247,8 @@ angular.module('kbWebApp')
             $scope.configStatus();
           },
           function (response) {  //  .reject
-            console.log("get status error:");
-            console.log(response);
+            console.log("status error");
+            //console.log(response);
           }
         );
       }
@@ -264,14 +264,14 @@ angular.module('kbWebApp')
     var disabledStagingConfig=false;
 
     $scope.disableConfig = function(disableId){
-      $("#"+disableId).find("input").each(function() {//show Config
+      $("#"+disableId).find("input,button").each(function() {//show Config
         $(this).attr("disabled", "disabled");
         //$(this).removeAttr("disabled");
       });
     };
 
     $scope.enableConfig = function(enableId){
-      $("#"+enableId).find("input").each(function() {//disable Config
+      $("#"+enableId).find("input,button").each(function() {//disable Config
         //$(this).attr("disabled", "disabled");
         $(this).removeAttr("disabled");
       });
@@ -285,6 +285,7 @@ angular.module('kbWebApp')
           disabledStagingConfig=false;
           $scope.enableConfig("stagingConfig2");
           $scope.enableConfig("getButton");
+          $("md-radio-button").removeAttr("disabled");
 
         }
       }
@@ -296,6 +297,7 @@ angular.module('kbWebApp')
           disabledStagingConfig=true;
           $scope.disableConfig("stagingConfig2");
           $scope.disableConfig("getButton");
+          $("md-radio-button").attr("disabled", "disabled");
         }
       }
 
@@ -311,11 +313,18 @@ angular.module('kbWebApp')
         .then(
         function (response) {  // 调用承诺API获取数据 .resolve
           $scope.setUserData(response.data.server);
-          console.log("get hypervisor list");
+          //console.log("get hypervisor list");
         },
         function (response) {  // 处理错误 .reject
           console.log("get hypervisor list error:");
           console.log(response);
+          //if (response.status == 400)
+          //  showAlert.showAlert("Cannot get the hypervisor list!");
+          //else if (response.status == 404)
+          //  showAlert.showAlert("The session_id is not found or invalid!");
+          //else if (response.status == -1)
+          //  showAlert.showAlert("Cannot get the hypervisor list!");
+
         }
       )
     };
@@ -331,8 +340,9 @@ angular.module('kbWebApp')
           console.log("get & save default config");
         },
         function(response) {  //  .reject
-          console.log("get default config error:");
-          console.log(response);
+          //console.log("get default config error:");
+          //console.log(response);
+          showAlert.showAlert("Cannot get the Default Configuration!");
         }
       );
       //$scope.config =JSON.stringify(response);
@@ -422,7 +432,7 @@ angular.module('kbWebApp')
           }
 
           kbCookie.setTopology($scope.topology);
-          console.log($scope.topology);
+          //console.log($scope.topology);
         }
         else{
           kbCookie.setTopology({"servers_rack":"", "clients_rack": ""});
@@ -437,15 +447,19 @@ angular.module('kbWebApp')
           .then(
           function (response) {  //  .resolve
             console.log("change running config");
+            showAlert.showAlert("Configuration updated successfully!");
+
           },
           function (response) {  //  .reject
-            console.log("change running config error:");
-            console.log(response);
+            //console.log("change running config error:");
+            //console.log(response);
+            showAlert.showAlert("Failed to update configuration!");
           }
         )
       }
       else{
-        console.log("config not allow to change now!");
+        //console.log("config not allow to change now!");
+        showAlert.showAlert("Configuration cannot be changed now!");
       }
     };
 
@@ -469,12 +483,19 @@ angular.module('kbWebApp')
       }
       else if($scope.availability_zone==3)
       {
+        //$scope.getTopology();
         $scope.config.server.availability_zone = "";
         $scope.config.client.availability_zone = "";
       }
     };
 
   });
+  //.config(function($mdThemingProvider) {
+  //  // Configure a dark theme with primary foreground yellow
+  //  $mdThemingProvider.theme('docs-dark', 'default')
+  //    .primaryPalette('yellow')
+  //    .dark();
+  //});
 
 
 

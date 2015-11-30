@@ -268,5 +268,20 @@ angular.module('kbWebApp')
       return logOffset;
     };
 
+  })
+  .service('showAlert', function($mdDialog) {
+    this.showAlert = function (words, ev) {
+      var alert = $mdDialog.alert({
+        title: 'Attention',
+        content: words,
+        ok: 'Close'
+      });
+      $mdDialog
+        .show(alert)
+        .finally(function () {
+          alert = undefined;
+        });
+    };
+
   });
 

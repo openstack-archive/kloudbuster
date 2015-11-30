@@ -15,10 +15,16 @@
     "moment": "~2.10.6",
     "ng-table": "~0.8.3",
     "angular-loading-bar": "~0.8.0",
-    "jquery-touchswipe": "~1.6.12"
+    "jquery-touchswipe": "~1.6.12",
+    "angular-messages": "~1.4.5",
+    "angular-material": "~0.11.4"
   },
   "devDependencies": {
+<<<<<<< HEAD
     "angular-mocks": "^1.4.5"
+=======
+    "angular-mocks": "~1.4.5"
+>>>>>>> 0b002f3... UI development
   },
   "appPath": "app",
   "moduleName": "kbWebApp",

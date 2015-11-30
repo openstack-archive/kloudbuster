@@ -18,19 +18,19 @@
 'use strict';
 
 angular.module('kbWebApp')
-  .controller('IntervalCtrl', function ($scope, $http, kbHttp, $q, $location, kbCookie, monitorMode, locationChange) {
+  .controller('IntervalCtrl', function ($scope, $http, kbHttp, $q, $location, showAlert, kbCookie, monitorMode, locationChange) {
     this.awesomeThings = [
       'HTML5 Boilerplate',
       'AngularJS',
       'Karma'
     ];
 
-    if(kbCookie.getSessionID()==="") $location.path('/Login');
+    if (kbCookie.getSessionID() === "") $location.path('/Login');
     //---------------------------------top navigation bar---------------------------------
     $(window).on('hashchange', locationChange.change());
 
 
-    $("[data-toggle='.container']").click(function() {
+    $("[data-toggle='.container']").click(function () {
       var toggle_el1 = $(this).data("toggle");
       $(toggle_el1).toggleClass("open-sidebar");
       $("#littleglyph1").toggleClass("glyphicon-triangle-right");
@@ -39,20 +39,17 @@ angular.module('kbWebApp')
       //$("#content").toggleClass("content-smaller");
     });
     $(".swipe-area").swipe({
-      swipeStatus:function(event, phase, direction, distance, duration, fingers)
-      {
-        if (phase=="move" && direction =="right") {
+      swipeStatus: function (event, phase, direction, distance, duration, fingers) {
+        if (phase == "move" && direction == "right") {
           $(".container").addClass("open-sidebar");
           return false;
         }
-        if (phase=="move" && direction =="left") {
+        if (phase == "move" && direction == "left") {
           $(".container").removeClass("open-sidebar");
           return false;
         }
       }
     });
-
-
 
 
     $scope.oneAtATime = true;
@@ -68,43 +65,41 @@ angular.module('kbWebApp')
     $scope.status2.open = true;
 
     $scope.alerts = [];
-    $scope.closeAlert = function(index) {
+    $scope.closeAlert = function (index) {
       $scope.alerts.splice(index, 1);
     };
 
 
-    $scope.sessionID=kbCookie.getSessionID();
-    $scope.status=kbCookie.getStatus();
-    $scope.config=kbCookie.getConfig();
+    $scope.sessionID = kbCookie.getSessionID();
+    $scope.status = kbCookie.getStatus();
+    $scope.config = kbCookie.getConfig();
     //$scope.credentials=kbCookie.getCredentials();
 
 
-    $scope.getRunConfig = function() {
+    $scope.getRunConfig = function () {
       kbHttp.getMethod("/config/running_config/" + $scope.sessionID)
         .then(
-        function(response) {  //  .resolve
+        function (response) {  //  .resolve
           $scope.config = response.data;
           kbCookie.setConfig(response.data);
           console.log("get & save config");
         },
-        function(response) {  //  .reject
+        function (response) {  //  .reject
           console.log("get running config error:");
           console.log(response);
         }
       );
     };
 
-    if($scope.sessionID && !$scope.config)
-    {
+    if ($scope.sessionID && !$scope.config) {
       $scope.getRunConfig();
     }
 
 
-
-    $scope.setConfig = function() {
+    $scope.setConfig = function (ifRun) {
       var deferred = $q.defer();
 
-      if($scope.status==="READY") {
+      if ($scope.status === "READY") {
         $scope.config.client.progression.enabled = false;//!!
         kbCookie.setConfig($scope.config);
         $scope.chaCon = {"kb_cfg": {}};
@@ -116,23 +111,50 @@ angular.module('kbWebApp')
           function (response) {  //  .resolve
             console.log("change running config");
             deferred.resolve(1);
+            if (ifRun != 1) {
+              showAlert.showAlert("Configuration updated successfully!");
+            }
 
           },
           function (response) {  //  .reject
-            console.log("change running config error:");
-            console.log(response);
+            //console.log("change running config error:");
+            //console.log(response);
             deferred.reject(0);
+            if (ifRun != 1) {
+              if (response.status == 400)
+                showAlert.showAlert("Error while parsing configurations! Please check your inputs!");
+              else if (response.status == 403)
+                showAlert.showAlert("Cannot update configuration if KloudBuster is busy or in error state");
+              else if (response.status == -1)
+                showAlert.showAlert("Error while connecting kloudbuster server!");
+            }
           }
         );
       }
-      else if($scope.status==="STAGED"){
-        if ($scope.config.client.progression.enabled === true) {
-          alert("Can't Run Monitor Test Now! You have chosen Progression Test. Click Unstage Button First!");
-          deferred.reject(0);
-          return deferred.promise;
-        }
+      else if ($scope.status === "STAGED") {
+        //if ($scope.config.client.progression.enabled === true) {
+        //  alert("Can't Run Monitor Test Now! You have chosen Progression Test. Click Unstage Button First!");
+        //  deferred.reject(0);
+        //  return deferred.promise;
+        //}
+        //if ($scope.config.client.progression.report_interval === 0) {
+        //  alert("Can't Run Monitor Test Now! Report interval must be a number no less than 1.");
+        //  deferred.reject(0);
+        //  return deferred.promise;
+        //}
         kbCookie.setConfig($scope.config);
-        $scope.chaCon = {"kb_cfg": {"client":{"http_tool_configs":{"duration":$scope.config.client.http_tool_configs.duration,"rate_limit":$scope.config.client.http_tool_configs.rate_limit,"connections":$scope.config.client.http_tool_configs.connections,"report_interval":$scope.config.client.http_tool_configs.report_interval}}}};
+        $scope.chaCon = {
+          "kb_cfg": {
+            "client": {
+              "http_tool_configs": {
+                "duration": $scope.config.client.http_tool_configs.duration,
+                "rate_limit": $scope.config.client.http_tool_configs.rate_limit,
+                "connections": $scope.config.client.http_tool_configs.connections,
+                "report_interval": $scope.config.client.http_tool_configs.report_interval
+              }
+            }
+          }
+        };
         console.log($scope.chaCon);
 
         kbHttp.putMethod("/config/running_config/" + $scope.sessionID, $scope.chaCon)
@@ -140,74 +162,81 @@ angular.module('kbWebApp')
           function (response) {  //  .resolve
             console.log("change running config");
             deferred.resolve(1);
-
+            if (ifRun != 1) {
+              showAlert.showAlert("Configuration updated successfully!");
+            }
           },
           function (response) {  //  .reject
-            console.log("change running config error:");
-            console.log(response);
+            //console.log("change running config error:");
+            //console.log(response);
             deferred.reject(0);
+            if (ifRun != 1) {
+              if (response.status == 400)
+                showAlert.showAlert("Error while parsing configurations! Please check your inputs!");
+              else if (response.status == 403)
+                showAlert.showAlert("Cannot update configuration if KloudBuster is busy or in error state");
+              else if (response.status == -1)
+                showAlert.showAlert("Error while connecting kloudbuster server!");
+            }
           }
         );
       }
-      else{
+      else {
         console.log("config not allow to change now!");
         deferred.reject(0);
       }
       return deferred.promise;
     };
 
-    var disabledStagingConfig=false;
-    var disabledRunningConfig=false;
+    var disabledStagingConfig = false;
+    var disabledRunningConfig = false;
 
-    $scope.disableConfig = function(disableId){
-      $("#"+disableId).find("input").each(function() {//show Config
+    $scope.disableConfig = function (disableId) {
+      $("#" + disableId).find("input").each(function () {//show Config
         $(this).attr("disabled", "disabled");
         //$(this).removeAttr("disabled");
       });
     };
 
-    $scope.enableConfig = function(enableId){
-      $("#"+enableId).find("input").each(function() {//disable Config
+    $scope.enableConfig = function (enableId) {
+      $("#" + enableId).find("input").each(function () {//disable Config
         //$(this).attr("disabled", "disabled");
         $(this).removeAttr("disabled");
       });
 
     };
 
-    $scope.configStatus = function(){
+    $scope.configStatus = function () {
 
-      if($scope.status === "READY")//show all config
+      if ($scope.status === "READY")//show all config
       {
-        if(disabledStagingConfig===true)
-        {
-          disabledStagingConfig=false;
+        if (disabledStagingConfig === true) {
+          disabledStagingConfig = false;
           $scope.enableConfig("stagingConfig");
         }
-        if(disabledRunningConfig===true) {
+        if (disabledRunningConfig === true) {
           disabledRunningConfig = false;
           $scope.enableConfig("runningConfig");
         }
       }
-      else if($scope.status === "STAGED") //show running config
+      else if ($scope.status === "STAGED") //show running config
       {
-        if(disabledStagingConfig===false)
-        {
-          disabledStagingConfig=true;
+        if (disabledStagingConfig === false) {
+          disabledStagingConfig = true;
           $scope.disableConfig("stagingConfig");
         }
-        if(disabledRunningConfig===true) {
+        if (disabledRunningConfig === true) {
           disabledRunningConfig = false;
           $scope.enableConfig("runningConfig");
         }
       }
       else//no config can be modified
       {
-        if(disabledStagingConfig===false)
-        {
-          disabledStagingConfig=true;
+        if (disabledStagingConfig === false) {
+          disabledStagingConfig = true;
           $scope.disableConfig("stagingConfig");
         }
-        if(disabledRunningConfig===false) {
+        if (disabledRunningConfig === false) {
           disabledRunningConfig = true;
           $scope.disableConfig("runningConfig");
         }
@@ -216,11 +245,10 @@ angular.module('kbWebApp')
 
 
     var pointNumber = 0;
-    $scope.pointNum = function(){
+    $scope.pointNum = function () {
       var point = ".";
-      pointNumber = (pointNumber+1)%6;
-      for(var x = 0; x < pointNumber; x++)
-      {
+      pointNumber = (pointNumber + 1) % 6;
+      for (var x = 0; x < pointNumber; x++) {
         point = point + " .";
       }
       return point;
@@ -232,13 +260,16 @@ angular.module('kbWebApp')
 
     $scope.setStatus = false;//if settings Button disabled
 
+    $scope.stageButton = "Stage";
     $scope.setUnstage = true;//if Unstage Button disabled
 
     $scope.client_vm_count = 0;
     $scope.server_vm_count = 0;
 
-    $scope.checkStatus = function(){
-      if($scope.sessionID) {
+    $scope.statusButton = "btn-default";
+
+    $scope.checkStatus = function () {
+      if ($scope.sessionID) {
         kbHttp.getMethod2("/kloudbuster/status/" + $scope.sessionID)
           .then(
           function (response) {  //  .resolve
@@ -246,76 +277,85 @@ angular.module('kbWebApp')
             $scope.configStatus();
             kbCookie.setStatus($scope.status);
             if ($scope.status === "READY") {
-              $scope.runButton = "Create VMs";
-              $scope.runStatus = false;//show button
+              $scope.runButton = "Run Test";
+              $scope.runStatus = true;//disable button
               $scope.setStatus = false;//show button
-              $scope.setUnstage = true;//disable button
+              $scope.stageButton = "Stage";
+              $scope.setUnstage = false;//show button
               $scope.client_vm_count = 0;
               $scope.server_vm_count = 0;
               $(".loading").addClass("pause");
-              $scope.info="";
+              $scope.statusButton = "btn-success";
+              $scope.info = "";
 
             }
             else if ($scope.status === "STAGING") {
               $scope.runButton = "Run Test";
               $scope.runStatus = true;
               $scope.setStatus = true;
+              $scope.stageButton = "Stage";
               $scope.setUnstage = true;
               $scope.client_vm_count = response.data.client_vm_count;
               $scope.server_vm_count = response.data.server_vm_count;
               $(".loading").removeClass("pause");
-              $scope.info="KloudBuster is Creating VM(s)"+$scope.pointNum();
+              $scope.statusButton = "btn-info";
+              $scope.info = "KloudBuster is Creating VM(s)" + $scope.pointNum();
 
             }
             else if ($scope.status === "STAGED") {
               $scope.runButton = "Run Test";
               $scope.runStatus = false;
               $scope.setStatus = false;
+              $scope.stageButton = "Unstage";
               $scope.setUnstage = false;
               $scope.client_vm_count = $scope.config.server.routers_per_tenant * $scope.config.server.networks_per_router * $scope.config.server.vms_per_network * $scope.config.server.number_tenants;
               $scope.server_vm_count = $scope.client_vm_count;
               $(".loading").addClass("pause");
-              $scope.info="";
+              $scope.statusButton = "btn-success";
+              $scope.info = "";
 
             }
             else if ($scope.status === "RUNNING") {
               $scope.runButton = "Stop Test";
               $scope.runStatus = false;
               $scope.setStatus = true;
+              $scope.stageButton = "Unstage";
               $scope.setUnstage = true;
               $scope.getSeqReport();
               $scope.client_vm_count = $scope.config.server.routers_per_tenant * $scope.config.server.networks_per_router * $scope.config.server.vms_per_network * $scope.config.server.number_tenants;
               $scope.server_vm_count = $scope.client_vm_count;
               $(".loading").removeClass("pause");
-              $scope.info="KloudBuster is Running"+$scope.pointNum();
+              $scope.statusButton = "btn-info";
+              $scope.info = "KloudBuster is Running" + $scope.pointNum();
 
             }
             else if ($scope.status === "ERROR") {
               $scope.runButton = "Run Test";
               $scope.runStatus = true;
               $scope.setStatus = true;
+              $scope.stageButton = "Unstage";
               $scope.setUnstage = false;
               $scope.client_vm_count = $scope.config.server.routers_per_tenant * $scope.config.server.networks_per_router * $scope.config.server.vms_per_network * $scope.config.server.number_tenants;
               $scope.server_vm_count = $scope.client_vm_count;
               $(".loading").addClass("pause");
-              $scope.info="";
+              $scope.statusButton = "btn-danger";
+              $scope.info = "";
 
             }
-            else if($scope.status === "CLEANING" || $scope.status === "STOPPING")
-            {
+            else if ($scope.status === "CLEANING" || $scope.status === "STOPPING") {
               $scope.runButton = "Run Test";
               $scope.runStatus = true;
               $scope.setStatus = true;
+              $scope.stageButton = "Unstage";
               $scope.setUnstage = true;
               $scope.client_vm_count = $scope.config.server.routers_per_tenant * $scope.config.server.networks_per_router * $scope.config.server.vms_per_network * $scope.config.server.number_tenants;
               $scope.server_vm_count = $scope.client_vm_count;
               $(".loading").removeClass("pause");
-              $scope.info="Please Wait"+$scope.pointNum();
+              $scope.statusButton = "btn-info";
+              $scope.info = "Please Wait" + $scope.pointNum();
 
             }
-            {
 
-            }
           },
           function (response) {  //  .reject
             console.log("get status error:");
@@ -323,68 +363,108 @@ angular.module('kbWebApp')
           }
         );
       }
-      else
-      {
+      else {
         $scope.status = "NO SESSION ID";
       }
     };
     $scope.checkStatus();
 
 
-
-    $scope.setStage = function(){
-        kbHttp.postMethod("/kloudbuster/stage/" + $scope.sessionID)
-          .then(
-          function(response) {  //  .resolve
-            $scope.checkStatus();
-          },
-          function(response) {  //  .reject
-            console.log("set stage error:");
-            console.log(response);
-          }
-        );
-    };
-
-    $scope.runKb = function(){
-        kbHttp.postMethod("/kloudbuster/run_test/" + $scope.sessionID)
-          .then(
-          function(response) {  //  .resolve
-            $scope.checkStatus();
-          },
-          function(response) {  //  .reject
-            console.log("running error:");
-            console.log(response);
-          }
-        );
-    };
-
-    $scope.stopKb = function(){
-      kbHttp.postMethod("/kloudbuster/stop_test/" + $scope.sessionID)
+    $scope.setStage = function () {
+      kbHttp.postMethod("/kloudbuster/stage/" + $scope.sessionID)
         .then(
-        function(response) {  //  .resolve
-          $scope.checkStatus();
+        function (response) {  //  .resolve
+          //$scope.checkStatus();
+          showAlert.showAlert("Staging all resources to run KloudBuster! Please wait...");
         },
-        function(response) {  //  .reject
-          console.log("stop error:");
+        function (response) {  //  .reject
+          console.log("set stage error:");
           console.log(response);
+          showAlert.showAlert("Unable to stage resources!");
         }
       );
     };
 
-    $scope.scaleTest = function(){
-      if($scope.status==="RUNNING"){
+    $scope.CleanUp = function () {
+      $scope.initChart();
+      if ($scope.sessionID && ($scope.status === "ERROR" || $scope.status === "STAGED")) {
+        kbHttp.postMethod("/kloudbuster/cleanup/" + $scope.sessionID)
+          .then(
+          function (response) {  //  .resolve
+            $scope.checkStatus();
+            showAlert.showAlert("Cleanup KloudBuster!");
+          },
+          function (response) {  //  .reject
+            console.log("clean error:");
+            console.log(response);
+          }
+        );
+      }
+      else {
+        console.log("Cannot cleanup!");
+      }
+    };
+
+    $scope.stage = function(){
+      if($scope.status==="ERROR"||$scope.status==="STAGED"){
+        //$scope.initChart();
+        $scope.CleanUp();
+      }
+      else if($scope.status==="READY"){
+        var promise = $scope.setConfig(1);
+        promise.then(function () {
+          $scope.setStage();
+        });
+      }
+    };
+
+
+
+    $scope.runKb = function () {
+      kbHttp.postMethod("/kloudbuster/run_test/" + $scope.sessionID)
+        .then(
+        function (response) {  //  .resolve
+          //$scope.checkStatus();
+          showAlert.showAlert("Successfully start to run KloudBuster! Please wait...");
+
+        },
+        function (response) {  //  .reject
+          console.log("running error:");
+          console.log(response);
+          showAlert.showAlert("Unable to start test!");
+        }
+      );
+    };
+
+    $scope.stopKb = function () {
+      kbHttp.postMethod("/kloudbuster/stop_test/" + $scope.sessionID)
+        .then(
+        function (response) {  //  .resolve
+          //$scope.checkStatus();
+          showAlert.showAlert("Stoping the KloudBuster tests...");
+        },
+        function (response) {  //  .reject
+          console.log("stop error:");
+          console.log(response);
+          showAlert.showAlert("Unable to stop test!");
+        }
+      );
+    };
+
+    $scope.scaleTest = function () {
+      if ($scope.status === "RUNNING") {
         //$scope.initChart();
         $scope.stopKb();
       }
       else {
-        var promise = $scope.setConfig();
+        var promise = $scope.setConfig(1);
         promise.then(function () {
-          if ($scope.status === "READY") {
-            $scope.setStage();
-          }
-          else if ($scope.status === "STAGED") {
+          if ($scope.status === "STAGED") {
             if ($scope.config.client.progression.enabled === true) {
-              alert("Can't Run Monitor Test Now! You have chosen Progression Test. Clean Up First!");
+              showAlert.showAlert("Can't Run Monitor Test Now! You have chosen Progression Test. Clean Up First!");
+            }
+            else if ($scope.config.client.http_tool_configs.report_interval === 0) {
+              showAlert.showAlert("Can't Run Monitor Test Now! Report interval must be a number no less than 1.");
             }
             else {
               $scope.initChart();
@@ -396,41 +476,48 @@ angular.module('kbWebApp')
         });
       }
     };
-
-    $scope.CleanUp = function(){
-      $scope.initChart();
-      if($scope.sessionID) {
-        kbHttp.postMethod("/kloudbuster/cleanup/" + $scope.sessionID)
-          .then(
-          function(response) {  //  .resolve
-            $scope.checkStatus();
-            console.log("clean up successfully");
-
-          },
-          function(response) {  //  .reject
-            console.log("clean error:");
-            console.log(response);
-          }
-        );
-      }
-      else{
-        console.log("no sessionID");
-      }
-    };
+    //$scope.scaleTest = function () {
+    //  if ($scope.status === "RUNNING") {
+    //    //$scope.initChart();
+    //    $scope.stopKb();
+    //  }
+    //  else {
+    //    var promise = $scope.setConfig(1);
+    //    promise.then(function () {
+    //      if ($scope.status === "READY") {
+    //        $scope.setStage();
+    //      }
+    //      else if ($scope.status === "STAGED") {
+    //        if ($scope.config.client.progression.enabled === true) {
+    //          showAlert.showAlert("Can't Run Monitor Test Now! You have chosen Progression Test. Clean Up First!");
+    //        }
+    //        else if ($scope.config.client.http_tool_configs.report_interval === 0) {
+    //          showAlert.showAlert("Can't Run Monitor Test Now! Report interval must be a number no less than 1.");
+    //        }
+    //        else {
+    //          $scope.initChart();
+    //          $scope.runKb();
+    //        }
+    //      }
+    //      else {
+    //      }
+    //    });
+    //  }
+    //};
 
 
 //---------------------------chart---------------------------
     $scope.data = [
       {x: new Date()}
     ];
-    $scope.isDely=false;
+    $scope.isDely = false;
     var count = 0;
 
-    $scope.initChart = function() {
+    $scope.initChart = function () {
       $scope.data = [
         {x: new Date()}
       ];
-      $scope.isDely=false;
+      $scope.isDely = false;
       count = 0;
       monitorMode.setResult("");
     };
@@ -455,50 +542,55 @@ angular.module('kbWebApp')
         y: {type: 'log', ticksFormat: 'd', innerTicks: true, grid: true}
       },
       series: [
-        {y: "val_6", label: "99.999%", type: "area", color: "#2e4174", dotSize: "0", thickness: "2px",visible:false},
-        {y: "val_5", label: "99.99%", type: "area", color: "#084594", dotSize: "0", thickness: "2px",visible:false},
+        {y: "val_6", label: "99.999%", type: "area", color: "#2e4174", dotSize: "0", thickness: "2px", visible: false},
+        {y: "val_5", label: "99.99%", type: "area", color: "#084594", dotSize: "0", thickness: "2px", visible: false},
         {y: "val_4", label: "99.9%", type: "area", color: "#0074D9", dotSize: "0", thickness: "2px"},
         {y: "val_3", label: "99%", type: "area", color: "#79afe1", dotSize: "0", thickness: "2px"},
         {y: "val_2", label: "90%", type: "area", color: "#9ecae1", dotSize: "0", thickness: "2px"},
-        {y: "val_1", label: "75%", type: "area", color: "#c6dbef", dotSize: "0", thickness: "2px",visible:false},
+        {y: "val_1", label: "75%", type: "area", color: "#c6dbef", dotSize: "0", thickness: "2px", visible: false},
         {y: "val_0", label: "50%", type: "area", color: "#eff3ff", dotSize: "0", thickness: "2px"}
       ],
-      tooltip: {mode: 'scrubber', formatter: function(x, y, series) {return series.label+":"+y;}},
+      tooltip: {
+        mode: 'scrubber', formatter: function (x, y, series) {
+          return series.label + ":" + y;
+        }
+      },
       tension: 0.9,
       lineMode: "cardinal"
     };
-    $scope.data.forEach(function(row) {
+    $scope.data.forEach(function (row) {
       row.x = new Date(row.x);
     });
 
-    $scope.getSeqReport = function(){
+    $scope.getSeqReport = function () {
 
-      kbHttp.getMethod2("/kloudbuster/report/"+$scope.sessionID)
+      kbHttp.getMethod2("/kloudbuster/report/" + $scope.sessionID)
         .then(
-        function(response) {  //  .resolve
+        function (response) {  //  .resolve
           $scope.result = response.data.report;
 
           $scope.seq = response.data.seq;
 
-          console.log("get seq report:"+$scope.seq);
+          console.log("get seq report:" + $scope.seq);
           //console.log(response.data);
-          if($scope.seq && $scope.seq > count) {
+          if ($scope.seq && $scope.seq > count) {
             count = $scope.seq;
 
-            if($scope.data.length>40) $scope.data.shift();
+            if ($scope.data.length > 40) $scope.data.shift();
 
-            $scope.pushChartData("SEQ_"+$scope.seq, $scope.result);
+            $scope.pushChartData("SEQ_" + $scope.seq, $scope.result);
           }
-          else {}
+          else {
+          }
         },
-        function(response) {  //  .reject
+        function (response) {  //  .reject
           console.log("get seq report error:");
           console.log(response);
         }
       );
     };
 
-    $scope.pushChartData = function(chName,chData){
+    $scope.pushChartData = function (chName, chData) {
       //console.log("chart date"+ chName);
 
       if ($scope.isDely === false) {
@@ -507,7 +599,7 @@ angular.module('kbWebApp')
       }
 
       $scope.data.push({
-        x:new Date(),
+        x: new Date(),
         val_0: chData.latency_stats[0][1] / 1000,
         val_1: chData.latency_stats[1][1] / 1000,
         val_2: chData.latency_stats[2][1] / 1000,
@@ -521,9 +613,8 @@ angular.module('kbWebApp')
     };
 
 
-    if(monitorMode.getResult())
-    {
-      $scope.data =  monitorMode.getResult();
+    if (monitorMode.getResult()) {
+      $scope.data = monitorMode.getResult();
     }
 
 
@@ -531,7 +622,7 @@ angular.module('kbWebApp')
     //$scope.pushChartData("SEQ_",JSON.parse($scope.aaa).report);
 
 
-    function downloadFile(fileName, content){
+    function downloadFile(fileName, content) {
       var aLink = document.createElement('a');
       var blob = new Blob([content]);
       var evt = document.createEvent("HTMLEvents");
@@ -540,36 +631,36 @@ angular.module('kbWebApp')
       aLink.href = URL.createObjectURL(blob);
       aLink.dispatchEvent(evt);
     }
-    $scope.saveResult = function(){
+
+    $scope.saveResult = function () {
       var date = new Date();
-      var m = date.getMonth()+1;//month (0-11,0 = Jan., remember to add 1)
+      var m = date.getMonth() + 1;//month (0-11,0 = Jan., remember to add 1)
       var d = date.getDate();//day(1-31)
       var h = date.getHours();//hour(0-23)
       var min = date.getMinutes();//minute(0-59)
-      var filename = m+d+h+min+".json";
+      var filename = m + d + h + min + ".json";
       console.log(filename);
-      if(monitorMode.getResult()!="")
+      if (monitorMode.getResult() != "")
         downloadFile(filename, JSON.stringify(monitorMode.getResult()));
       else console.log("no file to save");
     };
 
 
-
-    setInterval(function(){
+    setInterval(function () {
       $scope.checkStatus();
-    },2000);
+    }, 900);
 
 
   })
-  .service('monitorMode', function() {
+  .service('monitorMode', function () {
     //var self = this;
 
-    var result="";
+    var result = "";
 
-    this.getResult = function(){
+    this.getResult = function () {
       return result;
     };
-    this.setResult = function(res){
+    this.setResult = function (res) {
       result = res;
       return result;
     };

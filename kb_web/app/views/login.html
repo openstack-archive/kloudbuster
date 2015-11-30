@@ -12,34 +12,52 @@
 <!--License for the specific language governing permissions and limitations-->
 <!--under the License.-->
 
-<img class="background" src="images/back.jpg">
+
+<!--dialog-->
+<div class="md-padding dialogdemoBasicUsage" id="popupContainer" ng-cloak=""></div>
 
 <div id="page-login" class="row">
-  <div class="col-xs-12 col-md-6 col-md-offset-3 col-sm-6 col-sm-offset-3">
+  <div class="col-xs-12 col-md-6 col-md-offset-3 col-sm-6 col-sm-offset-3"
+       style="background:rgb(236,240,241);padding:1px 20px 30px 20px;border-radius: 20px;border: 10px solid rgb(44,62,80);">
     <div class="box">
       <div class="box-content">
         <div class="text-center">
-          <h3 class="page-header">Login</h3>
+          <h3 class="page-header">LOGIN</h3>
         </div>
 
         <h4>Server Cloud</h4>
+
         <div class="form-group">
-          <div>
-            <label>admin.openrc.sh:</label>
-            <input class="btn" type="file" id="file1" name="file1" enctype="multipart/form-data" />
+          <!--<div>-->
+          <!--<label>admin_openrc.sh:</label>-->
+          <!--<input class="btn" type="file" id="file1" name="file1" enctype="multipart/form-data" />-->
+          <!--</div>-->
+          <div class="input-group" style="margin:0 auto">
+            <span class="input-group-addon">openrc.sh</span>
+            <button class="form-control no-js">
+
+              <div class="box js">
+                <input type="file" name="file1" id="file1" class="inputfile inputfile-3" enctype="multipart/form-data"/>
+                <label for="file1"><span>Choose openrc.sh file&hellip;</span></label>
+              </div>
+
+            </button>
           </div>
+          <br/>
 
-
-          <div class="input-group"  style="margin:0 auto">
+          <div class="input-group" style="margin:0 auto">
             <span class="input-group-addon">Password</span>
-            <input type="password" class="form-control" id="inputPassword1" ng-model="inputPassword1" placeholder="Input Your Server Cloud's Password">
+            <input type="password" class="form-control" id="inputPassword1" ng-model="inputPassword1"
+                   placeholder="Input Your Server Cloud's Password">
           </div>
 
         </div>
+
 
         <hr/>
 
         <h4>Client Cloud</h4>
+
         <div class="checkbox">
           <h5>
             <label>
@@ -48,19 +66,35 @@
           </h5>
         </div>
         <div class="form-group">
-          <div>
-            <label>admin.openrc.sh:</label>
-            <input class="btn" type="file" id="file2" name="file2" enctype="multipart/form-data" disabled/>
-          </div>
 
-          <div class="input-group"  style="margin:0 auto">
+          <!--<div>-->
+          <!--<label>admin_openrc.sh:</label>-->
+          <!--<input class="btn" type="file" id="file2" name="file2" enctype="multipart/form-data" disabled/>-->
+          <!--</div>-->
+
+          <div class="input-group" style="margin:0 auto">
+            <span class="input-group-addon">openrc.sh</span>
+            <button class="form-control no-js" id="rcfile2" disabled>
+
+              <div class="box js">
+                <input type="file" name="file2" id="file2" class="inputfile inputfile-3" enctype="multipart/form-data"
+                       disabled/>
+                <label for="file2"><span>Choose admin_openrc.sh file&hellip;</span></label>
+              </div>
+
+            </button>
+          </div>
+          <br/>
+
+          <div class="input-group" style="margin:0 auto">
             <span class="input-group-addon">Password</span>
-            <input type="password" class="form-control" id="inputPassword2" ng-model="inputPassword2" placeholder="Input Your Client Cloud's Password" disabled>
+            <input type="password" class="form-control" id="inputPassword2" ng-model="inputPassword2"
+                   placeholder="Input Your Client Cloud's Password" disabled>
           </div>
         </div>
 
         <div class="text-center">
-          <a href="" class="btn btn-primary" ng-click="setConfig()">Sign in</a>
+          <a href="" class="btn btn-primary" ng-click="setConfig()" style="width: 150px"> Sign In </a>
         </div>
 
       </div>

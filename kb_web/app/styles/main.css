@@ -24,7 +24,8 @@
 /*}*/
 body {
   padding-top: 60px;
-  padding-bottom: 40px;
+  padding-bottom: 60px;
+  -webkit-font-smoothing:subpixel-antialiased;
 }
 
 
@@ -92,7 +93,7 @@ body {
 /* Responsive: Portrait tablets and up */
 @media screen and (min-width: 768px) {
   .container {
-    max-width: 1152px;
+    max-width: 1280px;
   }
 
   /* Remove the padding we set earlier */
@@ -118,6 +119,21 @@ input {
 .input-group-addon {
   min-width:150px;
 }
+
+[ng-message] {
+  /*color:rgb(223,49,77);*/
+  text-align: left;
+  padding-right: 0;
+}
+
+md-input-container{
+  padding-bottom:5px;
+}
+
+td.ng-binding.ng-scope {
+  padding:3px;
+}
+
 /*--------------------------top loading bar----------------------------*/
 #loading-bar-spinner {
   top: 70px;
@@ -402,7 +418,6 @@ body, html {
     transform: rotate(0deg);
   }
 }
-
 .loading {
   background-color: transparent;
   border-radius: 50%;
@@ -411,47 +426,168 @@ body, html {
 }
 
 .spin-1{
-  border: 1px solid #c00353 ;
-  border-top: 1px solid transparent;
-  border-left: 1px solid transparent;
-  width: 32px;
-  height: 32px;
+  border: 2px solid #c00353 ;
+  border-top: 2px solid transparent;
+  border-left: 2px solid transparent;
+  width: 48px;
+  height: 48px;
 }
 .spin-2{
-  border: 1px solid #05bbc3 ;
-  border-top: 1px solid transparent;
-  border-left: 1px solid transparent;
-  width: 26px;
-  height: 26px;
+  border: 2px solid #05bbc3 ;
+  border-top: 2px solid transparent;
+  border-left: 2px solid transparent;
+  width: 40px;
+  height: 40px;
   animation-delay: 1s;
 }
 .spin-3{
-  border: 1px solid #d2d947 ;
-  border-top: 1px solid transparent;
-  border-left: 1px solid transparent;
-  width: 20px;
-  height: 20px;
+  border: 2px solid #d2d947 ;
+  border-top: 2px solid transparent;
+  border-left: 2px solid transparent;
+  width: 32px;
+  height: 32px;
   animation-delay: 1s;
 }
 .spin-4{
-  border: 1px solid #f2a342 ;
-  border-top: 1px solid transparent;
-  border-left: 1px solid transparent;
-  width: 14px;
-  height: 14px;
+  border: 2px solid #f2a342 ;
+  border-top: 2px solid transparent;
+  border-left: 2px solid transparent;
+  width: 24px;
+  height: 24px;
   animation-delay: 1s;
 }
 .spin-5{
-  border: 1px solid #f34d51 ;
-  border-top: 1px solid transparent;
-  border-left: 1px solid transparent;
+  border: 2px solid #f34d51 ;
+  border-top: 2px solid transparent;
+  border-left: 2px solid transparent;
+  width: 16px;
+  height: 16px;
+  animation-delay: 1s;
+}
+.spin-6{
+  border: 2px solid #000 ;
   width: 8px;
   height: 8px;
   animation-delay: 1s;
 }
-.spin-6{
-  border: 1px solid #000000 ;
-  width: 2px;
-  height: 2px;
-  animation-delay: 1s;
+/*.spin-1{*/
+  /*border: 3px solid #c00353 ;*/
+  /*border-top: 3px solid transparent;*/
+  /*border-left: 3px solid transparent;*/
+  /*width: 60px;*/
+  /*height: 60px;*/
+/*}*/
+/*.spin-2{*/
+  /*border: 3px solid #05bbc3 ;*/
+  /*border-top: 3px solid transparent;*/
+  /*border-left: 3px solid transparent;*/
+  /*width: 50px;*/
+  /*height: 50px;*/
+  /*animation-delay: 1s;*/
+/*}*/
+/*.spin-3{*/
+  /*border: 3px solid #d2d947 ;*/
+  /*border-top: 3px solid transparent;*/
+  /*border-left: 3px solid transparent;*/
+  /*width: 40px;*/
+  /*height: 40px;*/
+  /*animation-delay: 1s;*/
+/*}*/
+/*.spin-4{*/
+  /*border: 3px solid #f2a342 ;*/
+  /*border-top: 3px solid transparent;*/
+  /*border-left: 3px solid transparent;*/
+  /*width: 30px;*/
+  /*height: 30px;*/
+  /*animation-delay: 1s;*/
+/*}*/
+/*.spin-5{*/
+  /*border: 3px solid #f34d51 ;*/
+  /*border-top: 3px solid transparent;*/
+  /*border-left: 3px solid transparent;*/
+  /*width:20px;*/
+  /*height: 20px;*/
+  /*animation-delay: 1s;*/
+/*}*/
+/*.spin-6{*/
+  /*border: 3px solid #000 ;*/
+  /*width: 10px;*/
+  /*height: 10px;*/
+  /*animation-delay: 1s;*/
+/*}*/
+
+
+/*------------------file upload--------------------*/
+.js .inputfile {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
 }
+
+.inputfile + label {
+  max-width: 80%;
+  font-size: 1.25rem;
+  /* 20px */
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.625rem 1.25rem;
+  /* 10px 20px */
+}
+
+.inputfile:focus + label,
+.inputfile.has-focus + label {
+  outline: 1px dotted #000;
+  outline: -webkit-focus-ring-color auto 5px;
+}
+
+.inputfile + label * {
+  /* pointer-events: none; */
+  /* in case of FastClick lib use */
+}
+
+.inputfile + label svg {
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  fill: currentColor;
+  margin-top: -0.25em;
+  /* 4px */
+  margin-right: 0.25em;
+  /* 4px */
+}
+
+/* style 3 */
+
+.inputfile-3 + label {
+  color: rgb(172, 182, 192);
+}
+
+.inputfile-3:focus + label,
+.inputfile-3.has-focus + label,
+.inputfile-3 + label:hover {
+  color: rgba(70, 70, 70, 0.85);
+}
+
+@media screen and (max-width: 50em) {
+  .inputfile-6 + label strong {
+    display: block;
+  }
+}
+/*----------------dialog---------------*/
+.dialogdemoBasicUsage #popupContainer {
+  position: relative; }
+.dialogdemoBasicUsage .footer {
+  width: 100%;
+  text-align: center;
+  margin-left: 20px; }
+.dialogdemoBasicUsage .footer, .dialogdemoBasicUsage .footer > code {
+  font-size: 0.8em;
+  margin-top: 50px; }
+
