@@ -175,11 +175,7 @@ angular.module('kbWebApp')
     $scope.setConfig = function () {
       if ($scope.samecloud === true) {
         kbCookie.setIsOneCloud(true);
-<<<<<<< HEAD
         $scope.credentials = { "tested-passwd": $scope.inputPassword1, "tested-rc": test_rc};
-=======
-        $scope.credentials = {"tested-passwd": $scope.inputPassword1, "tested-rc": test_rc};
->>>>>>> 0b002f3... UI development
       }
       else {
         kbCookie.setIsOneCloud(false);
