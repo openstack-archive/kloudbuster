@@ -110,13 +110,13 @@
               <div class="row" ng-show="availability_zone==2;"
                    popover="Leave empty if you prefer to have the Nova scheduler place the server VMs If you want to pick a particular AZ, put that AZ name (e.g. nova) If you want a paticular compute host, put the AZ and compute host names separated by ':' (e.g. nova:tme100) Note that this is ignored/overriden if you choose 'Use Topology'"
                    popover-trigger="mouseenter" popover-placement="bottom">
-                <div class="col-md-6">
+                <div class="col-md-6 col-sm-6">
                   <div class="input-group" style="margin:0 auto">
                     <span class="input-group-addon">For Server</span>
                     <input type="text" class="form-control" ng-model="config.server.availability_zone"/>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6 col-sm-6">
                   <div class="input-group" style="margin:0 auto">
                     <span class="input-group-addon">For Client</span>
                     <input type="text" class="form-control" ng-model="config.client.availability_zone"/>

@@ -120,7 +120,7 @@ angular.module('kbWebApp')
             console.log("change running config");
             deferred.resolve(1);
             if (ifRun != 1) {
-              showAlert.showAlert("Configuration updated successfully!");
+              //showAlert.showAlert("Configuration updated successfully!");
             }
           },
           function (response) {  //  .reject
@@ -150,7 +150,7 @@ angular.module('kbWebApp')
             console.log("change running config");
             deferred.resolve(1);
             if (ifRun != 1) {
-              showAlert.showAlert("Configuration updated successfully!");
+              //showAlert.showAlert("Configuration updated successfully!");
             }
           },
           function (response) {  //  .reject
@@ -374,7 +374,7 @@ angular.module('kbWebApp')
         kbHttp.postMethod("/kloudbuster/stage/" + $scope.sessionID)
           .then(
           function(response) {  //  .resolve
-            showAlert.showAlert("Staging all resources to run KloudBuster! Please wait...");
+            //showAlert.showAlert("Staging all resources to run KloudBuster! Please wait...");
             //$scope.checkStatus();
           },
           function(response) {  //  .reject
@@ -392,7 +392,7 @@ angular.module('kbWebApp')
           .then(
           function(response) {  //  .resolve
             $scope.checkStatus();
-            showAlert.showAlert("Cleanup KloudBuster!");
+            //showAlert.showAlert("Cleanup KloudBuster!");
           },
           function(response) {  //  .reject
             console.log("clean error:");
@@ -424,7 +424,7 @@ angular.module('kbWebApp')
         kbHttp.postMethod("/kloudbuster/run_test/" + $scope.sessionID)
           .then(
           function(response) {  //  .resolve
-            showAlert.showAlert("Successfully start to run KloudBuster! Please wait...");
+            //showAlert.showAlert("Successfully start to run KloudBuster! Please wait...");
             //$scope.checkStatus();
           },
           function(response) {  //  .reject
@@ -440,7 +440,7 @@ angular.module('kbWebApp')
         .then(
         function(response) {  //  .resolve
           //$scope.checkStatus();
-          showAlert.showAlert("Stoping the KloudBuster tests...");
+          //showAlert.showAlert("Stoping the KloudBuster tests...");
         },
         function(response) {  //  .reject
           console.log("stop error:");

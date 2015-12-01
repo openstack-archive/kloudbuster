@@ -447,7 +447,7 @@ angular.module('kbWebApp')
           .then(
           function (response) {  //  .resolve
             console.log("change running config");
-            showAlert.showAlert("Configuration updated successfully!");
+            //showAlert.showAlert("Configuration updated successfully!");
 
           },
           function (response) {  //  .reject
