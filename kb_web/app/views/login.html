@@ -34,14 +34,13 @@
           <!--</div>-->
           <div class="input-group" style="margin:0 auto">
             <span class="input-group-addon">openrc.sh</span>
-            <button class="form-control no-js">
+            <button class="form-control no-js" style="position: relative;z-index: 2;"></button>
 
-              <div class="box js">
-                <input type="file" name="file1" id="file1" class="inputfile inputfile-3" enctype="multipart/form-data"/>
-                <label for="file1"><span>Choose openrc.sh file&hellip;</span></label>
-              </div>
+            <div class="box js" style="position: absolute;z-index: 3;width: 100%;height:100%;left:50%;top:25%;">
+              <input type="file" name="file1" id="file1" class="inputfile inputfile-3" enctype="multipart/form-data"/>
+              <label for="file1"><span>Choose openrc.sh file&hellip;</span></label>
+            </div>
 
-            </button>
           </div>
           <br/>
 
@@ -74,15 +73,13 @@
 
           <div class="input-group" style="margin:0 auto">
             <span class="input-group-addon">openrc.sh</span>
-            <button class="form-control no-js" id="rcfile2" disabled>
+            <button class="form-control no-js" id="rcfile2" disabled></button>
 
-              <div class="box js">
-                <input type="file" name="file2" id="file2" class="inputfile inputfile-3" enctype="multipart/form-data"
-                       disabled/>
-                <label for="file2"><span>Choose openrc.sh file&hellip;</span></label>
-              </div>
-
-            </button>
+            <div class="box js" style="position: absolute;z-index: 3;width: 100%;height:100%;left:50%;top:25%;">
+              <input type="file" name="file2" id="file2" class="inputfile inputfile-3" enctype="multipart/form-data"
+                     disabled/>
+              <label for="file2"><span>Choose openrc.sh file&hellip;</span></label>
+            </div>
           </div>
           <br/>
 

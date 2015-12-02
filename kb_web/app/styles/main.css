@@ -575,11 +575,6 @@ body, html {
   color: rgba(70, 70, 70, 0.85);
 }
 
-@media screen and (max-width: 50em) {
-  .inputfile-6 + label strong {
-    display: block;
-  }
-}
 /*----------------dialog---------------*/
 .dialogdemoBasicUsage #popupContainer {
   position: relative; }
