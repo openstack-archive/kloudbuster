@@ -306,6 +306,7 @@ class KBRunner(object):
                 raise KBException("Some VMs failed to start.")
 
         if self.config.progression.enabled:
+            self.tool_result = {}
             start = self.config.progression.vm_start
             step = self.config.progression.vm_step
             limit = self.config.progression.stop_limit

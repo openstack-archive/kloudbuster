@@ -387,4 +387,50 @@ KloudBuster can run to.
 
 As a reference, for a Kilo OpenStack deployment (LinuxBridge + VLAN) with
 Packstack, using an 10GE NIC card for data plane traffic, KloudBuster can run
-up to 18 VMs and achieve approximately 5 GBps throughput.
+apprximately 21 VMs and achieve approximately 5 GBps throughput.
+
+How-to
+^^^^^^
+
+In order to run KloudBuster Standard Profiling, you have to set up below
+configurations:
+
+1. Enable progression runs:
+
+    Running from CLI: Edit the config file, and set
+    **client:progression:enabled** to True
+
+    Running from Web UI: Navigate to "Interactive Mode" from the top menu
+    bar, unfold the left panel for detail settings, under "Progression Test"
+    section, and check the "Progression Test" checkbox.
+
+2. Set up the max scale:
+
+    The max scale basically means the max VM counts that KloudBuster will
+    try to reach. For a typical 10GE NIC card with VLAN encapsulation,
+    25 will be a good value. Adjust it to a reasonable value based on
+    your deployment details.
+
+    Running from CLI: Edit the config file, and set **server:vms_per_network**
+    to a proper value.
+
+    Running from Web UI: Navigate to "Interactive Mode" from the top menu
+    bar, unfold the left panel for detail settings, under "Staging Settings"
+    section, and set "VMs/Network" to a proper value.
+
+
+Intepret the results
+^^^^^^^^^^^^^^^^^^^^
+
+From the CLI, check the log and find the warning that KloudBuster gave,
+similar to this::
+
+    WARNING KloudBuster is stopping the iteration because the result reaches the stop limit.
+
+One line before is the json output of last successful run, which has the
+number in the "total_server_vms" field.
+
+From the Web UI, in ihe "Interactive Mode" tab, you will see how many sets
+of data are you getting. The second last set of data shows the last successful
+run, which has the number in the "Server VMs" column.
+

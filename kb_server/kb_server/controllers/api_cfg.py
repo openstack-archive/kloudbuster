@@ -70,6 +70,13 @@ class ConfigController(object):
         tenants_list = AttrDict(user_config['tenants_list'])\
             if 'tenants_list' in user_config else None
 
+        # Synchronize the polling interval with report interval
+        try:
+            alt_config['kb_cfg']['client']['polling_interval'] = \
+                alt_config['kb_cfg']['client']['http_tool_config']['report_interval']
+        except Exception:
+            pass
+
         key = ['alt_cfg', 'topo_cfg', 'tenants_list']
         val = [alt_config, topo_cfg, tenants_list]
         kwargs = dict([(k, v) for k, v in zip(key, val) if v])

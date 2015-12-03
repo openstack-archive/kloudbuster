@@ -52,7 +52,6 @@ def setup(product_name, logfile=None):
     if logfile:
         if os.path.exists(logfile):
             os.remove(logfile)
-        CONF.log_file = logfile
         fmt = logging.Formatter(fmt=CONF.logging_default_format_string)
         hdlr = logging.FileHandler(logfile)
         hdlr.setFormatter(fmt)
@@ -73,11 +72,9 @@ def getLogger(name="unknown", version="unknown"):
 
     return oslogging._loggers[name]
 
-def delete_logfile(product_name):
-    if CONF.log_file and os.path.exists(CONF.log_file):
-        os.remove(CONF.log_file)
-    CONF.log_file = None
-
+def delete_logfile(product_name, filename):
+    if filename and os.path.exists(filename):
+        os.remove(filename)
 
 class KloudBusterContextAdapter(oslogging.KeywordArgumentAdapter):
 

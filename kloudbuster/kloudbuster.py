@@ -505,7 +505,8 @@ class KloudBuster(object):
     def dispose(self):
         if self.fp_logfile:
             self.fp_logfile.close()
-        logging.delete_logfile('kloudbuster')
+        logging.delete_logfile('kloudbuster', self.fp_logfile.name)
+        self.fp_logfile = None
 
     def get_tenant_vm_count(self, config):
         return (config['routers_per_tenant'] * config['networks_per_router'] *

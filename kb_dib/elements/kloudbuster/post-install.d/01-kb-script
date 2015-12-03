@@ -90,6 +90,7 @@ npm install -g grunt-cli bower
 npm install
 bower install --allow-root --config.interactive=false --force
 grunt build
+rm -rf ../kb_server/public/ui/*
 mv dist/* ../kb_server/public/ui
 
 
