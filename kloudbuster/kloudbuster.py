@@ -497,7 +497,7 @@ class KloudBuster(object):
 
     def dump_logs(self, offset=0):
         if not self.fp_logfile:
-            self.fp_logfile = open(CONF.log_file)
+            return ""
 
         self.fp_logfile.seek(offset)
         return self.fp_logfile.read()

@@ -24,7 +24,6 @@ sys.path.append(kb_main_path)
 
 from kb_session import KBSessionManager
 from kloudbuster import __version__ as kb_version
-from kloudbuster import KloudBuster
 
 from pecan import expose
 from pecan import response
@@ -55,13 +54,7 @@ class KBController(object):
     def kb_stage_thread_handler(self, session_id):
         kb_session = KBSessionManager.get(session_id)
         kb_session.kb_status = 'STAGING'
-        kb_config = kb_session.kb_config
         try:
-            if not kb_session.kloudbuster:
-                kb_session.kloudbuster = KloudBuster(
-                    kb_config.cred_tested, kb_config.cred_testing,
-                    kb_config.server_cfg, kb_config.client_cfg,
-                    kb_config.topo_cfg, kb_config.tenants_list)
             if kb_session.kloudbuster.check_and_upload_images():
                 kb_session.sync_cfg(["server_cfg", "client_cfg", "topo_cfg", "tenants_list"])
                 kb_session.kloudbuster.stage()

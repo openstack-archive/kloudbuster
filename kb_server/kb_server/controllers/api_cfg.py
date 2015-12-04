@@ -92,21 +92,6 @@ class ConfigController(object):
     def hypervisor_list(self, *args):
         session_id = args[0]
         kb_session = KBSessionManager.get(session_id)
-        kb_config = kb_session.kb_config
-
-        if not kb_session.kloudbuster:
-            try:
-                kb_session.kloudbuster = KloudBuster(
-                    kb_config.cred_tested, kb_config.cred_testing,
-                    kb_config.server_cfg, kb_config.client_cfg,
-                    kb_config.topo_cfg, kb_config.tenants_list)
-            except Exception:
-                LOG.warn(traceback.format_exc())
-                kb_session.kb_status = 'ERROR'
-                response.status = 400
-                response.text = u"Cannot get the hypervisor list."
-                return response.text
-
         kloudbuster = kb_session.kloudbuster
         ret_dict = {}
         ret_dict['server'] = kloudbuster.get_hypervisor_list(kloudbuster.server_cred)
@@ -165,13 +150,26 @@ class ConfigController(object):
             response.text = u"Error while parsing configurations: \n%s" % (traceback.format_exc())
             return response.text
 
-        logging.setup("kloudbuster", logfile="/tmp/kb_log_%s" % session_id)
+        logfile_name = "/tmp/kb_log_%s" % session_id
+        logging.setup("kloudbuster", logfile=logfile_name)
         kb_config.init_with_rest_api(cred_tested=cred_tested,
                                      cred_testing=cred_testing)
         self.fix_config(kb_config, user_config)
 
         kb_session = KBSession()
         kb_session.kb_config = kb_config
+        try:
+            kb_session.kloudbuster = KloudBuster(
+                kb_config.cred_tested, kb_config.cred_testing,
+                kb_config.server_cfg, kb_config.client_cfg,
+                kb_config.topo_cfg, kb_config.tenants_list)
+            kb_session.kloudbuster.fp_logfile = open(logfile_name)
+        except Exception:
+            LOG.warn(traceback.format_exc())
+            kb_session.kb_status = 'ERROR'
+            response.status = 400
+            response.text = u"Cannot initialize KloudBuster instance."
+            return response.text
         KBSessionManager.add(session_id, kb_session)
 
         response.status = 201
