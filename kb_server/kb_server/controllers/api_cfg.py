@@ -102,6 +102,19 @@ class ConfigController(object):
 
     @expose(generic=True)
     @check_session_id
+    def az_list(self, *args):
+        session_id = args[0]
+        kb_session = KBSessionManager.get(session_id)
+        kloudbuster = kb_session.kloudbuster
+        ret_dict = {}
+        ret_dict['server'] = kloudbuster.get_az_list(kloudbuster.server_cred)
+        if not kloudbuster.single_cloud:
+            ret_dict['client'] = kloudbuster.get_az_list(kloudbuster.client_cred)
+
+        return json.dumps(ret_dict)
+
+    @expose(generic=True)
+    @check_session_id
     def topology_config(self, *args):
         session_id = args[0]
         kb_config_obj = KBSessionManager.get(session_id).kb_config

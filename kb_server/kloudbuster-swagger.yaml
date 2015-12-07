@@ -28,6 +28,30 @@ paths:
                         type: string
                         format: json
 
+    /config/az_list/{session_id}:
+        get:
+            description: |
+                Get the available availability zone list
+            parameters:
+                - name: session_id
+                  type: string
+                  format: md5sum
+                  in: path
+                  description: The session to be queried
+                  required: true
+            tags:
+                - config
+            responses:
+                200:
+                    description: |
+                        The available availability zones for the session
+                    schema:
+                        $ref: '#/definitions/AZ_List'
+                400:
+                    description: Cannot get the availability zone list
+                404:
+                    description: The session_id is not found or invalid
+
     /config/hypervisor_list/{session_id}:
         get:
             description: |
@@ -401,6 +425,20 @@ definitions:
                 type: string
                 format: json
                 description: Tenant and User list for reusing
+    AZ_List:
+        properties:
+            server:
+                type: array
+                items:
+                    type: string
+                format: json
+                description: Available availability zones for server cloud
+            client:
+                type: array
+                items:
+                    type: string
+                format: json
+                description: Available availability zones for client cloud
     Hypervisor_List:
         properties:
             server:

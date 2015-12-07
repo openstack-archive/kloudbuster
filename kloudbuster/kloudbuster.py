@@ -257,6 +257,24 @@ class KloudBuster(object):
 
         return ret_list
 
+    def get_az_list(self, cred):
+        creden_nova = {}
+        ret_list = []
+        cred_dict = cred.get_credentials()
+        creden_nova['username'] = cred_dict['username']
+        creden_nova['api_key'] = cred_dict['password']
+        creden_nova['auth_url'] = cred_dict['auth_url']
+        creden_nova['project_id'] = cred_dict['tenant_name']
+        creden_nova['version'] = 2
+        nova_client = novaclient(**creden_nova)
+        for az in nova_client.availability_zones.list():
+            zoneName = vars(az)['zoneName']
+            isAvail = vars(az)['zoneState']['available']
+            if zoneName != 'internal' and isAvail:
+                ret_list.append(zoneName)
+
+        return ret_list
+
     def check_and_upload_images(self, retry_count=150):
         retry = 0
         keystone_list = [create_keystone_client(self.server_cred)[0],
