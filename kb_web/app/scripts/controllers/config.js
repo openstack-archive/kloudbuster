@@ -376,6 +376,27 @@ angular.module('kbWebApp')
         }
       );
 
+      kbHttp.getMethod("/config/az_list/" + $scope.sessionID)
+        .then(
+        function (response) {  //  .resolve
+
+          if(kbCookie.getIsOneCloud()===false)//two clouds
+          {
+            $scope.serversides = response.data.server;
+            $scope.clientsides = response.data.client;
+
+          }
+          else{//one clouds
+            $scope.serversides = response.data.server;
+            $scope.clientsides = response.data.server;
+          }
+        },
+        function (response) {  //  .reject
+          console.log("get AZ list error:");
+          console.log(response);
+        }
+      );
+
       init();
       $scope.getTopology();
 

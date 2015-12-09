@@ -39,7 +39,8 @@ angular.module('kbWebApp')
     $scope.status = kbCookie.getStatus();
 
     $scope.logs = "";
-    kbCookie.getLogOffset();
+
+    $scope.logNum = kbCookie.getLogNum();
 
     $scope.logOffset = 0;
 
@@ -54,6 +55,7 @@ angular.module('kbWebApp')
     //---------------------------------get LOG---------------------------------
     $scope.getLog = function () {
       if ($scope.sessionID) {
+        kbCookie.setLogNum($scope.logNum);
 
         kbHttp.getMethod("/kloudbuster/log/" + $scope.sessionID + "?offset=" + kbCookie.getLogOffset())
           .then(
@@ -71,7 +73,14 @@ angular.module('kbWebApp')
 
             $("#cc").empty();
 
+            //console.log($scope.logs.length);
+
+            var skipNum;
+            if(kbCookie.getLogNum()==0)  skipNum = 0;
+            else skipNum = $scope.logs.length-kbCookie.getLogNum();
+
             for (var row in $scope.logs) {
+              if (skipNum > 0) {skipNum--; continue;}
               $scope.logs[row] = $scope.logs[row].replace(/ /g, "&nbsp;");
               $("#cc").append($scope.logs[row] + "<br/>");
               //console.log($scope.logs[row]);

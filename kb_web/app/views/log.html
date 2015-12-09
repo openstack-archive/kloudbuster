@@ -21,7 +21,11 @@
           <thead>
           <tr>
             <th>
-              <span>LOGS</span>
+              <span class="col-md-2" style="float:left;line-height:25px; height:5px;">LOGS</span>
+              <md-radio-group ng-model="logNum" ng-click="getLog()">
+                  <div class="col-md-2"><md-radio-button value="0" class="md-primary" style="margin: 0 0;">Show All Logs</md-radio-button></div>
+                  <div class="col-md-3"><md-radio-button value="100" class="md-primary" style="margin: 0 0;"> Show Latest 100 Logs </md-radio-button></div>
+              </md-radio-group>
               <span  style="float:right;">
                 <button type="submit" class="btn btn-default btn-xs" ng-click="delLog()" style="width: 65px">Clear</button>
                 <button type="submit" class="btn btn-primary btn-xs" ng-click="getLog()" style="width: 65px">Refresh</button>

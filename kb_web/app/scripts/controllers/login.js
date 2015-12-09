@@ -188,7 +188,6 @@ angular.module('kbWebApp')
       }
       //no sessionID but have cred
       $scope.runCon = {"credentials": {}, kb_cfg: ""};
-
       //console.log($scope.credentials);
       $scope.runCon.credentials = $scope.credentials;
 

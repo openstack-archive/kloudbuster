@@ -50,7 +50,8 @@
             <md-input-container class="col-md-12">
               <label>VM Creation Concurrency</label>
               <input type="number" min="1" max="1000" step="1" name="vm_creation_concurrency"
-                     id="vm_creation_concurrency" ng-model="config.vm_creation_concurrency" ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left;"/>
+                     id="vm_creation_concurrency" ng-model="config.vm_creation_concurrency"
+                     ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left;"/>
 
               <div ng-messages="general.vm_creation_concurrency.$error" ng-if="general.vm_creation_concurrency.$dirty">
                 <div ng-message="required" style="padding-right: 0;">This field is required</div>
@@ -58,88 +59,116 @@
               </div>
             </md-input-container>
           </md-content>
-        <!--<form class="bs-component" name="general">-->
-        <!--<div class="input-group col-sm-12" style="margin:0 auto;"-->
-        <!--popover="Specifies how many VMs will be created at a time. Larger numbers can be used but will not necessarily shorten the overall staging time (this will largely depend on the scalability of the OpenStack control plane). Well tuned control planes with multiple instances of NOVA have shown to support a concurrency level of up to around 50"-->
-        <!--popover-trigger="mouseenter" popover-placement="bottom">-->
-        <!--<span class="input-group-addon">VM Creation Concurrency</span>-->
-        <!--<input type="number" min="1" max="1000" step="1" name="vm_creation_concurrency" class="form-control"-->
-        <!--id="vm_creation_concurrency"-->
-        <!--ng-model="config.vm_creation_concurrency" ng-pattern="/^[1-9][0-9]{0,2}$/i" required/>-->
-        <!--</div>-->
-        <!--<div ng-messages="general.vm_creation_concurrency.$error" ng-if="general.vm_creation_concurrency.$dirty">-->
-        <!--<div ng-message="required">This field is required</div>-->
-        <!--<div ng-message="pattern">Must be a number between 1 and 999</div>-->
-        <!--</div>-->
-        <!--<br/>-->
+          <!--<form class="bs-component" name="general">-->
+          <!--<div class="input-group col-sm-12" style="margin:0 auto;"-->
+          <!--popover="Specifies how many VMs will be created at a time. Larger numbers can be used but will not necessarily shorten the overall staging time (this will largely depend on the scalability of the OpenStack control plane). Well tuned control planes with multiple instances of NOVA have shown to support a concurrency level of up to around 50"-->
+          <!--popover-trigger="mouseenter" popover-placement="bottom">-->
+          <!--<span class="input-group-addon">VM Creation Concurrency</span>-->
+          <!--<input type="number" min="1" max="1000" step="1" name="vm_creation_concurrency" class="form-control"-->
+          <!--id="vm_creation_concurrency"-->
+          <!--ng-model="config.vm_creation_concurrency" ng-pattern="/^[1-9][0-9]{0,2}$/i" required/>-->
+          <!--</div>-->
+          <!--<div ng-messages="general.vm_creation_concurrency.$error" ng-if="general.vm_creation_concurrency.$dirty">-->
+          <!--<div ng-message="required">This field is required</div>-->
+          <!--<div ng-message="pattern">Must be a number between 1 and 999</div>-->
+          <!--</div>-->
+          <!--<br/>-->
 
-        <!--<div class="input-group col-sm-11"  style="margin:0 auto">-->
-        <!--<span class="input-group-addon">Public Key File:</span>-->
-        <!--<input type="text" class="form-control" id="public_key_file" ng-model="config.public_key_file"/>-->
-        <!--</div>-->
-        <!--<br/>-->
-        <!--<div class="input-group col-sm-11"  style="margin:0 auto">-->
-        <!--<input type="checkbox" id="server_use_floatingip" ng-model="config.server.use_floatingip" ng-change="config.client.use_floatingip=config.server.use_floatingip" /> use floating IP for client and server VMs-->
-        <!--</div>-->
+          <!--<div class="input-group col-sm-11"  style="margin:0 auto">-->
+          <!--<span class="input-group-addon">Public Key File:</span>-->
+          <!--<input type="text" class="form-control" id="public_key_file" ng-model="config.public_key_file"/>-->
+          <!--</div>-->
+          <!--<br/>-->
+          <!--<div class="input-group col-sm-11"  style="margin:0 auto">-->
+          <!--<input type="checkbox" id="server_use_floatingip" ng-model="config.server.use_floatingip" ng-change="config.client.use_floatingip=config.server.use_floatingip" /> use floating IP for client and server VMs-->
+          <!--</div>-->
 
-        <!--<hr>-->
+          <!--<hr>-->
 
 
-        <div class="panel panel-default">
-          <div class="panel-heading">VM Placement</div>
-          <div class="panel-body">
+          <div class="panel panel-default">
+            <div class="panel-heading">VM Placement</div>
+            <div class="panel-body">
 
-            <md-radio-group ng-model="availability_zone" ng-change="changeTopology()">
-              <md-radio-button value="1" class="md-primary">Let Nova Decide</md-radio-button>
+              <md-radio-group ng-model="availability_zone" ng-change="changeTopology()">
+                <md-radio-button value="1" class="md-primary">Let Nova Decide</md-radio-button>
 
-              <!--<div class="radio">-->
-              <!--<label>-->
-              <!--<input type="radio" ng-model="availability_zone" value="1" ng-change="changeTopology()">-->
-              <!--Let Nova Decide-->
-              <!--</label>-->
-              <!--</div>-->
+                <!--<div class="radio">-->
+                <!--<label>-->
+                <!--<input type="radio" ng-model="availability_zone" value="1" ng-change="changeTopology()">-->
+                <!--Let Nova Decide-->
+                <!--</label>-->
+                <!--</div>-->
 
-              <md-radio-button value="2" class="md-primary">Available Zone</md-radio-button>
+                <md-radio-button value="2" class="md-primary">Available Zone</md-radio-button>
 
-              <!--<div class="radio">-->
-              <!--<label>-->
-              <!--<input type="radio" ng-model="availability_zone" value="2" ng-change="changeTopology()">-->
-              <!--Available Zone-->
-              <!--</label>-->
-              <!--</div>-->
-              <div class="row" ng-show="availability_zone==2;"
-                   popover="Leave empty if you prefer to have the Nova scheduler place the server VMs If you want to pick a particular AZ, put that AZ name (e.g. nova) If you want a paticular compute host, put the AZ and compute host names separated by ':' (e.g. nova:tme100) Note that this is ignored/overriden if you choose 'Use Topology'"
-                   popover-trigger="mouseenter" popover-placement="bottom">
-                <div class="col-md-6 col-sm-6">
-                  <div class="input-group" style="margin:0 auto">
-                    <span class="input-group-addon">For Server</span>
-                    <input type="text" class="form-control" ng-model="config.server.availability_zone"/>
-                  </div>
+                <!--<div class="radio">-->
+                <!--<label>-->
+                <!--<input type="radio" ng-model="availability_zone" value="2" ng-change="changeTopology()">-->
+                <!--Available Zone-->
+                <!--</label>-->
+                <!--</div>-->
+                <div class="row" ng-show="availability_zone==2;"
+                     popover="Leave empty if you prefer to have the Nova scheduler place the server VMs If you want to pick a particular AZ, put that AZ name (e.g. nova) If you want a paticular compute host, put the AZ and compute host names separated by ':' (e.g. nova:tme100) Note that this is ignored/overriden if you choose 'Use Topology'"
+                     popover-trigger="mouseenter" popover-placement="bottom">
+                  <form name="userForm">
+
+                    <div class="col-md-6">
+                      <div layout="" layout-sm="column">
+                        <md-input-container flex="">
+                          <label>For Server</label>
+                          <md-select ng-model="config.server.availability_zone">
+                            <md-option ng-repeat="serverside in serversides" value="{{serverside}}">
+                              {{serverside}}
+                            </md-option>
+                          </md-select>
+                        </md-input-container>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div layout="" layout-sm="column">
+                        <md-input-container flex="">
+                          <label>For Client</label>
+                          <md-select ng-model="config.client.availability_zone">
+                            <md-option ng-repeat="clientside in clientsides" value="{{clientside}}">
+                              {{clientside}}
+                            </md-option>
+                          </md-select>
+                        </md-input-container>
+                      </div>
+                    </div>
+                  </form>
+
+                  <!--<div class="col-md-6 col-sm-6">-->
+                    <!--<div class="input-group" style="margin:0 auto">-->
+                      <!--<span class="input-group-addon">For Server</span>-->
+                      <!--<input type="text" class="form-control" ng-model="config.server.availability_zone"/>-->
+                    <!--</div>-->
+                  <!--</div>-->
+                  <!--<div class="col-md-6 col-sm-6">-->
+                    <!--<div class="input-group" style="margin:0 auto">-->
+                      <!--<span class="input-group-addon">For Client</span>-->
+                      <!--<input type="text" class="form-control" ng-model="config.client.availability_zone"/>-->
+                    <!--</div>-->
+                  <!--</div>-->
                 </div>
-                <div class="col-md-6 col-sm-6">
-                  <div class="input-group" style="margin:0 auto">
-                    <span class="input-group-addon">For Client</span>
-                    <input type="text" class="form-control" ng-model="config.client.availability_zone"/>
-                  </div>
-                </div>
-              </div>
 
-              <md-radio-button value="3" class="md-primary">Use Topology
-                <small> -- customized <cite title="Source Title">VM
-                  placement</cite></small>
-              </md-radio-button>
+                <md-radio-button value="3" class="md-primary">Use Topology
+                  <small> -- customized <cite title="Source Title">VM
+                    placement</cite></small>
+                </md-radio-button>
 
-              <!--<div class="radio" id="topology">-->
-              <!--<label>-->
-              <!--<input type="radio" ng-model="availability_zone" value="3" ng-change="changeTopology()">-->
-              <!--Use Topology-->
-              <!--<small> &#45;&#45; customized <cite title="Source Title">VM placement</cite></small>-->
+                <!--<div class="radio" id="topology">-->
+                <!--<label>-->
+                <!--<input type="radio" ng-model="availability_zone" value="3" ng-change="changeTopology()">-->
+                <!--Use Topology-->
+                <!--<small> &#45;&#45; customized <cite title="Source Title">VM placement</cite></small>-->
 
-              <!--</label>-->
-              <!--</div>-->
-              <div class="row" ng-show="availability_zone==3;">
-                <div class="col-md-3">
-                  <div class="list-group" id="list3">
+                <!--</label>-->
+                <!--</div>-->
+                <div class="row" ng-show="availability_zone==3;">
+                  <div class="col-md-3">
+                    <div class="list-group" id="list3">
                 <span class="list-group-item active">Server Pool
                  <input title="Toggle all" ng-click="toggleC()" ng-model="toggle" type="checkbox" class="pull-right">
                 </span>
@@ -150,23 +179,23 @@
                            ng-checked="selectedC.indexOf(user.id) > -1" type="checkbox" class="pull-right">
                   </span>
                 </span>
+                    </div>
                   </div>
-                </div>
 
 
-                <div class="col-md-1 v-center text-center">
-                  <div class="btn-group-sm">
-                    <button title="Send to list 1" class="btn btn-default btn-sm" ng-click="cToA()"
-                            style="margin:10px 0"><i
-                      class="glyphicon glyphicon-chevron-right"></i></button>
-                    <button title="Send to list 3" class="btn btn-default btn-sm" ng-click="aToC()"><i
-                      class="glyphicon glyphicon-chevron-left"></i></button>
+                  <div class="col-md-1 v-center text-center">
+                    <div class="btn-group-sm">
+                      <button title="Send to list 1" class="btn btn-default btn-sm" ng-click="cToA()"
+                              style="margin:10px 0"><i
+                        class="glyphicon glyphicon-chevron-right"></i></button>
+                      <button title="Send to list 3" class="btn btn-default btn-sm" ng-click="aToC()"><i
+                        class="glyphicon glyphicon-chevron-left"></i></button>
+                    </div>
                   </div>
-                </div>
 
 
-                <div class="col-md-4">
-                  <div class="list-group" id="list1">
+                  <div class="col-md-4">
+                    <div class="list-group" id="list1">
                 <span class="list-group-item active">Available Hypervisors
                  <input title="Toggle all" ng-click="toggleA()" ng-model="toggle" type="checkbox" class="pull-right">
                 </span>
@@ -177,19 +206,19 @@
                            ng-checked="selectedA.indexOf(user.id) > -1" type="checkbox" class="pull-right">
                   </span>
                 </span>
+                    </div>
                   </div>
-                </div>
-                <div class="col-md-1 v-center text-center" style="margin:0px 0px">
-                  <div class="btn-group-sm">
-                    <button title="Send to list 1" class="btn btn-default btn-sm" ng-click="bToA()"
-                            style="margin:10px 0"><i
-                      class="glyphicon glyphicon-chevron-left"></i></button>
-                    <button title="Send to list 2" class="btn btn-default btn-sm" ng-click="aToB()"><i
-                      class="glyphicon glyphicon-chevron-right"></i></button>
+                  <div class="col-md-1 v-center text-center" style="margin:0px 0px">
+                    <div class="btn-group-sm">
+                      <button title="Send to list 1" class="btn btn-default btn-sm" ng-click="bToA()"
+                              style="margin:10px 0"><i
+                        class="glyphicon glyphicon-chevron-left"></i></button>
+                      <button title="Send to list 2" class="btn btn-default btn-sm" ng-click="aToB()"><i
+                        class="glyphicon glyphicon-chevron-right"></i></button>
+                    </div>
                   </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="list-group" id="list2">
+                  <div class="col-md-3">
+                    <div class="list-group" id="list2">
                 <span class="list-group-item active">Client Pool
                   <input title="Toggle all" ng-click="toggleB()" ng-model="toggle" type="checkbox" class="pull-right">
                 </span>
@@ -199,21 +228,21 @@
                            ng-checked="selectedB.indexOf(user.id) > -1" type="checkbox" class="pull-right">
                   </span>
                 </span>
+                    </div>
+                  </div>
+                  <div class="col-md-12" style="text-align: right">
+                    <small><cite title="Source Title">Set hypervisors for both sides!</cite></small>
                   </div>
                 </div>
-                <div class="col-md-12" style="text-align: right">
-                  <small><cite title="Source Title">Set hypervisors for both sides!</cite></small>
-                </div>
-              </div>
-            </md-radio-group>
+              </md-radio-group>
 
 
+            </div>
           </div>
-        </div>
 
-        <!--<div class="text-center">-->
-        <!--<h4 style="margin-top: 5px">VM PLACEMENT</h4>-->
-        <!--</div>-->
+          <!--<div class="text-center">-->
+          <!--<h4 style="margin-top: 5px">VM PLACEMENT</h4>-->
+          <!--</div>-->
         </div>
 
       </form>

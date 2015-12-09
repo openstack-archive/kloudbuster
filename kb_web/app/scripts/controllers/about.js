@@ -53,7 +53,7 @@ angular.module('kbWebApp')
       loc = $(location).attr('hash');
 
       removeAllNav();
-      $("#scaletestname").text('Scale Test');
+      $("#scaletestname").text('Scale/Performance');
       $("#loginname").text('Log Out');
 
       switch (loc) {
@@ -202,6 +202,7 @@ angular.module('kbWebApp')
       isOneCloud = "";
       topology = "";
       logOffset = 0;
+      logNum=0;
     };
 
     var sessionID = "";
@@ -266,6 +267,15 @@ angular.module('kbWebApp')
     this.setLogOffset = function (offset) {
       logOffset = offset;
       return logOffset;
+    };
+
+    var logNum = 0;
+    this.getLogNum = function () {
+      return logNum;
+    };
+    this.setLogNum = function (lognumber) {
+      logNum = lognumber;
+      return logNum;
     };
 
   })

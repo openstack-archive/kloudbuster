@@ -48,8 +48,8 @@
         <accordion close-others="oneAtATime">
           <accordion-group heading="" is-open="status1.open">
             <accordion-heading>
-              Staging Settings <i class="pull-right glyphicon"
-                                  ng-class="{'glyphicon-chevron-down': !status1.open, 'glyphicon-chevron-up': status1.open}"></i>
+              Staging Settings (VM Count:{{config.server.number_tenants*config.server.routers_per_tenant*config.server.networks_per_router*config.server.vms_per_network*config.server.secgroups_per_network}})
+              <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': !status1.open, 'glyphicon-chevron-up': status1.open}"></i>
             </accordion-heading>
             <div class="col-lg-14" id="stagingConfig">
               <form class="bs-component" name="interactive_staging_settings">
