@@ -64,6 +64,7 @@ pip install redis
 cd /tmp
 git clone git://github.com/HdrHistogram/HdrHistogram_c.git
 cd HdrHistogram_c
+git reset --hard cf711d06d16cf4057f260a4b656fcddd110a1b7a
 cmake .
 make install
 
