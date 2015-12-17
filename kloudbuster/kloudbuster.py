@@ -205,12 +205,14 @@ class KloudBuster(object):
     4. Networks per router
     5. Instances per network
     """
-    def __init__(self, server_cred, client_cred, server_cfg, client_cfg, topology, tenants_list):
+    def __init__(self, server_cred, client_cred, server_cfg, client_cfg,
+                 topology, tenants_list, storage_mode=False):
         # List of tenant objects to keep track of all tenants
         self.server_cred = server_cred
         self.client_cred = client_cred
         self.server_cfg = server_cfg
         self.client_cfg = client_cfg
+        self.storage_mode = storage_mode
         if topology and tenants_list:
             self.topology = None
             LOG.warn("REUSING MODE: Topology configs will be ignored.")
@@ -327,14 +329,16 @@ class KloudBuster(object):
         Function that iterates and prints all VM info
         for tested and testing cloud
         """
-        table = [["VM Name", "Host", "Internal IP", "Floating IP", "Subnet", "Shared Interface IP"]]
-        client_list = self.kloud.get_all_instances()
-        for instance in client_list:
-            row = [instance.vm_name, instance.host, instance.fixed_ip,
-                   instance.fip_ip, instance.subnet_ip, instance.shared_interface_ip]
-            table.append(row)
-        LOG.info('Provision Details (Tested Kloud)\n' +
-                 tabulate(table, headers="firstrow", tablefmt="psql"))
+        if not self.storage_mode:
+            table = [["VM Name", "Host", "Internal IP", "Floating IP", "Subnet",
+                      "Shared Interface IP"]]
+            client_list = self.kloud.get_all_instances()
+            for instance in client_list:
+                row = [instance.vm_name, instance.host, instance.fixed_ip,
+                       instance.fip_ip, instance.subnet_ip, instance.shared_interface_ip]
+                table.append(row)
+            LOG.info('Provision Details (Tested Kloud)\n' +
+                     tabulate(table, headers="firstrow", tablefmt="psql"))
 
         table = [["VM Name", "Host", "Internal IP", "Floating IP", "Subnet"]]
         client_list = self.testing_kloud.get_all_instances(include_kb_proxy=True)
@@ -345,31 +349,43 @@ class KloudBuster(object):
         LOG.info('Provision Details (Testing Kloud)\n' +
                  tabulate(table, headers="firstrow", tablefmt="psql"))
 
-    def gen_user_data(self, role):
-        LOG.info("Preparing metadata for VMs... (%s)" % role)
-        if role == "Server":
-            svr_list = self.kloud.get_all_instances()
-            KBScheduler.setup_vm_placement(role, svr_list, self.topology,
-                                           self.kloud.placement_az, "Round-robin")
-            for ins in svr_list:
+    def gen_server_user_data(self, test_mode):
+        LOG.info("Preparing metadata for VMs... (Server)")
+        server_list = self.kloud.get_all_instances()
+        KBScheduler.setup_vm_placement('Server', server_list, self.topology,
+                                       self.kloud.placement_az, "Round-robin")
+        if test_mode == 'http':
+            for ins in server_list:
                 ins.user_data['role'] = 'Server'
                 ins.user_data['http_server_configs'] = ins.config['http_server_configs']
                 ins.boot_info['flavor_type'] = 'kb.server' if \
                     not self.tenants_list['server'] else self.kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)
-        elif role == "Client":
-            client_list = self.testing_kloud.get_all_instances()
-            svr_list = self.kloud.get_all_instances()
-            KBScheduler.setup_vm_mappings(client_list, svr_list, "1:1")
-            KBScheduler.setup_vm_placement(role, client_list, self.topology,
-                                           self.testing_kloud.placement_az, "Round-robin")
+
+    def gen_client_user_data(self, test_mode):
+        LOG.info("Preparing metadata for VMs... (Client)")
+        client_list = self.testing_kloud.get_all_instances()
+        KBScheduler.setup_vm_placement('Client', client_list, self.topology,
+                                       self.testing_kloud.placement_az, "Round-robin")
+        if test_mode == 'http':
+            server_list = self.kloud.get_all_instances()
+            KBScheduler.setup_vm_mappings(client_list, server_list, "1:1")
             for idx, ins in enumerate(client_list):
                 ins.user_data['role'] = 'Client'
                 ins.user_data['vm_name'] = ins.vm_name
                 ins.user_data['redis_server'] = self.kb_proxy.fixed_ip
                 ins.user_data['redis_server_port'] = 6379
-                ins.user_data['target_subnet_ip'] = svr_list[idx].subnet_ip
-                ins.user_data['target_shared_interface_ip'] = svr_list[idx].shared_interface_ip
+                ins.user_data['target_subnet_ip'] = server_list[idx].subnet_ip
+                ins.user_data['target_shared_interface_ip'] = server_list[idx].shared_interface_ip
+                ins.boot_info['flavor_type'] = 'kb.client' if \
+                    not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
+                ins.boot_info['user_data'] = str(ins.user_data)
+        elif test_mode == 'storage':
+            for idx, ins in enumerate(client_list):
+                ins.user_data['role'] = 'Client'
+                ins.user_data['vm_name'] = ins.vm_name
+                ins.user_data['redis_server'] = self.kb_proxy.fixed_ip
+                ins.user_data['redis_server_port'] = 6379
                 ins.boot_info['flavor_type'] = 'kb.client' if \
                     not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)
@@ -390,12 +406,21 @@ class KloudBuster(object):
         """
         Staging all resources for running KloudBuster Tests
         """
-        self.kloud = Kloud(self.server_cfg, self.server_cred, self.tenants_list['server'])
-        self.testing_kloud = Kloud(self.client_cfg, self.client_cred,
-                                   self.tenants_list['client'], testing_side=True)
         vm_creation_concurrency = self.client_cfg.vm_creation_concurrency
         tenant_quota = self.calc_tenant_quota()
-        self.kloud.create_resources(tenant_quota['server'])
+        if not self.storage_mode:
+            self.kloud = Kloud(self.server_cfg, self.server_cred, self.tenants_list['server'])
+            self.server_vm_create_thread = threading.Thread(target=self.kloud.create_vms,
+                                                            args=[vm_creation_concurrency])
+            self.server_vm_create_thread.daemon = True
+        self.testing_kloud = Kloud(self.client_cfg, self.client_cred,
+                                   self.tenants_list['client'], testing_side=True)
+        self.client_vm_create_thread = threading.Thread(target=self.testing_kloud.create_vms,
+                                                        args=[vm_creation_concurrency])
+        self.client_vm_create_thread.daemon = True
+
+        if not self.storage_mode:
+            self.kloud.create_resources(tenant_quota['server'])
         self.testing_kloud.create_resources(tenant_quota['client'])
 
         # Setting up the KloudBuster Proxy node
@@ -435,29 +460,27 @@ class KloudBuster(object):
                 stage += 1
             LOG.info(log_info)
 
-        if self.single_cloud:
+        if self.single_cloud and not self.storage_mode:
             # Find the shared network if the cloud used to testing is same
             # Attach the router in tested kloud to the shared network
             shared_net = self.testing_kloud.get_first_network()
             self.kloud.attach_to_shared_net(shared_net)
 
         # Create VMs in both tested and testing kloud concurrently
-        self.client_vm_create_thread = threading.Thread(target=self.testing_kloud.create_vms,
-                                                        args=[vm_creation_concurrency])
-        self.server_vm_create_thread = threading.Thread(target=self.kloud.create_vms,
-                                                        args=[vm_creation_concurrency])
-        self.client_vm_create_thread.daemon = True
-        self.server_vm_create_thread.daemon = True
-        if self.single_cloud:
-            self.gen_user_data("Server")
+        if self.storage_mode:
+            self.gen_client_user_data("storage")
+            self.client_vm_create_thread.start()
+            self.client_vm_create_thread.join()
+        elif self.single_cloud:
+            self.gen_server_user_data("http")
             self.server_vm_create_thread.start()
             self.server_vm_create_thread.join()
-            self.gen_user_data("Client")
+            self.gen_client_user_data("http")
             self.client_vm_create_thread.start()
             self.client_vm_create_thread.join()
         else:
-            self.gen_user_data("Server")
-            self.gen_user_data("Client")
+            self.gen_server_user_data("http")
+            self.gen_client_user_data("http")
             self.server_vm_create_thread.start()
             self.client_vm_create_thread.start()
             self.server_vm_create_thread.join()
@@ -490,7 +513,7 @@ class KloudBuster(object):
         # then testing side last (order is important because of the shared network)
         cleanup_flag = False
         try:
-            cleanup_flag = self.kloud.delete_resources()
+            cleanup_flag = self.kloud.delete_resources() if not self.storage_mode else True
         except Exception:
             traceback.print_exc()
             KBResLogger.dump_and_save('svr', self.kloud.res_logger.resource_list)
@@ -629,6 +652,9 @@ def main():
                    short="c",
                    default=None,
                    help="Override default values with a config file"),
+        cfg.BoolOpt("storage",
+                    default=False,
+                    help="Running KloudBuster to test storage performance"),
         cfg.StrOpt("topology",
                    short="t",
                    default=None,
@@ -683,7 +709,8 @@ def main():
     kloudbuster = KloudBuster(
         kb_config.cred_tested, kb_config.cred_testing,
         kb_config.server_cfg, kb_config.client_cfg,
-        kb_config.topo_cfg, kb_config.tenants_list)
+        kb_config.topo_cfg, kb_config.tenants_list,
+        storage_mode=CONF.storage)
     if kloudbuster.check_and_upload_images():
         kloudbuster.run()
 
