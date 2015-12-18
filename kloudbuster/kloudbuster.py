@@ -27,8 +27,9 @@ import glanceclient.exc as glance_exception
 from glanceclient.v1 import client as glanceclient
 from kb_config import KBConfig
 from kb_res_logger import KBResLogger
-from kb_runner import KBException
-from kb_runner import KBRunner
+from kb_runner_base import KBException
+from kb_runner_http import KBRunner_HTTP
+from kb_runner_storage import KBRunner_Storage
 from kb_scheduler import KBScheduler
 import kb_vm_agent
 from keystoneclient.v2_0 import client as keystoneclient
@@ -441,9 +442,13 @@ class KloudBuster(object):
         self.kb_proxy.boot_info['user_data'] = str(self.kb_proxy.user_data)
         self.testing_kloud.create_vm(self.kb_proxy)
 
-        self.kb_runner = KBRunner(client_list, self.client_cfg,
-                                  kb_vm_agent.get_image_version(),
-                                  self.single_cloud)
+        if self.storage_mode:
+            self.kb_runner = KBRunner_Storage(client_list, self.client_cfg,
+                                              kb_vm_agent.get_image_version(),
+                                              self.single_cloud)
+        else:
+            self.kb_runner = KBRunner_HTTP(client_list, self.client_cfg,
+                                           kb_vm_agent.get_image_version())
         self.kb_runner.setup_redis(self.kb_proxy.fip_ip)
         if self.client_cfg.progression['enabled']:
             log_info = "Progression run is enabled, KloudBuster will schedule "\
