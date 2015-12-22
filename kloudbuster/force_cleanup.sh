@@ -68,6 +68,7 @@ if [ "$1" == "--file" ] && [ -f "$2" ]; then
     TENANT_LIST=`grep "tenants" $2 | cut -d'|' -f3`
     USER_LIST=`grep "users" $2 | cut -d'|' -f3`
     FLOATINGIP_LIST=`grep "floating_ips" $2 | cut -d'|' -f3`
+    VOL_LIST=`grep "volumes" $2 | cut -d'|' -f3`
 else
     prompt_to_run;
     INSTANCE_LIST=`nova list --all-tenants | grep KB  | cut -d'|' -f2`
@@ -79,7 +80,17 @@ else
     TENANT_LIST=`keystone tenant-list | grep KB | cut -d'|' -f2`
     USER_LIST=`keystone user-list | grep KB | cut -d'|' -f2`
     FLOATINGIP_LIST=""
+    VOL_LIST=`cinder list --all-tenants | grep KB | cut -d'|' -f2`
 fi
+
+vol_list=`cinder list --all-tenants | grep KB`
+for line in $VOL_LIST; do
+    ins_id=`echo $vol_list | grep $line | cut -d'|' -f9 | xargs`
+    if [ "$ins_id" != "" ]; then
+        nova volume-detach $ins_id $line
+    fi
+    cinder force-delete $line &
+done;
 
 for line in $INSTANCE_LIST; do
     nova delete $line
@@ -102,7 +113,7 @@ if [ "$FLOATINGIP_LIST" == "" ] && [ "$1" == "" ]; then
         fid=`echo $line | cut -d'|' -f2 | xargs`
         portid=`echo $line | cut -d'|' -f5 | xargs`
         if [ "$fid" != "" ] && [ "$portid" = "" ]; then
-            neutron floatingip-delete $fid
+            neutron floatingip-delete $fid &
         fi
     done;
 else

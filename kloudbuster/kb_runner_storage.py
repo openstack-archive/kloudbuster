@@ -26,7 +26,7 @@ class KBRunner_Storage(KBRunner):
     """
 
     def __init__(self, client_list, config, expected_agent_version):
-        KBRunner.__init__(self, client_list, config, expected_agent_version, single_cloue=True)
+        KBRunner.__init__(self, client_list, config, expected_agent_version, single_cloud=True)
 
     def run(self, http_test_only=False):
         raise KBException("NOT IMPLEMENT")

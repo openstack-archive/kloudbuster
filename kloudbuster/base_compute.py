@@ -40,6 +40,7 @@ class BaseCompute(object):
         self.ssh_ip = None
         # Shared interface ip for tested and testing cloud
         self.shared_interface_ip = None
+        self.vol = None
 
 
     # Create a server instance with associated

@@ -26,7 +26,8 @@ class KBResLogger(object):
     def __init__(self):
         self.resource_list = {}
         for key in ['tenants', 'users', 'flavors', 'keypairs', 'routers',
-                    'networks', 'sec_groups', 'instances', 'floating_ips']:
+                    'networks', 'sec_groups', 'instances', 'floating_ips',
+                    'volumes']:
             self.resource_list[key] = []
 
     def log(self, res_type, name, id):

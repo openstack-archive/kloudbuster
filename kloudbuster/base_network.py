@@ -17,6 +17,7 @@ import time
 from perf_instance import PerfInstance
 
 import base_compute
+import base_storage
 import log as logging
 import netaddr
 from neutronclient.common.exceptions import NetworkInUseClient
@@ -90,8 +91,6 @@ class BaseNetwork(object):
     4. Also interacts with the compute class for instances
     """
 
-
-
     def __init__(self, router):
         """
         Store the neutron client
@@ -100,6 +99,7 @@ class BaseNetwork(object):
         """
         self.neutron_client = router.user.neutron_client
         self.nova_client = router.user.nova_client
+        self.cinder_client = router.user.cinder_client
         self.router = router
         self.res_logger = router.res_logger
         self.network = None
@@ -122,14 +122,25 @@ class BaseNetwork(object):
             self.res_logger.log('sec_groups', secgroup_instance.secgroup.name,
                                 secgroup_instance.secgroup.id)
 
-        LOG.info("Scheduled to create VM for network %s..." % network_prefix)
+        LOG.info("Scheduled to create VMs for network %s..." % network_prefix)
+        vm_total = config_scale['vms_per_network']
         if config_scale['use_floatingip']:
             external_network = find_external_network(self.neutron_client)
+        if config_scale['volume_size']:
+            bs_obj = base_storage.BaseStorage(self.cinder_client)
+            vol_size = config_scale['volume_size']
         # Schedule to create the required number of VMs
-        for instance_count in range(config_scale['vms_per_network']):
+        for instance_count in xrange(vm_total):
             vm_name = network_prefix + "-I" + str(instance_count)
             perf_instance = PerfInstance(vm_name, self, config_scale)
             self.instance_list.append(perf_instance)
+
+            # Create volume if needed
+            # Don't create volumn for KB-Proxy
+            if config_scale['volume_size'] and instance_count < vm_total - 1:
+                vol_name = network_prefix + "-V" + str(instance_count)
+                perf_instance.vol = bs_obj.create_vol(vol_size, name=vol_name)
+                self.res_logger.log('volumes', vol_name, perf_instance.vol.id)
 
             perf_instance.subnet_ip = self.network['subnet_ip']
             if config_scale['use_floatingip']:
@@ -154,8 +165,14 @@ class BaseNetwork(object):
         Security groups, keypairs and instances
         """
         flag = True
+        if self.instance_list[0].vol:
+            bs_obj = base_storage.BaseStorage(self.cinder_client)
+
         # Delete the instances first
         for instance in self.instance_list:
+            if instance.vol:
+                bs_obj.detach_vol(instance.vol)
+                bs_obj.delete_vol(instance.vol)
             instance.delete_server()
             if instance.fip:
                 # Delete the Floating IP

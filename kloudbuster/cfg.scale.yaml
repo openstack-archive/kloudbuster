@@ -181,5 +181,8 @@ client:
         # Duration of testing tools (seconds)
         duration: 30
 
+    # Volumes size in GB for each VM, setting to 0 to disable volume creation
+    volume_size: 0
+
     # Prompt before running benchmarking tools
     prompt_before_run: False

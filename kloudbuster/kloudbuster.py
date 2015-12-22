@@ -23,6 +23,7 @@ import traceback
 from __init__ import __version__
 import base_compute
 import base_network
+import base_storage
 import glanceclient.exc as glance_exception
 from glanceclient.v1 import client as glanceclient
 from kb_config import KBConfig
@@ -167,11 +168,20 @@ class Kloud(object):
         '''
         return self.placement_az
 
-    def create_vm(self, instance):
+    def create_vm(self, args):
+        '''Expecting:
+        :param perf_instance instance: The KloudBuster VM instance object
+        :param BaseStorage bs_obj: The BaseStorage object
+        '''
+        instance = args[0]
+        bs_obj = args[1]
         LOG.info("Creating Instance: " + instance.vm_name)
-        instance.create_server(**instance.boot_info)
+        ins = instance.create_server(**instance.boot_info)
         if not instance.instance:
             raise KBVMCreationException()
+
+        if instance.vol:
+            bs_obj.attach_vol(instance.vol, ins.id, '/dev/vdb')
 
         instance.fixed_ip = instance.instance.networks.values()[0][0]
         if (instance.vm_name == "KB-PROXY") and (not instance.config['use_floatingip']):
@@ -193,7 +203,12 @@ class Kloud(object):
 
     def create_vms(self, vm_creation_concurrency):
         tpool = ThreadPool(processes=vm_creation_concurrency)
-        for _ in tpool.imap(self.create_vm, self.get_all_instances()):
+        cinder_client = self.tenant_list[0].user_list[0].cinder_client
+        bs_obj = base_storage.BaseStorage(cinder_client)
+        all_vm = self.get_all_instances()
+        par = [(ins, bs_obj) for ins in all_vm]
+
+        for _ in tpool.imap(self.create_vm, par):
             self.vm_up_count += 1
 
 
@@ -440,15 +455,15 @@ class KloudBuster(object):
                 if self.testing_kloud.placement_az else "nova:%s" % (proxy_hyper)
 
         self.kb_proxy.boot_info['user_data'] = str(self.kb_proxy.user_data)
-        self.testing_kloud.create_vm(self.kb_proxy)
+        self.testing_kloud.create_vm((self.kb_proxy, None))
 
         if self.storage_mode:
             self.kb_runner = KBRunner_Storage(client_list, self.client_cfg,
-                                              kb_vm_agent.get_image_version(),
-                                              self.single_cloud)
+                                              kb_vm_agent.get_image_version())
         else:
             self.kb_runner = KBRunner_HTTP(client_list, self.client_cfg,
-                                           kb_vm_agent.get_image_version())
+                                           kb_vm_agent.get_image_version(),
+                                           self.single_cloud)
         self.kb_runner.setup_redis(self.kb_proxy.fip_ip)
         if self.client_cfg.progression['enabled']:
             log_info = "Progression run is enabled, KloudBuster will schedule "\
@@ -521,7 +536,6 @@ class KloudBuster(object):
             cleanup_flag = self.kloud.delete_resources() if not self.storage_mode else True
         except Exception:
             traceback.print_exc()
-            KBResLogger.dump_and_save('svr', self.kloud.res_logger.resource_list)
         if not cleanup_flag:
             LOG.warn('Some resources in server cloud are not cleaned up properly.')
             KBResLogger.dump_and_save('svr', self.kloud.res_logger.resource_list)
@@ -531,7 +545,6 @@ class KloudBuster(object):
             cleanup_flag = self.testing_kloud.delete_resources()
         except Exception:
             traceback.print_exc()
-            KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
         if not cleanup_flag:
             LOG.warn('Some resources in client cloud are not cleaned up properly.')
             KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)

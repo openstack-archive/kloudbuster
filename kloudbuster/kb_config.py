@@ -104,6 +104,11 @@ class KBConfig(object):
         if not self.config_scale['image_name']:
             self.config_scale['image_name'] = kb_vm_agent.get_image_name()
 
+        if CONF.storage and not self.config_scale.client['volume_size']:
+            LOG.error('You have to specify a volumn size in order to run '
+                      'storage performance tests.')
+            raise KBConfigParseException()
+
         # A bit of config dict surgery, extract out the client and server side
         # and transplant the remaining (common part) into the client and server dict
         self.server_cfg = AttrDict(self.config_scale.pop('server'))
