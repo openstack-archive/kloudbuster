@@ -12,3 +12,7 @@ nuttcp:
 python-pip:
 python-dev:
 redis-server:
+xfsprogs:
+zlib1g-dev:
+libaio1:
+libaio-dev:

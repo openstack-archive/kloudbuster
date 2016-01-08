@@ -69,18 +69,6 @@ class KBRunner_HTTP(KBRunner):
         for key, instance in self.client_dict.items():
             self.result[key] = instance.http_client_parser(**self.result[key])
 
-    def gen_host_stats(self):
-        self.host_stats = {}
-        for vm in self.result.keys():
-            phy_host = self.client_dict[vm].host
-            if phy_host not in self.host_stats:
-                self.host_stats[phy_host] = []
-            self.host_stats[phy_host].append(self.result[vm])
-
-        http_tool = self.client_dict.values()[0].http_tool
-        for phy_host in self.host_stats:
-            self.host_stats[phy_host] = http_tool.consolidate_results(self.host_stats[phy_host])
-
     def single_run(self, active_range=None, http_test_only=False):
         try:
             if not http_test_only:
@@ -97,6 +85,7 @@ class KBRunner_HTTP(KBRunner):
 
             LOG.info("Running HTTP Benchmarking...")
             self.report = {'seq': 0, 'report': None}
+            self.result = {}
             self.run_http_test(active_range)
 
             # Call the method in corresponding tools to consolidate results

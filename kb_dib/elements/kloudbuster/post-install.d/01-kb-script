@@ -64,7 +64,6 @@ pip install redis
 cd /tmp
 git clone git://github.com/HdrHistogram/HdrHistogram_c.git
 cd HdrHistogram_c
-git reset --hard cf711d06d16cf4057f260a4b656fcddd110a1b7a
 cmake .
 make install
 
@@ -78,6 +77,14 @@ mv wrk /usr/local/bin/wrk2
 # Move the HdrHistogram library to /usr/lib
 mv /usr/local/lib/libhdr_histogram.so /usr/lib/
 
+# Install fio
+cd /tmp
+FIO='fio-2.3'
+wget http://brick.kernel.dk/snaps/$FIO.tar.gz
+tar xzf $FIO.tar.gz
+cd $FIO
+make
+mv fio /usr/local/bin/fio
 
 # =================
 # KloudBuster Proxy
@@ -98,9 +105,8 @@ mv dist/* ../kb_server/public/ui
 # =======
 # Cleanup
 # =======
-# Remove HdrHistogram_c and wrk2 builds
-rm -rf /tmp/HdrHistogram_c
-rm -rf /tmp/wrk2
+# Remove HdrHistogram_c, wrk2, and fio builds
+rm -rf /tmp/
 
 # Remove KloudBuster Web UI builds
 rm -rf /kb_test/kloudbuster/kb_web/node_modules
@@ -109,9 +115,14 @@ rm -rf /kb_test/kloudbuster/kb_web/.tmp
 
 # Uninstall unneeded packages
 apt-get -y --purge remove libyaml-dev
+apt-get -y --purge remove libssl-dev
+apt-get -y --purge remove zlib1g-dev
+apt-get -y --purge remove libaio-dev
 apt-get -y --purge remove python-pip
 apt-get -y --purge remove python-dev
 apt-get -y --purge remove build-essential
 apt-get -y --purge remove cmake
+apt-get -y --purge remove npm
+apt-get -y --purge remove xfsprogs
 apt-get -y --purge autoremove
 apt-get -y autoclean
