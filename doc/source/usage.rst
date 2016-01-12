@@ -2,13 +2,13 @@
 Usage
 =====
 
-There are total of three ways of running KloudBuster, and the easiest way
-to start is using the **Web UI**. It offers the most friendly interface, and
-also needs the least learning to get started. **CLI** is the traditional way
+There are three ways for running KloudBuster, the easiest 
+being the **Web UI**. It offers the most user friendly interface and
+needs the least learning to get started. **CLI** is the traditional way
 to run applications. It has the most comprehensive feature sets when compared
-to the other two ways, and also it is pretty much the only choice if you don't
-have a GUI enabled environment. **Rest API** gives another way to access
-and control KloudBuster. All APIs provided are well documented, and the
+to the other two ways. **Rest API** gives another way to access
+and control KloudBuster from another application.
+All APIs provided are well documented, and the
 built-in web UI is fully implemented on top of these APIs.
 
 The default scale settings of KloudBuster is at minimal scale, which is
@@ -20,39 +20,43 @@ to run KloudBuster:
     * 3 available floating IPs
 
 
-Running KloudBuster with Web UI
--------------------------------
+Running KloudBuster as a Web Server
+-----------------------------------
 
+The easiest way to use KloudBuster is to run it as a web server application.
+The KloudBuster qcow2 image has the Web server built-in and is ready to use once up running. 
+To get the KloudBuster Web serverI running from scratch:
+
+1. Follow the steps :ref:`here <upload_kb_image>` to upload the KloudBuster
+   image to the openstack cloud that will host your kloudbuster web server
+   (note that this could be the same as the cloud under test or could be a different cloud)
+
+2. If necessary, and as for any web server bringup, create and configure the Neutron router and network 
+   where the KloudBuster web server VM instance will be attached
+
+3. Create or reuse a security group which allows the ingress TCP traffic on
+   port 8080
+
+4. Launch an instance using the KloudBuster image，with the proper security group
+   and connect to the appropriate network. Leave the
+   Key Pair as blank, as we don't need the SSH access to this VM
+
+5. Associate a floating IP to the newly created VM instance so that it can be accessible from
+   an external browser
+
+6. Open your browser, and type the below address to get started::
+
+    http://<floating_ip>:8080/ui/index.html
+
+
+Alternatively, you could also run KloudBuster as a local web server from a clone
+of the KloudBuster git repository. 
 The Web UI is developed using AngularJS framework, which needs to be built
 before serving. If you want the web app to run on localhost, you have to
 build it from source, and start the KloudBuster server. Refer to
 :ref:`here <build_web_ui>` for the steps to build the web app, and refer to
 :ref:`below section <start_kloudbuster_server>` for the steps to start the
 KloudBuster server.
-
-An easier and better way is to use the KloudBuster image. The KloudBuster
-image has the Web UI built-in, and it is ready to use once up running. It
-is as easy as create a new regular VM with OpenStack in OpenStack. Here
-are the steps for get the KloudBuster Web UI running from scratch:
-
-1. Follow the steps :ref:`here <upload_kb_image>` to upload the KloudBuster
-   image to the cloud uder test;
-
-2. Create and configure the Routers, Networks for holding a new VM;
-
-3. Create a new security group, which allows the ingress TCP traffic on
-   port 8080;
-
-4. Launch an instance using the KloudBuster image，with the security group
-   we just created, and connect to the network we just created. Leave the
-   Key Pair as blank, as we don't need the SSH access to this VM;
-
-5. Associate a floating IP to the newly created VM;
-
-6. Open your browser, and type the below address to get started::
-
-    http://<floating_ip>:8080/ui/index.html
-
 
 Running KloudBuster with CLI
 ----------------------------
@@ -326,11 +330,6 @@ for more options.
 Running with Rest API
 ---------------------
 
-.. note::
-
-    As of now, the Web UI can only be started when KloudBuster is using
-    GitHub/OpenStack Repository based installation.
-
 All Rest APIs are well documented using `Swagger <http://swagger.io/>`_. In
 order to view them in a nice format, copy the entire contents of file
 kb_server/kloudbuster-swagger.yaml, and paste into the left panel of
@@ -364,35 +363,38 @@ Once the server is started, you can use different HTTP methods
 (GET/PUT/POST/DELETE) to interactive with KloudBuster.
 
 
-KloudBuster Standard Profiling
-------------------------------
+KloudBuster Standard Scale Profile
+----------------------------------
 
-KloudBuster is able to perform the scale testing using different cominations
-of configurations. There are multiple factors which can impact the final
-results (VM count, number of connections per VM, number of requests per
-seconds per VM, timeout, etc.). So KloudBuster is defining a specific set of
-configurations among all cominations as a standard run.
+Multiple factors can impact data plane scale numbers measured by KloudBuster:
+VM count, number of connections per VM, number of requests per
+seconds per VM, timeout, etc...
+To help obtaining quick and easy results without having to tweak too many parameters,
+KloudBuster defines an off the shelf *default scale profile*.
 
-In the standard run, the number of connections per VM will be set to 1000,
-the number of requests per seconds per VM is set to 1000, the HTTP request
-timeout is set to 5 seconds. The stop limit for progression runs will be error
-packets greater than 50. The size of the HTML page in the server VMs will be
-32768 Bytes. Above configurations are all set by default.
+In the default scale profile:
 
-In order to perform the standard run, set the max VM counts for the tests,
-and enable the rogression runs. KloudBuster will start the iteration until
+- the number of connections per VM will be set to 1000,
+- the number of requests per seconds per VM is set to 1000, 
+- the HTTP request timeout is set to 5 seconds. 
+- the stop limit for progression runs will be error packets greater than 50. 
+- The size of the HTML page in the server VMs will be 32768 Bytes. 
+
+In order to perform a run using the default scale profile, set the max VM counts for the test,
+enable progression run and leave everything else with their default values.
+KloudBuster will start the iteration until
 reaching the stop limit or the max scale. Eventually, once the KloudBuster
 run is finished, the cloud performance can be told by looking at how many VMs
-KloudBuster can run to.
+KloudBuster can run to and by looking at the latency charts.
 
-As a reference, for a Kilo OpenStack deployment (LinuxBridge + VLAN) with
-Packstack, using an 10GE NIC card for data plane traffic, KloudBuster can run
-apprximately 21 VMs and achieve approximately 5 GBps throughput.
+As a reference, KloudBuster can run approximately 21 VMs (with 21,000 connections and 21,000 HTTP requests/sec)
+and achieve approximately 5 Gbps of HTTP throughput on
+a typical multi-node Kilo OpenStack deployment (LinuxBridge + VLAN, 10GE NIC card).
 
 How-to
 ^^^^^^
 
-In order to run KloudBuster Standard Profiling, you have to set up below
+In order to run KloudBuster Standard Scale Profile, you have to set up below
 configurations:
 
 1. Enable progression runs:

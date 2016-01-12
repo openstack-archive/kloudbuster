@@ -2,21 +2,25 @@
 Installation
 ============
 
-There are two ways to install and run KloudBuster tool. Users of KloudBuster
-should use regular PyPI based installation, while developers of KloudBuster
-should use GitHub/OpenStack Repository based installation. Normally, PyPI
-based installation will satisfy most of use cases, and it is the recommended
-way for running KloudBuster under production environments, or through an
-automated or scheduled job. A git repository based installation gives more
-flexibility, and it is a must for developers of KloudBuster.
+KloudBuster is already pre-installed as a web service in the KloudBuster VM image 
+available from the `OpenStack Community App Catalog <https://apps.openstack.org>`_
+
+There are two alternative ways to install and run KloudBuster tool.
+Users of KloudBuster who prefers to use the CLI should use regular PyPI based installation.
+Developers of KloudBuster should use the GitHub/OpenStack Repository based installation.
+
+Web Service and PyPI based installation will satisfy most use cases
+and are the 2 recommended ways for running KloudBuster under production environments, or through an
+automated or scheduled job.
+The git repository based installation is targeted at developers of KloudBuster.
 
 .. note:: Installation from PyPI will only have the latest stable version.
 
 PyPI based Installation
 -----------------------
 
-This is the recommended way to install KloudBuster for non-development use,
-and KloudBuster is available in the Python Package Index (PyPI):
+This is the recommended way to install KloudBuster for non-development use if CLI is required.
+KloudBuster is available in the Python Package Index (PyPI):
 `KloudBuster PyPI <https://pypi.python.org/pypi/KloudBuster>`_
 
 Step 1
@@ -154,11 +158,12 @@ Upload KloudBuster Image
 .. note::
 
     If your OpenStack Glance is able to access the Internet, and you don't
-    need to access the KloudBuster UI from the pre-built image, you can skip
+    need to access the KloudBuster Web UI from the pre-built image, you can skip
     this section and you are done with the installation.
 
-KloudBuster needs one "universal" test VM image (referred to as "KloudBuster
-image") that contains the necessary test software. The KloudBuster image is
+In the cloud under test, KloudBuster needs one "universal" test VM image
+(referred to as "KloudBuster image") that contains the necessary test software.
+The KloudBuster image is
 then instantiated in potentially large number of VMs by the KloudBuster
 application using the appropriate role (HTTP server, HTTP traffic generator,
 etc.).
@@ -169,17 +174,26 @@ whatever reason the pre-built version doesn't work for you, the image can be
 re-built from MacOSX using Vagrant or from any Linux server. See
 :ref:`here <build_vm_image>` for more details.
 
+.. note::
+
+    The same KloudBuster VM image can be instantiated for running the test functions
+    (HTTP servers and HTTP traffic generators) and for running KloudBuster as a web service.
+
+
 Manual upload of the KloudBuster VM image
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In order to upload the KloudBuster Image to the cloud under test, the image
-must be downloaded from the OpenStack App Catalog to an intermediate location,
-e.g. the jump host which has the access to both Internet and the cloud under
-test, then uploaded to Glance using either a Glance CLI command or via Horizon
-dashboard.
+must be downloaded from the OpenStack App Catalog either directly from
+the OpenStack App Catalog (if you have direct access to the Internet)
+or through an intermediate location such as a jump host (a jump host has access 
+to both Internet and the cloud under
+test and can be used to download the image from the App Catalog
+and upload to Glance using either a Glance CLI command or via Horizon
+dashboard).
 
 KloudBuster VM images are qcow2 images named "kloudbuster_v<version>.qcow2"
-(e.g. "kloudbuster_v3.qcow2"). The image can be downloaded from
+(e.g. "kloudbuster_v6.qcow2"). The image can be downloaded from
 `<http://apps.openstack.org/#tab=glance-images>`_. Look for an image named
 with the "kloudbuster_v" prefix and download the latest version from the list.
 
@@ -189,4 +203,4 @@ a local copy of that image:
 
 .. code-block:: bash
 
-    $ glance image-create --file kloudbuster_v3.qcow2 --disk-format qcow2 --container-format bare --is-public True --name kloudbuster_v3
+    $ glance image-create --file kloudbuster_v6.qcow2 --disk-format qcow2 --container-format bare --is-public True --name kloudbuster_v6

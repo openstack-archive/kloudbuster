@@ -44,7 +44,9 @@ Features
 
 * Manual cleanup script
 
-* Server mode and REST interface:
+* Web Server mode with Web UI to drive scale test from your browser
+ 
+* Web Server mode with REST interface:
 
    * Allows KloudBuster to be driven by other programs
    * Swagger 2.0 YAML description of the REST interface
