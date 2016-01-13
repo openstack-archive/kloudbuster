@@ -126,7 +126,7 @@ class BaseNetwork(object):
         vm_total = config_scale['vms_per_network']
         if config_scale['use_floatingip']:
             external_network = find_external_network(self.neutron_client)
-        if config_scale['volume_size']:
+        if config_scale.get('volume_size'):
             bs_obj = base_storage.BaseStorage(self.cinder_client)
             vol_size = config_scale['volume_size']
         # Schedule to create the required number of VMs
@@ -137,7 +137,7 @@ class BaseNetwork(object):
 
             # Create volume if needed
             # Don't create volumn for KB-Proxy
-            if config_scale['volume_size'] and instance_count < vm_total - 1:
+            if config_scale.get('volume_size') and instance_count < vm_total - 1:
                 vol_name = network_prefix + "-V" + str(instance_count)
                 perf_instance.vol = bs_obj.create_vol(vol_size, name=vol_name)
                 self.res_logger.log('volumes', vol_name, perf_instance.vol.id)

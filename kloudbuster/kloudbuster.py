@@ -590,10 +590,11 @@ class KloudBuster(object):
             # (4) Each Router has one external IP, takes up 1 port, total of
             #     server_quota['router'] port(s)
             server_quota['port'] = 2 * total_vm + 2 * server_quota['network'] +\
-                server_quota['router']
+                server_quota['router'] + 10
         else:
             server_quota['floatingip'] = server_quota['router']
-            server_quota['port'] = total_vm + 2 * server_quota['network'] + server_quota['router']
+            server_quota['port'] = total_vm + 2 * server_quota['network'] +\
+                server_quota['router'] + 10
         server_quota['security_group'] = server_quota['network'] + 1
         server_quota['security_group_rule'] = server_quota['security_group'] * 10
 
@@ -613,14 +614,14 @@ class KloudBuster(object):
             #     client_quota['network'] * 2 port(s)
             # (4) KB-Proxy node takes up 2 ports, one for fixed IP, one for floating IP
             # (5) Each Router has one external IP, takes up 1 port, total of 1 router/port
-            client_quota['port'] = 2 * total_vm + 2 * client_quota['network'] + 2 + 1
+            client_quota['port'] = 2 * total_vm + 2 * client_quota['network'] + 2 + 1 + 10
         else:
             client_quota['floatingip'] = 1 + 1
             client_quota['port'] = total_vm + 2 * client_quota['network'] + 2 + 1
         if self.single_cloud:
             # Under single-cloud mode, the shared network is attached to every router in server
             # cloud, and each one takes up 1 port on client side.
-            client_quota['port'] = client_quota['port'] + server_quota['router']
+            client_quota['port'] = client_quota['port'] + server_quota['router'] + 10
         client_quota['security_group'] = client_quota['network'] + 1
         client_quota['security_group_rule'] = client_quota['security_group'] * 10
 

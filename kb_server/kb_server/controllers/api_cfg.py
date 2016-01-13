@@ -136,8 +136,9 @@ class ConfigController(object):
             #   'credentials': {'tested-rc': '<STRING>', 'tested-passwd': '<STRING>',
             #                   'testing-rc': '<STRING>', 'testing-passwd': '<STRING>'},
             #   'kb_cfg': {<USER_OVERRIDED_CONFIGS>},
-            #   'topo_cfg': {<TOPOLOGY_CONFIGS>}
-            #   'tenants_cfg': {<TENANT_AND_USER_LISTS_FOR_REUSING>}
+            #   'topo_cfg': {<TOPOLOGY_CONFIGS>},
+            #   'tenants_cfg': {<TENANT_AND_USER_LISTS_FOR_REUSING>},
+            #   'storage_mode': True/False
             # }
             user_config = json.loads(arg)
 
@@ -154,6 +155,7 @@ class ConfigController(object):
                 cred_testing = cred_tested
 
             kb_config = KBConfig()
+            kb_config.storage_mode = user_config.get('storage_mode', False)
             session_id = hashlib.md5(str(cred_config)).hexdigest()
             if KBSessionManager.has(session_id):
                 response.status = 200

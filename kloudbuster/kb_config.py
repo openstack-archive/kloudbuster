@@ -78,6 +78,7 @@ class KBConfig(object):
         self.client_cfg = None
         self.topo_cfg = None
         self.tenants_list = None
+        self.storage_mode = False
 
     def update_configs(self):
         # Initialize the key pair name
@@ -96,6 +97,11 @@ class KBConfig(object):
                 LOG.warn('No public key is found or specified to instantiate VMs. '
                          'You will not be able to access the VMs spawned by KloudBuster.')
 
+        if self.storage_mode and not self.config_scale.client['volume_size']:
+            LOG.error('You have to specify a volumn size in order to run '
+                      'storage performance tests.')
+            raise KBConfigParseException()
+
         if self.alt_cfg:
             self.config_scale = self.config_scale + AttrDict(self.alt_cfg)
 
@@ -103,11 +109,6 @@ class KBConfig(object):
         # defaults to something like "kloudbuster_v3"
         if not self.config_scale['image_name']:
             self.config_scale['image_name'] = kb_vm_agent.get_image_name()
-
-        if CONF.storage and not self.config_scale.client['volume_size']:
-            LOG.error('You have to specify a volumn size in order to run '
-                      'storage performance tests.')
-            raise KBConfigParseException()
 
         # A bit of config dict surgery, extract out the client and server side
         # and transplant the remaining (common part) into the client and server dict
@@ -129,6 +130,7 @@ class KBConfig(object):
         self.config_scale['client'] = self.client_cfg
 
     def init_with_cli(self):
+        self.storage_mode = CONF.storage
         self.get_credentials()
         self.get_configs()
         self.get_topo_cfg()
