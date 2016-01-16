@@ -130,7 +130,7 @@ class KBRunner(object):
         retry = cnt_succ = cnt_failed = 0
         clist = self.client_dict.copy()
         samples = []
-        http_tool = self.client_dict.values()[0].http_tool
+        perf_tool = self.client_dict.values()[0].perf_tool
 
         while (retry < retry_count and len(clist)):
             time.sleep(polling_interval)
@@ -161,7 +161,7 @@ class KBRunner(object):
                     sample_count = sample_count + 1
                     # Parse the results from HTTP Tools
                     instance = self.client_dict[vm_name]
-                    self.result[vm_name] = instance.http_client_parser(**payload['data'])
+                    self.result[vm_name] = instance.perf_client_parser(**payload['data'])
                     samples.append(self.result[vm_name])
                 elif cmd == 'DONE':
                     self.result[vm_name] = payload['data']
@@ -185,7 +185,7 @@ class KBRunner(object):
             LOG.info(log_msg)
 
             if sample_count != 0:
-                report = http_tool.consolidate_samples(samples, len(self.client_dict))
+                report = perf_tool.consolidate_samples(samples, len(self.client_dict))
                 self.report['seq'] = self.report['seq'] + 1
                 self.report['report'] = report
                 LOG.info('Periodical report: %s.' % str(self.report))
@@ -218,9 +218,9 @@ class KBRunner(object):
                 self.host_stats[phy_host] = []
             self.host_stats[phy_host].append(self.result[vm])
 
-        http_tool = self.client_dict.values()[0].http_tool
+        perf_tool = self.client_dict.values()[0].perf_tool
         for phy_host in self.host_stats:
-            self.host_stats[phy_host] = http_tool.consolidate_results(self.host_stats[phy_host])
+            self.host_stats[phy_host] = perf_tool.consolidate_results(self.host_stats[phy_host])
 
     @abc.abstractmethod
     def run(self, http_test_only=False):
@@ -228,4 +228,4 @@ class KBRunner(object):
         return None
 
     def stop(self):
-        self.send_cmd('ABORT', 'http', None)
+        self.send_cmd('ABORT', None, None)

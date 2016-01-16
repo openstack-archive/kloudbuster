@@ -65,9 +65,9 @@ class KBRunner_HTTP(KBRunner):
             LOG.warn("Testing VMs are not returning results within grace period, "
                      "summary shown below may not be accurate!")
 
-        # Parse the results from HTTP Tools
+        # Parse the results from HTTP benchmarking tool
         for key, instance in self.client_dict.items():
-            self.result[key] = instance.http_client_parser(**self.result[key])
+            self.result[key] = instance.perf_client_parser(**self.result[key])
 
     def single_run(self, active_range=None, http_test_only=False):
         try:
@@ -89,9 +89,9 @@ class KBRunner_HTTP(KBRunner):
             self.run_http_test(active_range)
 
             # Call the method in corresponding tools to consolidate results
-            http_tool = self.client_dict.values()[0].http_tool
+            perf_tool = self.client_dict.values()[0].perf_tool
             LOG.kbdebug(self.result.values())
-            self.tool_result = http_tool.consolidate_results(self.result.values())
+            self.tool_result = perf_tool.consolidate_results(self.result.values())
             self.tool_result['http_rate_limit'] =\
                 len(self.client_dict) * self.config.http_tool_configs.rate_limit
             self.tool_result['total_connections'] =\

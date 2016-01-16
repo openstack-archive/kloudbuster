@@ -105,8 +105,11 @@ mv dist/* ../kb_server/public/ui
 # =======
 # Cleanup
 # =======
+
 # Remove HdrHistogram_c, wrk2, and fio builds
-rm -rf /tmp/
+rm -rf /tmp/HdrHistogram_c
+rm -rf /tmp/wrk2
+rm -rf /tmp/fio
 
 # Remove KloudBuster Web UI builds
 rm -rf /kb_test/kloudbuster/kb_web/node_modules
@@ -123,6 +126,5 @@ apt-get -y --purge remove python-dev
 apt-get -y --purge remove build-essential
 apt-get -y --purge remove cmake
 apt-get -y --purge remove npm
-apt-get -y --purge remove xfsprogs
 apt-get -y --purge autoremove
 apt-get -y autoclean

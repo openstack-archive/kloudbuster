@@ -101,15 +101,38 @@ class KB_Instance(object):
 
     # Run the HTTP benchmarking tool
     @staticmethod
-    def run_http_test(dest_path, target_url, threads, connections,
-                      rate_limit, duration, timeout, connection_type,
-                      report_interval):
+    def run_wrk2(dest_path, target_url, threads, connections,
+                 rate_limit, duration, timeout, connection_type,
+                 report_interval):
         if not rate_limit:
             rate_limit = 65535
 
         cmd = '%s -t%d -c%d -R%d -d%ds -p%ds --timeout %ds -D2 -e %s' % \
               (dest_path, threads, connections, rate_limit, duration,
                report_interval, timeout, target_url)
+        return cmd
+
+    # Init volume
+    @staticmethod
+    def init_volume(size):
+        cmd = 'mkfs.xfs /dev/vdb && '
+        cmd += 'mkdir -p /mnt/volume && '
+        cmd += 'mount /dev/vdb /mnt/volume && '
+        cmd += 'dd if=/dev/zero of=/mnt/volume/kb_storage_test.bin bs=%s count=1' % size
+        return cmd
+
+    # Run fio
+    @staticmethod
+    def run_fio(dest_path, name, rw, bs, iodepth, runtime, rate_iops, rate, status_interval):
+        fixed_opt = '--thread --ioengine=libaio --out-format=json+ '
+        fixed_opt += '--filename=/mnt/volume/kb_storage_test.bin '
+        required_opt = '--name=%s --rw=%s --bs=%s --iodepth=%s --runtime=%s ' %\
+            (name, rw, bs, iodepth, runtime)
+        optional_opt = ''
+        optional_opt += '--rate_iops=%s ' % rate_iops if rate_iops else ''
+        optional_opt += '--rate=%s ' % rate if rate else ''
+        optional_opt += '--status_interval=%s ' % status_interval if status_interval else ''
+        cmd = '%s %s %s %s' % (dest_path, fixed_opt, required_opt, optional_opt)
         return cmd
 
 
@@ -234,6 +257,8 @@ class KBA_Client(object):
             # Unexpected
             print 'ERROR: Unexpected command received!'
 
+class KBA_HTTP_Client(KBA_Client):
+
     def exec_setup_static_route(self):
         self.last_cmd = KB_Instance.get_static_route(self.user_data['target_subnet_ip'])
         result = self.exec_command(self.last_cmd)
@@ -250,10 +275,22 @@ class KBA_Client(object):
         return self.exec_command(self.last_cmd)
 
     def exec_run_http_test(self, http_tool_configs):
-        self.last_cmd = KB_Instance.run_http_test(
+        self.last_cmd = KB_Instance.run_wrk2(
             dest_path='/usr/local/bin/wrk2',
             target_url=self.user_data['target_url'],
             **http_tool_configs)
+        return self.exec_command_report(self.last_cmd)
+
+class KBA_Storage_Client(KBA_Client):
+
+    def exec_init_volume(self, size):
+        self.last_cmd = KB_Instance.init_volume(size)
+        return self.exec_command(self.last_cmd)
+
+    def exec_run_storage_test(self, fio_configs):
+        self.last_cmd = KB_Instance.run_fio(
+            dest_path='usr/local/bin/fio',
+            **fio_configs)
         return self.exec_command_report(self.last_cmd)
 
 
@@ -278,9 +315,6 @@ class KBA_Server(object):
     #     return exec_command(cmd)
 
 class KBA_Proxy(object):
-
-    def __init__(self):
-        pass
 
     def start_redis_server(self):
         cmd = ['sudo', 'service', 'redis-server', 'start']
@@ -309,8 +343,9 @@ if __name__ == "__main__":
             sys.exit(agent.start_nginx_server())
         else:
             sys.exit(1)
-    elif user_data.get('role') == 'Client':
-        agent = KBA_Client(user_data)
+    elif user_data.get('role')[-6:] == 'Client':
+        agent = KBA_HTTP_Client(user_data) if user_data['role'][:-7] == 'HTTP'\
+            else KBA_Storage_Client(user_data)
         agent.setup_channels()
         agent.hello_thread = threading.Thread(target=agent.send_hello)
         agent.hello_thread.daemon = True

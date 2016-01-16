@@ -55,11 +55,12 @@ def create_keystone_client(creds):
     return (keystoneclient.Client(endpoint_type='publicURL', **creds), creds['auth_url'])
 
 class Kloud(object):
-    def __init__(self, scale_cfg, cred, reusing_tenants, testing_side=False):
+    def __init__(self, scale_cfg, cred, reusing_tenants, testing_side=False, storage_mode=False):
         self.tenant_list = []
         self.testing_side = testing_side
         self.scale_cfg = scale_cfg
         self.reusing_tenants = reusing_tenants
+        self.storage_mode = storage_mode
         self.keystone, self.auth_url = create_keystone_client(cred)
         self.flavor_to_use = None
         self.vm_up_count = 0
@@ -387,7 +388,7 @@ class KloudBuster(object):
             server_list = self.kloud.get_all_instances()
             KBScheduler.setup_vm_mappings(client_list, server_list, "1:1")
             for idx, ins in enumerate(client_list):
-                ins.user_data['role'] = 'Client'
+                ins.user_data['role'] = 'HTTP_Client'
                 ins.user_data['vm_name'] = ins.vm_name
                 ins.user_data['redis_server'] = self.kb_proxy.fixed_ip
                 ins.user_data['redis_server_port'] = 6379
@@ -398,7 +399,7 @@ class KloudBuster(object):
                 ins.boot_info['user_data'] = str(ins.user_data)
         elif test_mode == 'storage':
             for idx, ins in enumerate(client_list):
-                ins.user_data['role'] = 'Client'
+                ins.user_data['role'] = 'Storage_Client'
                 ins.user_data['vm_name'] = ins.vm_name
                 ins.user_data['redis_server'] = self.kb_proxy.fixed_ip
                 ins.user_data['redis_server_port'] = 6379
@@ -425,12 +426,14 @@ class KloudBuster(object):
         vm_creation_concurrency = self.client_cfg.vm_creation_concurrency
         tenant_quota = self.calc_tenant_quota()
         if not self.storage_mode:
-            self.kloud = Kloud(self.server_cfg, self.server_cred, self.tenants_list['server'])
+            self.kloud = Kloud(self.server_cfg, self.server_cred, self.tenants_list['server'],
+                               storage_mode=self.storage_mode)
             self.server_vm_create_thread = threading.Thread(target=self.kloud.create_vms,
                                                             args=[vm_creation_concurrency])
             self.server_vm_create_thread.daemon = True
         self.testing_kloud = Kloud(self.client_cfg, self.client_cred,
-                                   self.tenants_list['client'], testing_side=True)
+                                   self.tenants_list['client'], testing_side=True,
+                                   storage_mode=self.storage_mode)
         self.client_vm_create_thread = threading.Thread(target=self.testing_kloud.create_vms,
                                                         args=[vm_creation_concurrency])
         self.client_vm_create_thread.daemon = True

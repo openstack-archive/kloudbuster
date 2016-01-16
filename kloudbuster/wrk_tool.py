@@ -74,13 +74,23 @@ class WrkTool(PerfTool):
         except Exception:
             return self.parse_error('Could not parse: "%s"' % (stdout))
 
-        return self.parse_results(http_total_req=http_total_req,
-                                  http_rps=http_rps,
-                                  http_tp_kbytes=http_tp_kbytes,
-                                  http_sock_err=http_sock_err,
-                                  http_sock_timeout=http_sock_timeout,
-                                  http_err=http_err,
-                                  latency_stats=latency_stats)
+        parsed_output = {'tool': self.name}
+        if http_total_req:
+            parsed_output['http_total_req'] = http_total_req
+        if http_rps:
+            parsed_output['http_rps'] = http_rps
+        if http_tp_kbytes:
+            parsed_output['http_throughput_kbytes'] = http_tp_kbytes
+        if http_sock_err:
+            parsed_output['http_sock_err'] = http_sock_err
+        if http_sock_timeout:
+            parsed_output['http_sock_timeout'] = http_sock_timeout
+        if http_err:
+            parsed_output['http_err'] = http_err
+        if latency_stats:
+            parsed_output['latency_stats'] = latency_stats
+
+        return parsed_output
 
     @staticmethod
     def consolidate_results(results):

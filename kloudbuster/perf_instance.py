@@ -14,6 +14,7 @@
 #
 
 from base_compute import BaseCompute
+from fio_tool import FioTool
 import log as logging
 from wrk_tool import WrkTool
 
@@ -35,50 +36,19 @@ class PerfInstance(BaseCompute):
         self.ssh = None
         self.az = None
 
+        self.storage_mode = network.router.user.tenant.kloud.storage_mode
+        self.perf_tool = FioTool(self) if self.storage_mode else WrkTool(self)
         # self.tp_tool = nuttcp_tool.NuttcpTool(self)
-        self.http_tool = WrkTool(self)
 
-    def run_tp_client(self, label, dest_ip, target_instance,
-                      mss=None, bandwidth=0, bidirectional=False, az_to=None):
-        # NOTE: This function will not work, and pending to convert to use redis
-        '''test iperf client using the default TCP window size
-        (tcp window scaling is normally enabled by default so setting explicit window
-        size is not going to help achieve better results)
-        :return: a dictionary containing the results of the run
-        '''
-        # TCP/UDP throughput with tp_tool, returns a list of dict
-        if self.tp_tool:
-            tp_tool_res = self.tp_tool.run_client(dest_ip,
-                                                  target_instance,
-                                                  mss=mss,
-                                                  bandwidth=bandwidth,
-                                                  bidirectional=bidirectional)
-        else:
-            tp_tool_res = []
-
-        res = {'ip_to': dest_ip}
-        res['ip_from'] = self.ssh_access.host
-        if label:
-            res['desc'] = label
-        if self.az:
-            res['az_from'] = self.az
-        if az_to:
-            res['az_to'] = az_to
-        res['distro_id'] = self.ssh.distro_id
-        res['distro_version'] = self.ssh.distro_version
-
-        # consolidate results for all tools
-        res['results'] = tp_tool_res
-        return res
-
-    def http_client_parser(self, status, stdout, stderr):
-        http_tool_res = self.http_tool.cmd_parser_run_client(status, stdout, stderr)
+    def perf_client_parser(self, status, stdout, stderr):
         res = {'vm_name': self.vm_name}
-        res['target_url'] = self.target_url
-        res['ip_from'] = self.ssh_ip
+        perf_tool_res = self.perf_tool.cmd_parser_run_client(status, stdout, stderr)
+        if not self.storage_mode:
+            res['target_url'] = self.target_url
+            res['ip_from'] = self.ssh_ip
 
         # consolidate results for all tools
-        res['results'] = http_tool_res
+        res['results'] = perf_tool_res
         return res
 
     # Send a command on the ssh session
