@@ -62,8 +62,8 @@ class KBRunner_HTTP(KBRunner):
         timeout = self.config.http_tool_configs.duration + 30
         cnt_pending = self.polling_vms(timeout)[2]
         if cnt_pending != 0:
-            LOG.warn("Testing VMs are not returning results within grace period, "
-                     "summary shown below may not be accurate!")
+            LOG.warning("Testing VMs are not returning results within grace period, "
+                        "summary shown below may not be accurate!")
 
         # Parse the results from HTTP benchmarking tool
         for key, instance in self.client_dict.items():
@@ -136,10 +136,10 @@ class KBRunner_HTTP(KBRunner):
                     if limit[1] in pert_dict.keys():
                         timeout_at_percentile = pert_dict[limit[1]] // 1000000
                     elif limit[1] != 0:
-                        LOG.warn('Percentile %s%% is not a standard statistic point.' % limit[1])
+                        LOG.warning('Percentile %s%% is not a standard statistic point.' % limit[1])
                     if err > limit[0] or timeout_at_percentile > timeout:
-                        LOG.warn('KloudBuster is stopping the iteration because the result '
-                                 'reaches the stop limit.')
+                        LOG.warning('KloudBuster is stopping the iteration because the result '
+                                    'reaches the stop limit.')
                         break
 
                 for idx in xrange(cur_vm_count, target_vm_count):

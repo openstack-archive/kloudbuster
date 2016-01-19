@@ -98,7 +98,7 @@ class Credentials(object):
             # just check that they are present
             for varname in ['OS_USERNAME', 'OS_AUTH_URL', 'OS_TENANT_NAME']:
                 if varname not in os.environ:
-                    LOG.warn("%s is missing" % varname)
+                    LOG.warning("%s is missing" % varname)
                     success = False
             if success:
                 self.rc_username = os.environ['OS_USERNAME']

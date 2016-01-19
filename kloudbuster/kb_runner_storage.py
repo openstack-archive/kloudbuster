@@ -47,8 +47,8 @@ class KBRunner_Storage(KBRunner):
         timeout = self.config.storage_tool_configs.runtime + 30
         cnt_pending = self.polling_vms(timeout)[2]
         if cnt_pending != 0:
-            LOG.warn("Testing VMs are not returning results within grace period, "
-                     "summary shown below may not be accurate!")
+            LOG.warning("Testing VMs are not returning results within grace period, "
+                        "summary shown below may not be accurate!")
 
         # Parse the results from storage benchmarking tool
         for key, instance in self.client_dict.items():

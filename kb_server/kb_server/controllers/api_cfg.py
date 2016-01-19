@@ -180,7 +180,7 @@ class ConfigController(object):
                 kb_config.topo_cfg, kb_config.tenants_list)
             kb_session.kloudbuster.fp_logfile = open(logfile_name)
         except Exception:
-            LOG.warn(traceback.format_exc())
+            LOG.warning(traceback.format_exc())
             kb_session.kb_status = 'ERROR'
             response.status = 400
             response.text = u"Cannot initialize KloudBuster instance."

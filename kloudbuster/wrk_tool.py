@@ -125,8 +125,8 @@ class WrkTool(PerfTool):
             all_res['latency_stats'].sort()
 
         if err_flag:
-            LOG.warn('Unable to find latency_stats from the result dictionary, this '
-                     'may indicate that the test application on VM exited abnormally.')
+            LOG.warning('Unable to find latency_stats from the result dictionary, this '
+                        'may indicate that the test application on VM exited abnormally.')
 
         return all_res
 

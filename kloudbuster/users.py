@@ -96,8 +96,8 @@ class User(object):
             if exc.http_status != 409:
                 raise exc
             # Try to repair keystone by removing that user
-            LOG.warn("User creation failed due to stale user with same name: " +
-                     self.user_name)
+            LOG.warning("User creation failed due to stale user with same name: " +
+                        self.user_name)
             user = self.tenant.kloud.keystone.users.find(name=self.user_name)
             LOG.info("Deleting stale user with name: " + self.user_name)
             self.tenant.kloud.keystone.users.delete(user)

@@ -232,7 +232,7 @@ class KloudBuster(object):
         self.storage_mode = storage_mode
         if topology and tenants_list:
             self.topology = None
-            LOG.warn("REUSING MODE: Topology configs will be ignored.")
+            LOG.warning("REUSING MODE: Topology configs will be ignored.")
         else:
             self.topology = topology
         if tenants_list:
@@ -241,8 +241,8 @@ class KloudBuster(object):
                 [{'name': tenants_list['tenant_name'], 'user': tenants_list['server_user']}]
             self.tenants_list['client'] =\
                 [{'name': tenants_list['tenant_name'], 'user': tenants_list['client_user']}]
-            LOG.warn("REUSING MODE: The quotas will not be adjusted automatically.")
-            LOG.warn("REUSING MODE: The flavor configs will be ignored.")
+            LOG.warning("REUSING MODE: The quotas will not be adjusted automatically.")
+            LOG.warning("REUSING MODE: The flavor configs will be ignored.")
         else:
             self.tenants_list = {'server': None, 'client': None}
         # TODO(check on same auth_url instead)
@@ -540,7 +540,7 @@ class KloudBuster(object):
         except Exception:
             traceback.print_exc()
         if not cleanup_flag:
-            LOG.warn('Some resources in server cloud are not cleaned up properly.')
+            LOG.warning('Some resources in server cloud are not cleaned up properly.')
             KBResLogger.dump_and_save('svr', self.kloud.res_logger.resource_list)
 
         cleanup_flag = False
@@ -549,7 +549,7 @@ class KloudBuster(object):
         except Exception:
             traceback.print_exc()
         if not cleanup_flag:
-            LOG.warn('Some resources in client cloud are not cleaned up properly.')
+            LOG.warning('Some resources in client cloud are not cleaned up properly.')
             KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
 
         # Set the kloud to None

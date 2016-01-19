@@ -94,8 +94,8 @@ class KBConfig(object):
                 self.config_scale['public_key_file'] = pub_key
                 LOG.info('Using %s as public key for all VMs' % (pub_key))
             else:
-                LOG.warn('No public key is found or specified to instantiate VMs. '
-                         'You will not be able to access the VMs spawned by KloudBuster.')
+                LOG.warning('No public key is found or specified to instantiate VMs. '
+                            'You will not be able to access the VMs spawned by KloudBuster.')
 
         if self.storage_mode and not self.config_scale.client['volume_size']:
             LOG.error('You have to specify a volumn size in order to run '

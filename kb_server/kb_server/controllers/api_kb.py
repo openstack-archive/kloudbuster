@@ -60,7 +60,7 @@ class KBController(object):
                 kb_session.kloudbuster.stage()
             kb_session.kb_status = 'STAGED'
         except Exception:
-            LOG.warn(traceback.format_exc())
+            LOG.warning(traceback.format_exc())
             kb_session.kb_status = 'ERROR'
 
     def kb_run_test_thread_handler(self, session_id):
@@ -73,7 +73,7 @@ class KBController(object):
             kb_session.first_run = False
             kb_session.kb_status = 'STAGED'
         except Exception:
-            LOG.warn(traceback.format_exc())
+            LOG.warning(traceback.format_exc())
             kb_session.kb_status = 'ERROR'
 
     def kb_cleanup_thread_handler(self, session_id):
@@ -197,7 +197,7 @@ class KBController(object):
         try:
             kb_session.kloudbuster.stop_test()
         except Exception:
-            LOG.warn(traceback.format_exc())
+            LOG.warning(traceback.format_exc())
             kb_session.kb_status = 'ERROR'
 
         return "OK!"

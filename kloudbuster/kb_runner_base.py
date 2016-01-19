@@ -206,9 +206,9 @@ class KBRunner(object):
                 and (self.expected_agent_version not in vm_version_mismatches):
                 # only warn once for each unexpected VM version
                 vm_version_mismatches.add(self.expected_agent_version)
-                LOG.warn("The VM image you are running (%s) is not the expected version (%s) "
-                         "this may cause some incompatibilities" %
-                         (self.agent_version, self.expected_agent_version))
+                LOG.warning("The VM image you are running (%s) is not the expected version (%s) "
+                            "this may cause some incompatibilities" %
+                            (self.agent_version, self.expected_agent_version))
 
     def gen_host_stats(self):
         self.host_stats = {}
