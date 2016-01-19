@@ -23,7 +23,6 @@ import traceback
 from __init__ import __version__
 import base_compute
 import base_network
-import base_storage
 import glanceclient.exc as glance_exception
 from glanceclient.v1 import client as glanceclient
 from kb_config import KBConfig
@@ -169,20 +168,14 @@ class Kloud(object):
         '''
         return self.placement_az
 
-    def create_vm(self, args):
-        '''Expecting:
-        :param perf_instance instance: The KloudBuster VM instance object
-        :param BaseStorage bs_obj: The BaseStorage object
-        '''
-        instance = args[0]
-        bs_obj = args[1]
+    def create_vm(self, instance):
         LOG.info("Creating Instance: " + instance.vm_name)
-        ins = instance.create_server(**instance.boot_info)
+        instance.create_server(**instance.boot_info)
         if not instance.instance:
             raise KBVMCreationException()
 
         if instance.vol:
-            bs_obj.attach_vol(instance.vol, ins.id, '/dev/vdb')
+            instance.attach_vol()
 
         instance.fixed_ip = instance.instance.networks.values()[0][0]
         if (instance.vm_name == "KB-PROXY") and (not instance.config['use_floatingip']):
@@ -204,12 +197,7 @@ class Kloud(object):
 
     def create_vms(self, vm_creation_concurrency):
         tpool = ThreadPool(processes=vm_creation_concurrency)
-        cinder_client = self.tenant_list[0].user_list[0].cinder_client
-        bs_obj = base_storage.BaseStorage(cinder_client)
-        all_vm = self.get_all_instances()
-        par = [(ins, bs_obj) for ins in all_vm]
-
-        for _ in tpool.imap(self.create_vm, par):
+        for _ in tpool.imap(self.create_vm, self.get_all_instances()):
             self.vm_up_count += 1
 
 
@@ -458,7 +446,7 @@ class KloudBuster(object):
                 if self.testing_kloud.placement_az else "nova:%s" % (proxy_hyper)
 
         self.kb_proxy.boot_info['user_data'] = str(self.kb_proxy.user_data)
-        self.testing_kloud.create_vm((self.kb_proxy, None))
+        self.testing_kloud.create_vm(self.kb_proxy)
 
         if self.storage_mode:
             self.kb_runner = KBRunner_Storage(client_list, self.client_cfg,

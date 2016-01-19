@@ -89,7 +89,7 @@ for line in $VOL_LIST; do
     if [ "$ins_id" != "" ]; then
         nova volume-detach $ins_id $line
     fi
-    cinder force-delete $line &
+    cinder force-delete $line
 done;
 
 for line in $INSTANCE_LIST; do

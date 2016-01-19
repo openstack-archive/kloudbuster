@@ -29,14 +29,15 @@ class BaseStorage(object):
     def create_vol(self, size, name=None):
         return self.cinderclient.volumes.create(size, name=name)
 
-    def attach_vol(self, volume, instance_uuid, mountpoint):
-        self.cinderclient.volumes.attach(volume, instance_uuid, mountpoint)
-
     def delete_vol(self, volume):
         self.cinderclient.volumes.force_delete(volume)
 
-    def detach_vol(self, volume):
-        self.cinderclient.volumes.detach(volume)
+    # DO NOT USE THESE TWO APIS, THEY WILL CREATE TROUBLES WHEN TRYING TO DETACH
+    # OR DELETE THE VOLUMES. Volume attachment should be done via NOVA not CINDER
+    # def attach_vol(self, volume, instance_uuid, mountpoint):
+    #     self.cinderclient.volumes.attach(volume, instance_uuid, mountpoint)
+    # def detach_vol(self, volume):
+    #     self.cinderclient.volumes.detach(volume)
 
 
 class CinderQuota(object):

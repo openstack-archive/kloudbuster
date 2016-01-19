@@ -33,7 +33,7 @@ class KBRunner_Storage(KBRunner):
 
     def init_volume(self, active_range, timeout=30):
         func = {'cmd': 'init_volume', 'active_range': active_range,
-                'parameter': str(self.config.volume_size) + 'G'}
+                'parameter': str(self.config.volume_size) + 'GB'}
         self.send_cmd('EXEC', 'storage', func)
         cnt_succ = self.polling_vms(timeout)[0]
         if cnt_succ != len(self.client_dict):

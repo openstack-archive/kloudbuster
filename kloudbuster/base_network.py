@@ -171,7 +171,7 @@ class BaseNetwork(object):
         # Delete the instances first
         for instance in self.instance_list:
             if instance.vol:
-                bs_obj.detach_vol(instance.vol)
+                instance.detach_vol()
                 bs_obj.delete_vol(instance.vol)
             instance.delete_server()
             if instance.fip:

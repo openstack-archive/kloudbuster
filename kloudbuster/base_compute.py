@@ -91,16 +91,21 @@ class BaseCompute(object):
                 return None
             time.sleep(2)
 
+    def attach_vol(self):
+        self.novaclient.volumes.create_server_volume(self.instance.id, self.vol.id)
+
     def get_server_list(self):
         servers_list = self.novaclient.servers.list()
         return servers_list
-
 
     def delete_server(self):
         # First delete the instance
         if self.instance:
             self.novaclient.servers.delete(self.instance)
             self.instance = None
+
+    def detach_vol(self):
+        self.novaclient.volumes.delete_server_volume(self.instance.id, self.vol.id)
 
     def find_image(self, image_name):
         """
