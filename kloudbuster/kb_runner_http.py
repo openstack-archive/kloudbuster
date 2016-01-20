@@ -108,8 +108,8 @@ class KBRunner_HTTP(KBRunner):
         except KBHTTPBenchException:
             raise KBException("Error while running HTTP benchmarking tool.")
 
-    def run(self, http_test_only=False):
-        if not http_test_only:
+    def run(self, test_only=False):
+        if not test_only:
             # Resources are already staged, just re-run the HTTP benchmarking tool
             self.wait_for_vm_up()
 
@@ -147,11 +147,11 @@ class KBRunner_HTTP(KBRunner):
                 description = "-- %s --" % self.header_formatter(cur_stage, len(self.client_dict))
                 LOG.info(description)
                 self.single_run(active_range=[0, target_vm_count - 1],
-                                http_test_only=http_test_only)
+                                http_test_only=test_only)
                 LOG.info('-- Stage %s: %s --' % (cur_stage, str(self.tool_result)))
                 self.tool_result['description'] = description
                 cur_stage += 1
                 yield self.tool_result
         else:
-            self.single_run(http_test_only=http_test_only)
+            self.single_run(http_test_only=test_only)
             yield self.tool_result

@@ -181,6 +181,50 @@ client:
         # Duration of testing tools (seconds)
         duration: 30
 
+    # Storage tool specific configs (per VM)
+    # Multiple factors can impact the storage performance numbers, and KloudBuster is defining
+    # a default profile which consists of four testing scenarios:
+    # (1) Random read
+    # (2) Random write
+    # (3) Sequential read
+    # (4) Sequential write
+    #
+    # Accepted testing parameters for each scenario:
+    # mode: (Required)
+    #     Self-explained with the name, must be one of the below:
+    #     ['randread', 'randwrite', 'read', 'write']
+    # runtime: (Required)
+    #     Test duration in seconds
+    # block_size: (Optional, default=4k)
+    #     Block size for I/O units
+    # iodepth: (Optional, default=1)
+    #     Number of I/O units to keep in flight against the file
+    # rate_iops: (Optional, default=unlimited)
+    #     Cap the bandwidth to this number of IOPS
+    # rate: (Optional, default=unlimited)
+    #     Cap the bandwidth to this number of bytes/sec, normal postfix rules apply
+    storage_tool_configs:
+        - mode: 'randread'
+          runtime: 30
+          block_size: '4k'
+          iodepth: 4
+          rate_iops: 100
+        - mode: 'randwrite'
+          runtime: 30
+          block_size: '4k'
+          iodepth: 4
+          rate_iops: 100
+        - mode: 'read'
+          runtime: 30
+          block_size: '64k'
+          iodepth: 64
+          rate: '60m'
+        - mode: 'write'
+          runtime: 30
+          block_size: '64k'
+          iodepth: 64
+          rate: '60m'
+
     # Volumes size in GB for each VM, setting to 0 to disable volume creation
     volume_size: 0
 

@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import time
+
 import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -23,14 +25,24 @@ class BaseStorage(object):
 
     def __init__(self, cinderclient):
         self.cinderclient = cinderclient
-        # from cinderclient.v2 import client as cinderclient
-        # self.cinderclient = cinderclient.Client(endpoint_type='publicURL', **creden_nova)
 
     def create_vol(self, size, name=None):
         return self.cinderclient.volumes.create(size, name=name)
 
     def delete_vol(self, volume):
-        self.cinderclient.volumes.force_delete(volume)
+        """
+        Sometimes this maybe in use if volume is just deleted
+        Add a retry mechanism
+        """
+        for _ in range(10):
+            try:
+                self.cinderclient.volumes.force_delete(volume)
+                return True
+            except Exception:
+                time.sleep(2)
+
+        LOG.error('Failed while deleting volume %s.' % volume.id)
+        return False
 
     # DO NOT USE THESE TWO APIS, THEY WILL CREATE TROUBLES WHEN TRYING TO DETACH
     # OR DELETE THE VOLUMES. Volume attachment should be done via NOVA not CINDER

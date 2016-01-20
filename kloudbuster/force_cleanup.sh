@@ -88,8 +88,13 @@ for line in $VOL_LIST; do
     ins_id=`echo $vol_list | grep $line | cut -d'|' -f9 | xargs`
     if [ "$ins_id" != "" ]; then
         nova volume-detach $ins_id $line
+        while true; do
+            vol_st=`cinder list --all-tenants | grep $line | cut -d'|' -f4 | xargs`
+            if [ $? -ne 0 ]; then break; fi
+            if [ "$vol_st" == "available" ]; then break; fi
+        done
     fi
-    cinder force-delete $line
+    cinder force-delete $line &
 done;
 
 for line in $INSTANCE_LIST; do

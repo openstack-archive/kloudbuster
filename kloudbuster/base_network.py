@@ -172,7 +172,7 @@ class BaseNetwork(object):
         for instance in self.instance_list:
             if instance.vol:
                 instance.detach_vol()
-                bs_obj.delete_vol(instance.vol)
+                flag = flag & bs_obj.delete_vol(instance.vol)
             instance.delete_server()
             if instance.fip:
                 # Delete the Floating IP

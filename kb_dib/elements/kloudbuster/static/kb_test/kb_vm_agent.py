@@ -123,15 +123,16 @@ class KB_Instance(object):
 
     # Run fio
     @staticmethod
-    def run_fio(dest_path, name, rw, bs, iodepth, runtime, rate_iops, rate, status_interval):
-        fixed_opt = '--thread --ioengine=libaio --out-format=json+ '
+    def run_fio(dest_path, name, mode, block_size, iodepth,
+                runtime, rate_iops=None, rate=None, status_interval=None):
+        fixed_opt = '--thread --ioengine=libaio --output-format=json+ --direct=1 '
         fixed_opt += '--filename=/mnt/volume/kb_storage_test.bin '
         required_opt = '--name=%s --rw=%s --bs=%s --iodepth=%s --runtime=%s ' %\
-            (name, rw, bs, iodepth, runtime)
+            (name, mode, block_size, iodepth, runtime)
         optional_opt = ''
         optional_opt += '--rate_iops=%s ' % rate_iops if rate_iops else ''
         optional_opt += '--rate=%s ' % rate if rate else ''
-        optional_opt += '--status_interval=%s ' % status_interval if status_interval else ''
+        optional_opt += '--status-interval=%s ' % status_interval if status_interval else ''
         cmd = '%s %s %s %s' % (dest_path, fixed_opt, required_opt, optional_opt)
         return cmd
 
@@ -206,7 +207,7 @@ class KBA_Client(object):
                 p_output = line
             else:
                 p_output += line
-                if line.strip() == "}":
+                if line.rstrip() == "}":
                     cmd_res_dict = dict(zip(("status", "stdout", "stderr"), (0, p_output, '')))
                     continue
 
@@ -289,7 +290,8 @@ class KBA_Storage_Client(KBA_Client):
 
     def exec_run_storage_test(self, fio_configs):
         self.last_cmd = KB_Instance.run_fio(
-            dest_path='usr/local/bin/fio',
+            dest_path='/usr/local/bin/fio',
+            name='kb_storage_test',
             **fio_configs)
         return self.exec_command_report(self.last_cmd)
 

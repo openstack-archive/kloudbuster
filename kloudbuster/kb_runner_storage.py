@@ -39,12 +39,12 @@ class KBRunner_Storage(KBRunner):
         if cnt_succ != len(self.client_dict):
             raise KBInitVolumeException()
 
-    def run_storage_test(self, active_range):
+    def run_storage_test(self, active_range, tool_config):
         func = {'cmd': 'run_storage_test', 'active_range': active_range,
-                'parameter': dict(self.config.storage_tool_configs)}
+                'parameter': tool_config}
         self.send_cmd('EXEC', 'storage', func)
         # Give additional 30 seconds for everybody to report results
-        timeout = self.config.storage_tool_configs.runtime + 30
+        timeout = tool_config['runtime'] + 30
         cnt_pending = self.polling_vms(timeout)[2]
         if cnt_pending != 0:
             LOG.warning("Testing VMs are not returning results within grace period, "
@@ -52,7 +52,7 @@ class KBRunner_Storage(KBRunner):
 
         # Parse the results from storage benchmarking tool
         for key, instance in self.client_dict.items():
-            self.result[key] = instance.storage_client_parser(**self.result[key])
+            self.result[key] = instance.perf_client_parser(**self.result[key])
 
     def single_run(self, active_range=None, test_only=False):
         try:
@@ -64,12 +64,20 @@ class KBRunner_Storage(KBRunner):
                     print "Press enter to start running benchmarking tools..."
                     raw_input()
 
-            LOG.info("Running Storage Benchmarking...")
-            self.report = {'seq': 0, 'report': None}
-            self.result = {}
-            # self.run_storage_test(active_range)
-
-            # Call the method in corresponding tools to consolidate results
+            test_count = len(self.config.storage_tool_configs)
+            perf_tool = self.client_dict.values()[0].perf_tool
+            for idx, cur_config in enumerate(self.config.storage_tool_configs):
+                LOG.info("Runing test case %d of %d..." % (idx + 1, test_count))
+                self.report = {'seq': 0, 'report': None}
+                self.result = {}
+                self.run_storage_test(active_range, dict(cur_config))
+                # Call the method in corresponding tools to consolidate results
+                LOG.kbdebug(self.result.values())
+                self.tool_result = perf_tool.consolidate_results(self.result.values())
+                vm_count = active_range[1] - active_range[0] + 1\
+                    if active_range else len(self.full_client_dict)
+                self.tool_result['total_client_vms'] = vm_count
+                self.tool_result['total_server_vms'] = self.tool_result['total_client_vms']
         except KBInitVolumeException:
             raise KBException("Could not initilize the volume.")
 
