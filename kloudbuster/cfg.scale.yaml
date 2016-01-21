@@ -195,9 +195,9 @@ client:
     #     ['randread', 'randwrite', 'read', 'write']
     # runtime: (Required)
     #     Test duration in seconds
-    # block_size: (Optional, default=4k)
+    # block_size: (Required, default=4k)
     #     Block size for I/O units
-    # iodepth: (Optional, default=1)
+    # iodepth: (Required, default=1)
     #     Number of I/O units to keep in flight against the file
     # rate_iops: (Optional, default=unlimited)
     #     Cap the bandwidth to this number of IOPS

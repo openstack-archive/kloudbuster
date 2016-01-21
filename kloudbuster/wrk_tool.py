@@ -104,8 +104,7 @@ class WrkTool(PerfTool):
                     'http_sock_timeout', 'http_throughput_kbytes']:
             all_res[key] = 0
             for item in results:
-                if (key in item['results']):
-                    all_res[key] += item['results'][key]
+                all_res[key] += item['results'].get(key, 0)
             all_res[key] = int(all_res[key])
 
         if 'latency_stats' in results[0]['results']:

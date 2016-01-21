@@ -66,6 +66,9 @@ class KBRunner_Storage(KBRunner):
 
             test_count = len(self.config.storage_tool_configs)
             perf_tool = self.client_dict.values()[0].perf_tool
+            self.tool_result = []
+            vm_count = active_range[1] - active_range[0] + 1\
+                if active_range else len(self.full_client_dict)
             for idx, cur_config in enumerate(self.config.storage_tool_configs):
                 LOG.info("Runing test case %d of %d..." % (idx + 1, test_count))
                 self.report = {'seq': 0, 'report': None}
@@ -73,11 +76,17 @@ class KBRunner_Storage(KBRunner):
                 self.run_storage_test(active_range, dict(cur_config))
                 # Call the method in corresponding tools to consolidate results
                 LOG.kbdebug(self.result.values())
-                self.tool_result = perf_tool.consolidate_results(self.result.values())
-                vm_count = active_range[1] - active_range[0] + 1\
-                    if active_range else len(self.full_client_dict)
-                self.tool_result['total_client_vms'] = vm_count
-                self.tool_result['total_server_vms'] = self.tool_result['total_client_vms']
+                tc_result = perf_tool.consolidate_results(self.result.values())
+                tc_result['mode'] = cur_config['mode']
+                tc_result['block_size'] = cur_config['block_size']
+                tc_result['iodepth'] = cur_config['iodepth']
+                if 'rate_iops' in cur_config:
+                    tc_result['rate_iops'] = cur_config['rate_iops']
+                if 'rate' in cur_config:
+                    tc_result['rate'] = cur_config['rate']
+                tc_result['total_client_vms'] = vm_count
+                tc_result['total_server_vms'] = tc_result['total_client_vms']
+                self.tool_result.append(tc_result)
         except KBInitVolumeException:
             raise KBException("Could not initilize the volume.")
 
