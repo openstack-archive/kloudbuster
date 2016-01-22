@@ -105,6 +105,7 @@ KloudBuster VM images contain multiple open source license components:
 * wrk2: Apache License 2.0
   (https://raw.githubusercontent.com/giltene/wrk2/master/LICENSE)
 * redis: BSD License (http://redis.io/topics/license)
+* fio: GPL v2 (https://raw.githubusercontent.com/axboe/fio/master/MORAL-LICENSE)
 
 
 Links
