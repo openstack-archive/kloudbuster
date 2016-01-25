@@ -57,8 +57,8 @@ sed -i "s/^exit\s0/python kb_vm_agent.py \&\n\0/g" /etc/rc.local
 # ======
 # Client
 # ======
-# python redis client
-pip install redis
+# python redis client, HdrHistorgram_py
+pip install redis hdrhistogram
 
 # Install HdrHistorgram_c
 cd /tmp

@@ -13,11 +13,13 @@
 #    under the License.
 #
 
+import json
 import subprocess
 import sys
 import threading
 import time
 
+from hdrh.histogram import HdrHistogram
 import redis
 
 # Define the version of the KloudBuster agent and VM image
@@ -29,7 +31,7 @@ import redis
 #
 # This version must be incremented if the interface changes or if new features
 # are added to the agent VM
-__version__ = '5'
+__version__ = '6'
 
 # TODO(Logging on Agent)
 
@@ -177,6 +179,13 @@ class KBA_Client(object):
             self.report('READY', None, __version__)
             time.sleep(2)
 
+    def post_processing(self, p_output):
+        # If the result is coming from storage testing tool (FIO), compress
+        # the buckets from the output using HdrHistogram, and send it back
+        # to kb-master node.
+        if self.__class__.__name__ == 'KBA_Storage_Client':
+            return self.encode_bins(p_output)
+
     def exec_command(self, cmd):
         # Execute the command, and returns the outputs
         cmds = ['bash', '-c']
@@ -208,8 +217,8 @@ class KBA_Client(object):
             else:
                 p_output += line
                 if line.rstrip() == "}":
+                    p_output = self.post_processing(p_output)
                     cmd_res_dict = dict(zip(("status", "stdout", "stderr"), (0, p_output, '')))
-                    continue
 
         stderr = p.communicate()[1]
         return (p.returncode, p_output, stderr)
@@ -283,6 +292,34 @@ class KBA_HTTP_Client(KBA_Client):
         return self.exec_command_report(self.last_cmd)
 
 class KBA_Storage_Client(KBA_Client):
+
+    def encode_bins(self, p_output):
+        p_output = json.loads(p_output)
+        test_list = ['read', 'write', 'trim']
+
+        for test in test_list:
+            histogram = HdrHistogram(1, 5 * 3600 * 1000, 3)
+            clat = p_output['jobs'][0][test]['clat']['bins']
+            total_buckets = clat['FIO_IO_U_PLAT_NR']
+            grp_msb_bits = clat['FIO_IO_U_PLAT_BITS']
+            buckets_per_grp = clat['FIO_IO_U_PLAT_VAL']
+
+            for bucket in xrange(total_buckets):
+                if clat[str(bucket)]:
+                    grp = bucket / buckets_per_grp
+                    subbucket = bucket % buckets_per_grp
+                    if grp == 0:
+                        val = subbucket - 1
+                    else:
+                        base = 2 ** (grp_msb_bits + grp - 1)
+                        val = int(base + (base / buckets_per_grp) * (subbucket - 0.5))
+                    histogram.record_value(val, clat[str(bucket)])
+
+            p_output['jobs'][0][test]['clat']['hist'] = histogram.encode()
+            p_output['jobs'][0][test]['clat'].pop('bins')
+            p_output['jobs'][0][test]['clat'].pop('percentile')
+
+        return json.dumps(p_output)
 
     def exec_init_volume(self, size):
         self.last_cmd = KB_Instance.init_volume(size)
