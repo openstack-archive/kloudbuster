@@ -60,13 +60,6 @@ class KBRunner(object):
         self.report_chan_name = "kloudbuster_report"
         self.message_queue = deque()
 
-    def header_formatter(self, stage, vm_count):
-        conns = vm_count * self.config.http_tool_configs.connections
-        rate_limit = vm_count * self.config.http_tool_configs.rate_limit
-        msg = "Stage %d: %d VM(s), %d Connections, %d Expected RPS" %\
-              (stage, vm_count, conns, rate_limit)
-        return msg
-
     def msg_handler(self):
         for message in self.pubsub.listen():
             if message['data'] == "STOP":

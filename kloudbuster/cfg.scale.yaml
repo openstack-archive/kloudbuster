@@ -107,8 +107,9 @@ client:
         vm_start: 1
         # The steping for the VM count for each stage
         vm_step: 1
-        # The stop condition, it is used for KloudBuster to determine when to
-        # stop the progression, and do the cleanup if needed. It defines as:
+        # The stop condition for HTTP benchmarking, it is used for KloudBuster to
+        # determine when to stop the progression, and do the cleanup if needed.
+        # It defines as:
         # [number_of_socket_errs, percentile_of_requests_not_timeout(%%)]
         #
         # e.g. [50, 99.99] means, KloudBuster will continue the progression run
@@ -123,7 +124,25 @@ client:
         #   (2) The percentile of requests must be in the below list:
         #       [50, 75, 90, 99, 99.9, 99.99, 99.999]
         #   (3) Sets percentile to 0 to disable HTTP request timeout checks;
-        stop_limit: [50, 0]
+        http_stop_limit: [50, 0]
+        # The stop condition for storage benchmarking, it is used for KloudBuster
+        # to determine when to stop the progression, and do the cleanup if needed.
+        # In the mode of random read and random write, this value indicates the
+        # percentile of degrading on IOPS, while in the mode of sequential read
+        # and sequential write, this value indicates the percentile of degrading
+        # on throughput.
+        #
+        # Assume the IOPS or throughput per VM is a fixed value, usually we are
+        # expecting higher values when the VM count grows. At certain point where
+        # the capacity of storage is reached, the overall performance will start
+        # to degrade.
+        #
+        # e.g. In the randread and randwrite mode, the last run with 10 VMs is
+        # measured at 1000 IOPS, i.e. 100 IOPS/VM; the current run with 11 VMs
+        # is measured at 880 IOPS, i.e. 80 IOPS/VM. So this set of data shows a
+        # 20% degrading. KloudBuster will continue the progression run if the
+        # degrading percentile is within (less or equal) the range defined below.
+        storage_stop_limit: 20
 
     # Assign floating IP for every client side test VM
     # Default: no floating IP (only assign internal fixed IP)
@@ -218,12 +237,12 @@ client:
           runtime: 30
           block_size: '64k'
           iodepth: 64
-          rate: '60m'
+          rate: '60M'
         - mode: 'write'
           runtime: 30
           block_size: '64k'
           iodepth: 64
-          rate: '60m'
+          rate: '60M'
 
     # Volumes size in GB for each VM, setting to 0 to disable volume creation
     volume_size: 0

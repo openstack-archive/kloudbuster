@@ -18,9 +18,6 @@ from kb_runner_base import KBException
 from kb_runner_base import KBRunner
 import log as logging
 
-# A set of warned VM version mismatches
-vm_version_mismatches = set()
-
 LOG = logging.getLogger(__name__)
 
 class KBSetStaticRouteException(KBException):
@@ -39,6 +36,13 @@ class KBRunner_HTTP(KBRunner):
 
     def __init__(self, client_list, config, expected_agent_version, single_cloud=True):
         KBRunner.__init__(self, client_list, config, expected_agent_version, single_cloud)
+
+    def header_formatter(self, stage, vm_count):
+        conns = vm_count * self.config.http_tool_configs.connections
+        rate_limit = vm_count * self.config.http_tool_configs.rate_limit
+        msg = "Stage %d: %d VM(s), %d Connections, %d Expected RPS" %\
+              (stage, vm_count, conns, rate_limit)
+        return msg
 
     def setup_static_route(self, active_range, timeout=30):
         func = {'cmd': 'setup_static_route', 'active_range': active_range}
@@ -117,7 +121,7 @@ class KBRunner_HTTP(KBRunner):
             self.tool_result = {}
             start = self.config.progression.vm_start
             step = self.config.progression.vm_step
-            limit = self.config.progression.stop_limit
+            limit = self.config.progression.http_stop_limit
             timeout = self.config.http_tool_configs.timeout
             vm_list = self.full_client_dict.keys()
             vm_list.sort(cmp=lambda x, y: cmp(int(x[x.rfind('I') + 1:]), int(y[y.rfind('I') + 1:])))

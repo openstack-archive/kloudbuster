@@ -637,10 +637,12 @@ class KloudBuster(object):
         total_vm = self.get_tenant_vm_count(self.server_cfg)
         server_quota = {}
         server_quota['gigabytes'] = total_vm * self.server_cfg['flavor']['disk']
+        server_quota['volumes'] = total_vm
 
         client_quota = {}
         total_vm = total_vm * self.server_cfg['number_tenants']
         client_quota['gigabytes'] = total_vm * self.client_cfg['flavor']['disk'] + 20
+        client_quota['volumes'] = total_vm
 
         return [server_quota, client_quota]
 

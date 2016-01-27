@@ -31,6 +31,20 @@ class KBRunner_Storage(KBRunner):
     def __init__(self, client_list, config, expected_agent_version):
         KBRunner.__init__(self, client_list, config, expected_agent_version, single_cloud=True)
 
+    def header_formatter(self, stage, vm_count):
+        rr_iops = vm_count * self.config.storage_tool_configs[0].rate_iops
+        rw_iops = vm_count * self.config.storage_tool_configs[1].rate_iops
+        sr_tp = self.config.storage_tool_configs[2].rate.upper()
+        ex_unit = sr_tp[-1] if sr_tp[-1] in ['K', 'M', 'G', 'T'] else None
+        sr_tp = (str(vm_count * int(sr_tp[:-1])) + ex_unit) if ex_unit else vm_count * int(sr_tp)
+        sw_tp = self.config.storage_tool_configs[3].rate.upper()
+        ex_unit = sw_tp[-1] if sw_tp[-1] in ['K', 'M', 'G', 'T'] else None
+        sw_tp = (str(vm_count * int(sw_tp[:-1])) + ex_unit) if ex_unit else vm_count * int(sw_tp)
+
+        msg = "Stage %d: %d VM(s), %d/%d(r/w) Expected IOPS, %sB/%sB(r/w) Expected Throughput" %\
+              (stage, vm_count, rr_iops, rw_iops, sr_tp, sw_tp)
+        return msg
+
     def init_volume(self, active_range, timeout=30):
         func = {'cmd': 'init_volume', 'active_range': active_range,
                 'parameter': str(self.config.volume_size) + 'GB'}
@@ -96,8 +110,58 @@ class KBRunner_Storage(KBRunner):
             self.wait_for_vm_up()
 
         if self.config.progression.enabled:
-            # TODO(Implement progression runs)
-            pass
+            self.tool_result = {}
+            self.last_result = None
+            start = self.config.progression.vm_start
+            step = self.config.progression.vm_step
+            limit = self.config.progression.storage_stop_limit
+            vm_list = self.full_client_dict.keys()
+            vm_list.sort(cmp=lambda x, y: cmp(int(x[x.rfind('I') + 1:]), int(y[y.rfind('I') + 1:])))
+            self.client_dict = {}
+            cur_stage = 1
+
+            while True:
+                tc_flag = False
+                cur_vm_count = len(self.client_dict)
+                target_vm_count = start + (cur_stage - 1) * step
+                if target_vm_count > len(self.full_client_dict):
+                    break
+
+                for idx in xrange(cur_vm_count, target_vm_count):
+                    self.client_dict[vm_list[idx]] = self.full_client_dict[vm_list[idx]]
+
+                description = "-- %s --" % self.header_formatter(cur_stage, len(self.client_dict))
+                LOG.info(description)
+                self.single_run(active_range=[0, target_vm_count - 1], test_only=test_only)
+                LOG.info('-- Stage %s: %s --' % (cur_stage, str(self.tool_result)))
+                cur_stage += 1
+
+                if self.tool_result and self.last_result:
+                    for idx, cur_tc in enumerate(self.config.storage_tool_configs):
+                        if cur_tc['mode'] in ['randread', 'read']:
+                            last_iops = self.last_result[idx]['read_iops'] / cur_vm_count
+                            last_bw = self.last_result[idx]['read_bw'] / cur_vm_count
+                            cur_iops = self.tool_result[idx]['read_iops'] / target_vm_count
+                            cur_bw = self.tool_result[idx]['read_bw'] / target_vm_count
+                        else:
+                            last_iops = self.last_result[idx]['write_iops'] / cur_vm_count
+                            last_bw = self.last_result[idx]['write_bw'] / cur_vm_count
+                            cur_iops = self.tool_result[idx]['write_iops'] / target_vm_count
+                            cur_bw = self.tool_result[idx]['write_bw'] / target_vm_count
+
+                        degrade_iops = (last_iops - cur_iops) * 100 / last_iops
+                        degrade_bw = (last_bw - cur_bw) * 100 / last_bw
+                        if ((cur_tc['mode'] in ['randread', 'randwrite'] and degrade_iops > limit)
+                           or (cur_tc['mode'] in ['read', 'write'] and degrade_bw > limit)):
+                            LOG.warning('KloudBuster is stopping the iteration because the result '
+                                        'reaches the stop limit.')
+                            tc_flag = True
+                            break
+                    if tc_flag:
+                        break
+
+                self.last_result = self.tool_result
+                yield self.tool_result
         else:
             self.single_run(test_only=test_only)
             yield self.tool_result

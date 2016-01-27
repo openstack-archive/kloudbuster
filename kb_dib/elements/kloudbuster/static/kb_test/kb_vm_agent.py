@@ -31,7 +31,7 @@ import redis
 #
 # This version must be incremented if the interface changes or if new features
 # are added to the agent VM
-__version__ = '6'
+__version__ = '5'
 
 # TODO(Logging on Agent)
 
@@ -117,10 +117,12 @@ class KB_Instance(object):
     # Init volume
     @staticmethod
     def init_volume(size):
-        cmd = 'mkfs.xfs /dev/vdb && '
+        cmd = 'if [ ! -e /mnt/volume ]; then\n'
+        cmd += 'mkfs.xfs /dev/vdb && '
         cmd += 'mkdir -p /mnt/volume && '
         cmd += 'mount /dev/vdb /mnt/volume && '
-        cmd += 'dd if=/dev/zero of=/mnt/volume/kb_storage_test.bin bs=%s count=1' % size
+        cmd += 'dd if=/dev/zero of=/mnt/volume/kb_storage_test.bin bs=%s count=1\n' % size
+        cmd += 'fi'
         return cmd
 
     # Run fio
