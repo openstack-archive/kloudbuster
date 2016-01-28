@@ -177,7 +177,8 @@ class ConfigController(object):
             kb_session.kloudbuster = KloudBuster(
                 kb_config.cred_tested, kb_config.cred_testing,
                 kb_config.server_cfg, kb_config.client_cfg,
-                kb_config.topo_cfg, kb_config.tenants_list)
+                kb_config.topo_cfg, kb_config.tenants_list,
+                storage_mode=kb_config.storage_mode)
             kb_session.kloudbuster.fp_logfile = open(logfile_name)
         except Exception:
             LOG.warning(traceback.format_exc())
