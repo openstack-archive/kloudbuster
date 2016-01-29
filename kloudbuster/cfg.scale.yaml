@@ -137,11 +137,14 @@ client:
         # the capacity of storage is reached, the overall performance will start
         # to degrade.
         #
-        # e.g. In the randread and randwrite mode, the last run with 10 VMs is
-        # measured at 1000 IOPS, i.e. 100 IOPS/VM; the current run with 11 VMs
-        # is measured at 880 IOPS, i.e. 80 IOPS/VM. So this set of data shows a
-        # 20% degrading. KloudBuster will continue the progression run if the
-        # degrading percentile is within (less or equal) the range defined below.
+        # e.g. In the randread and randwrite mode, for example the IOPS is limited
+        # to 100 IOPS/VM. In the iteration of 10 VMs, the requested IOPS for the
+        # system is 100 * 10 = 1000. However, the measured IOPS is degraded to
+        # only 800 IOPS. So the degraded percentile is calculated as 800/1000=20%
+        # for this set of data.
+        #
+        # KloudBuster will continue the progression run if the degrading percentile
+        # is within (less or equal) the range defined below.
         storage_stop_limit: 20
 
     # Assign floating IP for every client side test VM
@@ -244,8 +247,9 @@ client:
           iodepth: 64
           rate: '60M'
 
-    # Volumes size in GB for each VM, setting to 0 to disable volume creation
-    volume_size: 0
+    # Volumes size in GB for each VM
+    # Will effect only in storage testing mode
+    volume_size: 1
 
     # Prompt before running benchmarking tools
     prompt_before_run: False

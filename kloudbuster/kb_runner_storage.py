@@ -95,11 +95,14 @@ class KBRunner_Storage(KBRunner):
                 tc_result['block_size'] = cur_config['block_size']
                 tc_result['iodepth'] = cur_config['iodepth']
                 if 'rate_iops' in cur_config:
-                    tc_result['rate_iops'] = cur_config['rate_iops']
+                    tc_result['rate_iops'] = vm_count * cur_config['rate_iops']
                 if 'rate' in cur_config:
-                    tc_result['rate'] = cur_config['rate']
+                    req_rate = cur_config['rate']
+                    ex_unit = 'KMG'.find(req_rate[-1].upper())
+                    req_rate = vm_count * int(req_rate[:-1]) * (1024 ** (ex_unit))\
+                        if ex_unit != -1 else vm_count * int(req_rate)
+                    tc_result['rate'] = req_rate
                 tc_result['total_client_vms'] = vm_count
-                tc_result['total_server_vms'] = tc_result['total_client_vms']
                 self.tool_result.append(tc_result)
         except KBInitVolumeException:
             raise KBException("Could not initilize the volume.")
@@ -111,7 +114,6 @@ class KBRunner_Storage(KBRunner):
 
         if self.config.progression.enabled:
             self.tool_result = {}
-            self.last_result = None
             start = self.config.progression.vm_start
             step = self.config.progression.vm_step
             limit = self.config.progression.storage_stop_limit
@@ -136,23 +138,21 @@ class KBRunner_Storage(KBRunner):
                 LOG.info('-- Stage %s: %s --' % (cur_stage, str(self.tool_result)))
                 cur_stage += 1
 
-                if self.tool_result and self.last_result:
+                if self.tool_result:
                     for idx, cur_tc in enumerate(self.config.storage_tool_configs):
+                        req_iops = self.tool_result[idx].get('rate_iops', 0)
+                        req_rate = self.tool_result[idx].get('rate', 0)
                         if cur_tc['mode'] in ['randread', 'read']:
-                            last_iops = self.last_result[idx]['read_iops'] / cur_vm_count
-                            last_bw = self.last_result[idx]['read_bw'] / cur_vm_count
-                            cur_iops = self.tool_result[idx]['read_iops'] / target_vm_count
-                            cur_bw = self.tool_result[idx]['read_bw'] / target_vm_count
+                            cur_iops = int(self.tool_result[idx]['read_iops'])
+                            cur_rate = int(self.tool_result[idx]['read_bw'])
                         else:
-                            last_iops = self.last_result[idx]['write_iops'] / cur_vm_count
-                            last_bw = self.last_result[idx]['write_bw'] / cur_vm_count
-                            cur_iops = self.tool_result[idx]['write_iops'] / target_vm_count
-                            cur_bw = self.tool_result[idx]['write_bw'] / target_vm_count
+                            cur_iops = int(self.tool_result[idx]['write_iops'])
+                            cur_rate = int(self.tool_result[idx]['write_bw'])
 
-                        degrade_iops = (last_iops - cur_iops) * 100 / last_iops
-                        degrade_bw = (last_bw - cur_bw) * 100 / last_bw
+                        degrade_iops = (req_iops - cur_iops) * 100 / req_iops if req_iops else 0
+                        degrade_rate = (req_rate - cur_rate) * 100 / req_rate if req_rate else 0
                         if ((cur_tc['mode'] in ['randread', 'randwrite'] and degrade_iops > limit)
-                           or (cur_tc['mode'] in ['read', 'write'] and degrade_bw > limit)):
+                           or (cur_tc['mode'] in ['read', 'write'] and degrade_rate > limit)):
                             LOG.warning('KloudBuster is stopping the iteration because the result '
                                         'reaches the stop limit.')
                             tc_flag = True
@@ -160,7 +160,6 @@ class KBRunner_Storage(KBRunner):
                     if tc_flag:
                         break
 
-                self.last_result = self.tool_result
                 yield self.tool_result
         else:
             self.single_run(test_only=test_only)

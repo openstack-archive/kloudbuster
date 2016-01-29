@@ -187,6 +187,8 @@ class KBA_Client(object):
         # to kb-master node.
         if self.__class__.__name__ == 'KBA_Storage_Client':
             return self.encode_bins(p_output)
+        else:
+            return p_output
 
     def exec_command(self, cmd):
         # Execute the command, and returns the outputs
