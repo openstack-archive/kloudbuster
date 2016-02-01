@@ -97,9 +97,13 @@ class KBController(object):
         kloudbuster = kb_session.kloudbuster
         status_dict = {'status': status}
         if status == "STAGING":
-            status_dict['server_vm_count'] = kloudbuster.kloud.vm_up_count
+            if hasattr(kloudbuster, 'kloud'):
+                status_dict['server_vm_count'] = kloudbuster.kloud.vm_up_count
+            else:
+                status_dict['server_vm_count'] = 0
             status_dict['client_vm_count'] = kloudbuster.testing_kloud.vm_up_count
         return json.dumps(status_dict)
+
 
     @expose(generic=True)
     @check_session_id

@@ -632,19 +632,42 @@ angular.module('kbWebApp')
       aLink.dispatchEvent(evt);
     }
 
+    //$scope.saveResult = function () {
+    //  var date = new Date();
+    //  var m = date.getMonth() + 1;//month (0-11,0 = Jan., remember to add 1)
+    //  var d = date.getDate();//day(1-31)
+    //  var h = date.getHours();//hour(0-23)
+    //  var min = date.getMinutes();//minute(0-59)
+    //  var filename = m + d + h + min + ".json";
+    //  console.log(filename);
+    //  if (monitorMode.getResult() != "")
+    //    downloadFile(filename, JSON.stringify(monitorMode.getResult()));
+    //  else console.log("no file to save");
+    //};
     $scope.saveResult = function () {
       var date = new Date();
-      var m = date.getMonth() + 1;//month (0-11,0 = Jan., remember to add 1)
-      var d = date.getDate();//day(1-31)
-      var h = date.getHours();//hour(0-23)
-      var min = date.getMinutes();//minute(0-59)
-      var filename = m + d + h + min + ".json";
+      var m = to2(date.getMonth()+1);//month (0-11,0 = Jan., remember to add 1)
+      var d = to2(date.getDate());//day(1-31)
+      var h = to2(date.getHours());//hour(0-23)
+      var min = to2(date.getMinutes());//minute(0-59)
+      var filename = "" + m + d + h + min + ".html";
       console.log(filename);
+      console.log(monitorMode.getResult());
       if (monitorMode.getResult() != "")
-        downloadFile(filename, JSON.stringify(monitorMode.getResult()));
+      {
+        var myresult = '<!--Copyright 2015 Cisco Systems, Inc. All rights reserved.--> <!--Licensed under the Apache License, Version 2.0 (the "License"); you may--> <!--not use this file except in compliance with the License. You may obtain--> <!--a copy of the License at--> <!--http://www.apache.org/licenses/LICENSE-2.0--> <!--Unless required by applicable law or agreed to in writing, software--> <!--distributed under the License is distributed on an "AS IS" BASIS, WITHOUT--> <!--WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the--> <!--License for the specific language governing permissions and limitations--> <!--under the License.--> <!DOCTYPE html> <html lang="en-US" ng-app="app"> <head> <meta charset="utf-8"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <meta name="viewport" content="width=device-width, initial-scale=1"> <title>KloudBuster Report</title> <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.2/angular.min.js"></script> <script src="https://d3js.org/d3.v3.min.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/line-chart/2.0.3/LineChart.min.js"></script> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/line-chart/2.0.3/LineChart.min.css"> <link rel="stylesheet" href="https://bootswatch.com/flatly/bootstrap.min.css"> <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script> <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script> <style rel="stylesheet"> .hidden { display: inline !important; } .label { padding: 0; font-size: 110%; font-weight: normal; line-height: 16; color: #000000; text-align: center; } .chart .area-series { opacity: .9; } </style> </head> <body ng-controller="MainCtrl"> <nav class="navbar navbar-default"> <div class="container-fluid"> <div class="navbar-header"> <a class="navbar-brand" href="#">KloudBuster Report</a> </div> <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1"> <ul class="nav navbar-nav navbar-right"> <li><a href="#">'+m+'-'+d + ' ' + h +':'+ min +'</a></li> </ul> </div> </div> </nav> <div class="container"> <div class="my-chart" style="height: 500px;margin-bottom: 10%"> <linechart data="data" options="options"></linechart> </div> </div> <script type="text/javascript"> angular.module("app", ["n3-line-chart"]).controller("MainCtrl", function ($scope) { $scope.result ='+JSON.stringify(monitorMode.getResult()) +'; var x; for(x in $scope.result) { $scope.result[x]["x"]=new Date($scope.result[x]["x"]); } $scope.data = {dataset0: $scope.result}; $scope.options = { series: [ {axis: "y", dataset: "dataset0",interpolation: {mode: "cardinal", tension: 0.7}, key: "val_6",id: "val_6",label: "99.999%", type: ["line", "area"],color: "#222222"}, {axis: "y", dataset: "dataset0",interpolation: {mode: "cardinal", tension: 0.7}, key: "val_5",id: "val_5",label: "99.99%", type: ["line", "area"], color: "#084594"}, {axis: "y", dataset: "dataset0",interpolation: {mode: "cardinal", tension: 0.7}, key: "val_4",id: "val_4",label: "99.9%", type: ["line", "area"],color: "#0074D9"}, {axis: "y", dataset: "dataset0",interpolation: {mode: "cardinal", tension: 0.7}, key: "val_3",id: "val_3",label: "99%", type: ["line", "area"], color: "#79afe1"}, {axis: "y", dataset: "dataset0",interpolation: {mode: "cardinal", tension: 0.7}, key: "val_2",id: "val_2",label: "90%", type: ["line", "area"], color: "#9ecae1"}, {axis: "y", dataset: "dataset0",interpolation: {mode: "cardinal", tension: 0.7}, key: "val_1",id: "val_1",label: "75%", type: ["line", "area"], color: "#c6dbef"}, {axis: "y", dataset: "dataset0",interpolation: {mode: "cardinal", tension: 0.7}, key: "val_0",id: "val_0",label: "50%", type: ["line", "area"], color: "#eff3ff"} ], axes: { x: { key: "x", type: "date" }, y: { key:"y",type: "log", ticksFormat: "d", ticks: 10, tickFormat: function (value, index) { return value; } } }, margin: {top: 20, right: 30, bottom: 20, left: 30}, grid: {x: false, y: true} }; }); </script> </body> </html>';
+        downloadFile(filename, myresult);
+      }
       else console.log("no file to save");
     };
 
+    function to2(num){
+      if (num < 10)
+        return "0" + num;
+      else if (num < 99)
+        return "" + num;
+      else return -1;
+    }
 
     setInterval(function () {
       $scope.checkStatus();
