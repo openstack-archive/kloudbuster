@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from kb_server.hooks.cors import CorsHook
 # Server Specific Configurations
 server = {
     'port': '8080',
@@ -29,6 +30,7 @@ app = {
     #     404: '/error/404',
     #     '__force_dict__': True
     # }
+    'hooks': [CorsHook()]
 }
 
 logging = {
