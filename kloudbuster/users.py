@@ -17,7 +17,7 @@ import sys
 import base_compute
 import base_network
 from cinderclient.v2 import client as cinderclient
-import keystoneclient.openstack.common.apiclient.exceptions as keystone_exception
+from keystoneclient import exceptions as keystone_exception
 import log as logging
 from neutronclient.v2_0 import client as neutronclient
 from novaclient.client import Client
