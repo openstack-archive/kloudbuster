@@ -160,6 +160,7 @@
             }
         }
         if(max == min) min = 0;
+        console.log(min);
         $scope.options = {
             series: [
                 {y: 'IOPS', color: '#F44336', type: 'column', striped: true, label: 'Rate BW'},
@@ -170,7 +171,7 @@
             ],
             axes: {
                 x: {key: 'x', type: 'linear',ticksFormat: 'd'},
-                y: {type: 'linear', ticksFormat: 'd', innerTicks: true,max:max*1.0005,min:min*0.995},
+                y: {type: 'linear', ticksFormat: 'd', innerTicks: true,max:max*1.0005,min:0},
                 y2: {type: 'log', ticksFormat: 'd', innerTicks: false,grid: true}
             },
             tooltip: {mode: 'scrubber', formatter: function(x, y,series) {return series.label+":"+y;}},
