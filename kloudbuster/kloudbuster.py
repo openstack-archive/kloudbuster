@@ -543,7 +543,6 @@ class KloudBuster(object):
         # Set the kloud to None
         self.kloud = None
         self.testing_kloud = None
-        self.final_result = []
 
     def dump_logs(self, offset=0):
         if not self.fp_logfile:
