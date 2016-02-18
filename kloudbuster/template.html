@@ -1,0 +1,316 @@
+<!--Copyright 2015 Cisco Systems, Inc. All rights reserved.-->
+
+<!--Licensed under the Apache License, Version 2.0 (the "License"); you may-->
+<!--not use this file except in compliance with the License. You may obtain-->
+<!--a copy of the License at-->
+
+<!--http://www.apache.org/licenses/LICENSE-2.0-->
+
+<!--Unless required by applicable law or agreed to in writing, software-->
+<!--distributed under the License is distributed on an "AS IS" BASIS, WITHOUT-->
+<!--WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the-->
+<!--License for the specific language governing permissions and limitations-->
+<!--under the License.-->
+<!DOCTYPE html>
+<html lang="en-US" ng-app="app">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>KloudBuster Report</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.2/angular.min.js"></script>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/line-chart/2.0.3/LineChart.min.css">-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ng-table/0.8.3/ng-table.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ng-table/0.8.3/ng-table.min.js"></script>
+    <link rel="stylesheet" href="https://bootswatch.com/flatly/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/line-chart/1.1.12/line-chart.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+</head>
+
+<body ng-controller="MainCtrl">
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">KloudBuster Report</a>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <li ng-repeat="mode in modes" ng-class="{active: current_index==$index}"
+                    ng-click="handleEvent($event, $index)">
+                    <a href="#"><span class="glyphicon" aria-hidden="true"></span>&nbsp;{{mode.title}}</a>
+                </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="#">[[time]]</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <h3>{{current_mode["title"]}}[[label]] </h3>
+    <div class="my-chart" style="height: 550px;margin-bottom: 5%">
+        <h6 style="margin-bottom:0"><span>{{current_mode["y_axis"]}}</span><span style="float:right">Latency(ms)</span></h6>
+        <linechart data="data" options="options"></linechart>
+    </div>
+    <table ng-table="tableParams" class="table table-responsive table-condensed table-bordered table-striped">
+        <tr ng-repeat="row in tableParams.data" style="text-align:center;">
+            <!--<td title="cols[0].title" ng-if="cols[0].show" style="margin:0 auto;padding:0;">-->
+            <!--<button class="btn btn-default btn-xs {{row.seq}}" ng-click=""-->
+            <!--style="height: 22px;width: 24px;"></button>-->
+            <!--</td>-->
+            <!--<td title="cols[1].title" data-sortable="cols[1].field">{{row.mode}}</td>-->
+            <td title="cols[2].title" data-sortable="cols[2].field">{{row.total_client_vms}}</td>
+            <td title="cols[3].title" data-sortable="cols[3].field">{{row.block_size}}b</td>
+            <td title="cols[4].title" data-sortable="cols[4].field">{{row.iodepth}}</td>
+            <td title="cols[5].title" data-sortable="cols[5].field" ng-if="current_index == 0 || current_index ==1">{{row.rate_iops}}</td>
+            <td title="cols[6].title" data-sortable="cols[6].field" ng-if="current_index == 0 || current_index ==2">{{row.read_iops}}</td>
+            <td title="cols[7].title" data-sortable="cols[7].field" ng-if="current_index == 1 || current_index ==3">{{row.write_iops}}</td>
+            <td title="cols[8].title" data-sortable="cols[8].field" ng-if="current_index == 2 || current_index ==3">{{row.rate}} KB/s</td>
+            <td title="cols[9].title" data-sortable="cols[9].field" ng-if="current_index == 0 || current_index ==2">{{row.read_bw}} KB/s</td>
+            <td title="cols[10].title" data-sortable="cols[10].field" ng-if="current_index == 1 || current_index ==3">{{row.write_bw}} KB/s</td>
+        </tr>
+    </table>
+</div>
+
+<script type="text/javascript">
+    var json_data = "res.json";
+    var num = -1;
+    var colorList = ["#F44336", "#673AB7", "#03A9F4", "#4CAF50", "#FFEB3B", "#BF360C", "#795548", "#E91E63", "#3F51B5", "#00BCD4", "#CDDC39", "#FF9800", "#9E9E9E", "#9C27B0", "#009688"];
+    var length = colorList.length;
+    function get_color() {
+        num = (num + 1) % length;
+        return colorList[num];
+    }
+
+    var modes = [
+        {title: "Rand Read", icon: "", id: "randread", init: "",y_axis:"IOPs/VM",y_label:"RATE IOPs Per VM"},
+        {title: "Rand Write", icon: "", id: "randwrite", init: "",y_axis:"IOPs/VM",y_label:"RATE IOPs Per VM"},
+        {title: "Seq Read", icon: "", id: "read", init: "",y_axis: "BW/VM(KB/s)",y_label:"RATE BW Per VM"},
+        {title: "Seq Write", icon: "", id: "write", init: "",y_axis: "BW/VM(KB/s)",y_label:"RATE BW Per VM"}
+    ];
+
+    var content;
+    angular.module("app", ["n3-line-chart", "ngTable"]).controller("MainCtrl", function ($scope, ngTableParams) {
+        $scope.current_index = 0;
+        $scope.modes = modes;
+        $scope.current_mode = $scope.modes[0];
+
+        content = [[result]];
+        draw_chart($scope, ngTableParams, content);
+
+        $scope.handleEvent = function(event, index) {
+            $scope.current_index = index;
+            $scope.current_mode = $scope.modes[index];
+            draw_chart($scope, ngTableParams, content);
+        };
+    });
+
+    function get_min_hist(results) {
+        var min = Number.POSITIVE_INFINITY;
+        results.forEach(function (rr) {
+            rr.forEach(function (d) {
+                if ('write_hist' in d) {
+                    min = Math.min(min, d.write_hist[0][1]);
+                }
+                if ('read_hist' in d) {
+                    min = Math.min(min, d.read_hist[0][1]);
+                }
+            });
+        });
+        return min;
+
+    }
+
+    function draw_chart($scope, ngTableParams, results) {
+        $scope.results = results;
+        var countRep = $scope.results.length;
+        var countRep2 = $scope.results[0].length;
+        var mode = $scope.current_mode["id"];
+        //table config
+        $scope.tabledata = [];
+        $scope.cols = [
+            {
+                field: "seq", title: "SEQ", sortable: "seq", show: true
+            },
+            {
+                field: "mode", title: "Mode", sortable: "mode", show: true
+            },
+            {
+                field: "total_client_vms", title: "Client VMs", sortable: "total_client_vms", show: true
+            },
+            {
+                field: "block_size", title: "Block Size", sortable: "block_size", show: true
+            },
+            {
+                field: "iodepth", title: "IO Depth", sortable: "iodepth", show: true
+            },
+            {
+                field: "rate_iops", title: "Rate IOPS", sortable: "rate_iops", show: true
+            },
+            {
+                field: "read_iops", title: "Read IOPS", sortable: "read_iops", show: true
+            },
+            {
+                field: "write_iops", title: "Write IOPS", sortable: "write_iops", show: true
+            },
+            {
+                field: "rate", title: "Rate BW", sortable: "rate", show: true
+            },
+            {
+                field: "read_bw", title: "Read BW", sortable: "read_bw", show: true
+            },
+            {
+                field: "write_bw", title: "Write BW", sortable: "write_bw", show: true
+            }];
+        $scope.tableParams = new ngTableParams({sorting: {name: "asc"}, "count": 10}, {
+            counts: [],
+            data: $scope.tabledata
+        });
+        $scope.pushTableData = function (taName, taData, pickColor) {
+            $scope.tabledata.push({
+                "seq": taName,
+                "mode": taData.mode,
+                "total_client_vms": taData.total_client_vms,
+                "block_size": taData.block_size,
+                "iodepth": taData.iodepth,
+                "rate_iops": taData.rate_iops,
+                "read_bw": taData.read_bw,
+                "write_bw": taData.write_bw,
+                "read_iops": taData.read_iops,
+                "write_iops": taData.write_iops,
+                "rate": taData.rate,
+                "color": pickColor
+            });
+            $scope.tableParams.reload()
+        };
+
+        //chart config $scope.current_mode
+        var max;
+        $scope.data = [];
+        for (var i = 0; i < countRep; i++) {
+            for (var k = 0; k < countRep2; k++) {
+                $scope.perrow = $scope.results[i][k];
+                if ($scope.perrow["mode"] == mode) {
+                    if (mode == "randread") {
+                        $scope.data.push({
+                            x: $scope.perrow.total_client_vms,
+                            "IOPS": $scope.perrow.read_iops / $scope.perrow.total_client_vms,
+                            "latency1": $scope.perrow.read_hist[2][1] / 1000,
+                            "latency2": $scope.perrow.read_hist[3][1] / 1000,
+                            "latency3": $scope.perrow.read_hist[4][1] / 1000,
+                            "requested_rate": $scope.perrow.rate_iops / $scope.perrow.total_client_vms
+                        });
+                        max = $scope.perrow.rate_iops / $scope.perrow.total_client_vms;
+                    }
+                    if (mode == "randwrite") {
+                        $scope.data.push({
+                            x: $scope.perrow.total_client_vms,
+                            "IOPS": $scope.perrow.write_iops / $scope.perrow.total_client_vms,
+                            "latency1": $scope.perrow.write_hist[2][1] / 1000,
+                            "latency2": $scope.perrow.write_hist[3][1] / 1000,
+                            "latency3": $scope.perrow.write_hist[4][1] / 1000,
+                            "requested_rate": $scope.perrow.rate_iops / $scope.perrow.total_client_vms
+                        });
+                        max = $scope.perrow.rate_iops / $scope.perrow.total_client_vms;
+
+                    }
+                    if (mode == "read") {
+                        $scope.data.push({
+                            x: $scope.perrow.total_client_vms,
+                            "IOPS": $scope.perrow.read_bw / $scope.perrow.total_client_vms,
+                            "latency1": $scope.perrow.read_hist[2][1] / 1000,
+                            "latency2": $scope.perrow.read_hist[3][1] / 1000,
+                            "latency3": $scope.perrow.read_hist[4][1] / 1000,
+                            "requested_rate": $scope.perrow.rate / $scope.perrow.total_client_vms
+                        });
+                        max = $scope.perrow.rate / $scope.perrow.total_client_vms;
+
+                    }
+                    if (mode == "write") {
+                        $scope.data.push({
+                            x: $scope.perrow.total_client_vms,
+                            "IOPS": $scope.perrow.write_bw / $scope.perrow.total_client_vms,
+                            "latency1": $scope.perrow.write_hist[2][1] / 1000,
+                            "latency2": $scope.perrow.write_hist[3][1] / 1000,
+                            "latency3": $scope.perrow.write_hist[4][1] / 1000,
+                            "requested_rate": $scope.perrow.rate / $scope.perrow.total_client_vms
+                        });
+                        max = $scope.perrow.rate / $scope.perrow.total_client_vms;
+
+                    }
+                    var pickColor = get_color();
+                    chName = "mode-" + $scope.perrow.mode + "_VM-" + $scope.perrow.total_client_vms;
+                    $scope.pushTableData(chName, $scope.perrow, pickColor)
+
+                }
+            }
+        }
+        $scope.options = {
+            series: [
+                {y: 'IOPS', color: '#F44336', type: 'column', striped: true, label: $scope.current_mode["y_label"]},
+                {
+                    y: 'requested_rate',
+                    color: '#696969',
+                    drawDots: false,
+                    thickness: '1px',
+                    label: 'Requested Rate',
+                    lineMode: "dashed"
+                },
+                {
+                    y: 'latency1',
+                    axis: 'y2',
+                    color: '#673AB7',
+                    drawDots: true,
+                    dotSize: 4,
+                    thickness: '3px',
+                    label: 'Latency(ms)--90%'
+                },
+                {
+                    y: 'latency2',
+                    axis: 'y2',
+                    color: '#03A9F4',
+                    drawDots: true,
+                    dotSize: 4,
+                    thickness: '3px',
+                    label: 'Latency(ms)--99%'
+                },
+                {
+                    y: 'latency3',
+                    axis: 'y2',
+                    color: '#E91E63',
+                    drawDots: true,
+                    dotSize: 4,
+                    thickness: '3px',
+                    label: 'Latency(ms)--99.9%'
+                }
+            ],
+            axes: {
+                x: {key: 'x', type: 'linear', ticksFormat: 'd'},
+                y: {type: 'linear', ticksFormat: 'd', innerTicks: true, max: max * 1.0005, min: 0},
+                y2: {
+                    type: 'log',
+                    ticksFormat: 'd',
+                    innerTicks: false,
+                    grid: true,
+                    min: get_min_hist($scope.results) / 1000
+                }
+            },
+            tooltip: {
+                mode: 'scrubber', formatter: function (x, y, series) {
+                    return series.label + ":" + y;
+                }
+            },
+            tension: 0.8,
+            lineMode: "cardinal",
+            columnsHGap: 35
+        };
+    }
+</script>
+</body>
+</html>

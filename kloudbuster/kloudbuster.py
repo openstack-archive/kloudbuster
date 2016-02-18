@@ -15,10 +15,12 @@
 
 import json
 from multiprocessing.pool import ThreadPool
+import os
 import sys
 import threading
 import time
 import traceback
+import webbrowser
 
 from __init__ import __version__
 import base_compute
@@ -36,6 +38,7 @@ from keystoneclient.v2_0 import client as keystoneclient
 import log as logging
 from novaclient.client import Client as novaclient
 from oslo_config import cfg
+from pkg_resources import resource_filename
 from pkg_resources import resource_string
 from tabulate import tabulate
 import tenant
@@ -43,8 +46,10 @@ import tenant
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
+
 class KBVMCreationException(Exception):
     pass
+
 
 def create_keystone_client(creds):
     """
@@ -52,6 +57,7 @@ def create_keystone_client(creds):
     """
     creds = creds.get_credentials()
     return (keystoneclient.Client(endpoint_type='publicURL', **creds), creds['auth_url'])
+
 
 class Kloud(object):
     def __init__(self, scale_cfg, cred, reusing_tenants, testing_side=False, storage_mode=False):
@@ -73,7 +79,7 @@ class Kloud(object):
         LOG.info("Creating kloud: " + self.prefix)
 
         # pre-compute the placement az to use for all VMs
-        self.placement_az = scale_cfg['availability_zone']\
+        self.placement_az = scale_cfg['availability_zone'] \
             if scale_cfg['availability_zone'] else None
         if self.placement_az:
             LOG.info('%s Availability Zone: %s' % (self.name, self.placement_az))
@@ -210,6 +216,7 @@ class KloudBuster(object):
     4. Networks per router
     5. Instances per network
     """
+
     def __init__(self, server_cred, client_cred, server_cfg, client_cfg,
                  topology, tenants_list, storage_mode=False):
         # List of tenant objects to keep track of all tenants
@@ -225,16 +232,16 @@ class KloudBuster(object):
             self.topology = topology
         if tenants_list:
             self.tenants_list = {}
-            self.tenants_list['server'] =\
+            self.tenants_list['server'] = \
                 [{'name': tenants_list['tenant_name'], 'user': tenants_list['server_user']}]
-            self.tenants_list['client'] =\
+            self.tenants_list['client'] = \
                 [{'name': tenants_list['tenant_name'], 'user': tenants_list['client_user']}]
             LOG.warning("REUSING MODE: The quotas will not be adjusted automatically.")
             LOG.warning("REUSING MODE: The flavor configs will be ignored.")
         else:
             self.tenants_list = {'server': None, 'client': None}
         # TODO(check on same auth_url instead)
-        self.single_cloud = True\
+        self.single_cloud = True \
             if server_cred.get_credentials() == client_cred.get_credentials() else False
         # Automatically enable the floating IP for server cloud under dual-cloud mode
         if not self.single_cloud and not self.server_cfg['use_floatingip']:
@@ -441,8 +448,8 @@ class KloudBuster(object):
             not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
         if self.topology:
             proxy_hyper = self.topology.clients_rack[0]
-            self.kb_proxy.boot_info['avail_zone'] =\
-                "%s:%s" % (self.testing_kloud.placement_az, proxy_hyper)\
+            self.kb_proxy.boot_info['avail_zone'] = \
+                "%s:%s" % (self.testing_kloud.placement_az, proxy_hyper) \
                 if self.testing_kloud.placement_az else "nova:%s" % (proxy_hyper)
 
         self.kb_proxy.boot_info['user_data'] = str(self.kb_proxy.user_data)
@@ -457,13 +464,13 @@ class KloudBuster(object):
                                            self.single_cloud)
         self.kb_runner.setup_redis(self.kb_proxy.fip_ip)
         if self.client_cfg.progression['enabled']:
-            log_info = "Progression run is enabled, KloudBuster will schedule "\
-                "multiple runs as listed:"
+            log_info = "Progression run is enabled, KloudBuster will schedule " \
+                       "multiple runs as listed:"
             stage = 1
             start = self.client_cfg.progression.vm_start
             step = self.client_cfg.progression.vm_step
             cur_vm_count = start
-            total_vm = self.get_tenant_vm_count(self.server_cfg) *\
+            total_vm = self.get_tenant_vm_count(self.server_cfg) * \
                 self.server_cfg['number_tenants']
             while (cur_vm_count <= total_vm):
                 log_info += "\n" + self.kb_runner.header_formatter(stage, cur_vm_count)
@@ -565,7 +572,7 @@ class KloudBuster(object):
         total_vm = self.get_tenant_vm_count(self.server_cfg)
 
         server_quota = {}
-        server_quota['network'] = self.server_cfg['routers_per_tenant'] *\
+        server_quota['network'] = self.server_cfg['routers_per_tenant'] * \
             self.server_cfg['networks_per_router']
         server_quota['subnet'] = server_quota['network']
         server_quota['router'] = self.server_cfg['routers_per_tenant']
@@ -579,11 +586,11 @@ class KloudBuster(object):
             #     server_quota['network'] * 2 port(s)
             # (4) Each Router has one external IP, takes up 1 port, total of
             #     server_quota['router'] port(s)
-            server_quota['port'] = 2 * total_vm + 2 * server_quota['network'] +\
+            server_quota['port'] = 2 * total_vm + 2 * server_quota['network'] + \
                 server_quota['router'] + 10
         else:
             server_quota['floatingip'] = server_quota['router']
-            server_quota['port'] = total_vm + 2 * server_quota['network'] +\
+            server_quota['port'] = total_vm + 2 * server_quota['network'] + \
                 server_quota['router'] + 10
         server_quota['security_group'] = server_quota['network'] + 1
         server_quota['security_group_rule'] = server_quota['security_group'] * 10
@@ -657,6 +664,22 @@ class KloudBuster(object):
 
         return quota_dict
 
+    def create_html(self, html, hfp, template, task_re, label, headless):
+        cur_time = time.strftime('%Y-%m-%d %A %X %Z', time.localtime(time.time()))
+        for line in template:
+            line = line.replace('[[time]]', cur_time)
+            if label:
+                line = line.replace('[[label]]', ' - ' + label)
+            else:
+                line = line.replace('[[label]]', '')
+            line = line.replace('[[result]]', task_re)
+            hfp.write(line)
+        if not headless:
+            # bring up the file in the default browser
+            url = 'file://' + os.path.abspath(html)
+            webbrowser.open(url, new=2)
+
+
 def main():
     cli_opts = [
         cfg.StrOpt("config",
@@ -688,6 +711,15 @@ def main():
                    default=None,
                    secret=True,
                    help="Testing cloud password"),
+        cfg.StrOpt("html",
+                   default=None,
+                   help='store results in HTML file (Only support for storage test for now)'),
+        cfg.StrOpt("label",
+                   default=None,
+                   help='label for the title in HTML file (Only support for storage test for now)'),
+        cfg.BoolOpt("headless",
+                    default=False,
+                    help="do not show chart in the browser (default=False)"),
         cfg.StrOpt("json",
                    default=None,
                    help='store results in JSON format file'),
@@ -730,6 +762,18 @@ def main():
         LOG.info('Saving results in json file: ' + CONF.json + "...")
         with open(CONF.json, 'w') as jfp:
             json.dump(kloudbuster.final_result, jfp, indent=4, sort_keys=True)
+
+    if CONF.storage and CONF.html:
+        '''Save results in HTML format file.'''
+        LOG.info('Saving results in HTML file: ' + CONF.html + "...")
+        template_path = resource_filename(__name__, 'template.html')
+        with open(CONF.html, 'w') as hfp, open(template_path, 'r') as template:
+            kloudbuster.create_html(CONF.html,
+                                    hfp,
+                                    template,
+                                    json.dumps(kloudbuster.final_result, sort_keys=True),
+                                    CONF.label,
+                                    CONF.headless)
 
 
 if __name__ == '__main__':
