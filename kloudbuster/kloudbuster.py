@@ -664,19 +664,21 @@ class KloudBuster(object):
 
         return quota_dict
 
-    def create_html(self, html, hfp, template, task_re, label, headless):
+    def create_html(self, hfp, template, task_re):
         cur_time = time.strftime('%Y-%m-%d %A %X %Z', time.localtime(time.time()))
         for line in template:
             line = line.replace('[[time]]', cur_time)
-            if label:
-                line = line.replace('[[label]]', ' - ' + label)
+            if CONF.label and CONF.storage:
+                line = line.replace('[[label]]', ' - ' + CONF.label)
+            elif CONF.label:
+                line = line.replace('[[label]]', CONF.label)
             else:
                 line = line.replace('[[label]]', '')
             line = line.replace('[[result]]', task_re)
             hfp.write(line)
-        if not headless:
+        if not CONF.headless:
             # bring up the file in the default browser
-            url = 'file://' + os.path.abspath(html)
+            url = 'file://' + os.path.abspath(CONF.html)
             webbrowser.open(url, new=2)
 
 
@@ -763,17 +765,17 @@ def main():
         with open(CONF.json, 'w') as jfp:
             json.dump(kloudbuster.final_result, jfp, indent=4, sort_keys=True)
 
-    if CONF.storage and CONF.html:
+    if CONF.html:
         '''Save results in HTML format file.'''
         LOG.info('Saving results in HTML file: ' + CONF.html + "...")
-        template_path = resource_filename(__name__, 'template.html')
+        if CONF.storage:
+            template_path = resource_filename(__name__, 'template_storage.html')
+        else:
+            template_path = resource_filename(__name__, 'template_http.html')
         with open(CONF.html, 'w') as hfp, open(template_path, 'r') as template:
-            kloudbuster.create_html(CONF.html,
-                                    hfp,
+            kloudbuster.create_html(hfp,
                                     template,
-                                    json.dumps(kloudbuster.final_result, sort_keys=True),
-                                    CONF.label,
-                                    CONF.headless)
+                                    json.dumps(kloudbuster.final_result, sort_keys=True))
 
 
 if __name__ == '__main__':
