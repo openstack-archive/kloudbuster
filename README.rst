@@ -10,7 +10,7 @@ cloud at massive scale and can measure how well the cloud behaves under load.
 Features
 --------
 
-* Neutron configuration agnostic (any encapsulation, any overlay, any plugin)
+* Neutron configuration agnostic (any encapsulation, any overlay, any plugin )
 
 * Can load the data plane with one OpenStack cloud (single-cloud operations
   for L3 East-West scale) or 2 OpenStack clouds (dual-cloud operations with
