@@ -109,13 +109,13 @@ class Kloud(object):
             flavor_manager = base_compute.Flavor(nova_client)
             flavor_dict = self.scale_cfg.flavor
             if self.testing_side:
-                flv = flavor_manager.create_flavor('kb.client', override=True, **flavor_dict)
+                flv = flavor_manager.create_flavor('KB.client', override=True, **flavor_dict)
                 self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
-                flv = flavor_manager.create_flavor('kb.proxy', override=True,
+                flv = flavor_manager.create_flavor('KB.proxy', override=True,
                                                    ram=2048, vcpus=1, disk=20)
                 self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
             else:
-                flv = flavor_manager.create_flavor('kb.server', override=True, **flavor_dict)
+                flv = flavor_manager.create_flavor('KB.server', override=True, **flavor_dict)
                 self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
 
     def delete_resources(self):
@@ -130,10 +130,10 @@ class Kloud(object):
         if not self.reusing_tenants:
             flavor_manager = base_compute.Flavor(nova_client)
             if self.testing_side:
-                flavor_manager.delete_flavor('kb.client')
-                flavor_manager.delete_flavor('kb.proxy')
+                flavor_manager.delete_flavor('KB.client')
+                flavor_manager.delete_flavor('KB.proxy')
             else:
-                flavor_manager.delete_flavor('kb.server')
+                flavor_manager.delete_flavor('KB.server')
 
         for tnt in self.tenant_list:
             flag = flag & tnt.delete_resources()
@@ -370,7 +370,7 @@ class KloudBuster(object):
             for ins in server_list:
                 ins.user_data['role'] = 'Server'
                 ins.user_data['http_server_configs'] = ins.config['http_server_configs']
-                ins.boot_info['flavor_type'] = 'kb.server' if \
+                ins.boot_info['flavor_type'] = 'KB.server' if \
                     not self.tenants_list['server'] else self.kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)
 
@@ -389,7 +389,7 @@ class KloudBuster(object):
                 ins.user_data['redis_server_port'] = 6379
                 ins.user_data['target_subnet_ip'] = server_list[idx].subnet_ip
                 ins.user_data['target_shared_interface_ip'] = server_list[idx].shared_interface_ip
-                ins.boot_info['flavor_type'] = 'kb.client' if \
+                ins.boot_info['flavor_type'] = 'KB.client' if \
                     not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)
         elif test_mode == 'storage':
@@ -398,7 +398,7 @@ class KloudBuster(object):
                 ins.user_data['vm_name'] = ins.vm_name
                 ins.user_data['redis_server'] = self.kb_proxy.fixed_ip
                 ins.user_data['redis_server_port'] = 6379
-                ins.boot_info['flavor_type'] = 'kb.client' if \
+                ins.boot_info['flavor_type'] = 'KB.client' if \
                     not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)
 
@@ -444,7 +444,7 @@ class KloudBuster(object):
 
         self.kb_proxy.vm_name = 'KB-PROXY'
         self.kb_proxy.user_data['role'] = 'KB-PROXY'
-        self.kb_proxy.boot_info['flavor_type'] = 'kb.proxy' if \
+        self.kb_proxy.boot_info['flavor_type'] = 'KB.proxy' if \
             not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
         if self.topology:
             proxy_hyper = self.topology.clients_rack[0]

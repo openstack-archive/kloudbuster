@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright 2016 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -33,7 +34,7 @@
 # When there is no resource list provided, the script will simply grep the    #
 # resource name with "KB" and delete them. If running on a production         #
 # network, please double and triple check all resources names are *NOT*       #
-# containing "KB", otherwise they will be deleted by the script.              #
+# starting with "KB", otherwise they will be deleted by the script.           #
 #                                                                             #
 ###############################################################################
 
@@ -43,7 +44,7 @@
 # IMPORTANT FOR RUNNING KLOUDBUSTER ON PRODUCTION CLOUDS
 #
 # DOUBLE CHECK THE NAMES OF ALL RESOURCES THAT DO NOT
-# BELONG TO KLOUDBUSTER ARE *NOT* CONTAINING "KB".
+# BELONG TO KLOUDBUSTER ARE *NOT* STARTING WITH "KB".
 # ======================================================
 
 from abc import ABCMeta
@@ -67,7 +68,7 @@ import credentials
 
 def prompt_to_run():
     print "Warning: You didn't specify a resource list file as the input. "\
-          "The script will delete all above resources"
+          "The script will delete all resources shown above."
     answer = raw_input("Are you sure? (y/n) ")
     if answer.lower() != 'y':
         sys.exit(0)
@@ -82,11 +83,11 @@ def fetch_resources(fetcher, options=None):
         # some objects provide direct access some
         # require access by key
         try:
-            resname = res.name
             resid = res.id
+            resname = res.name
         except AttributeError:
-            resname = res['name']
             resid = res['id']
+            resname = res['name']
         if resname.startswith('KB'):
             resources[resid] = resname
     return resources
@@ -111,7 +112,7 @@ class AbstractCleaner(object):
         if self.dryrun:
             print '    + ' + rtype + ' ' + name + ' should be deleted (but is not deleted: dry run)'
         else:
-            print '    + ' + rtype + ' ' + name + ' successfully deleted'
+            print '    + ' + rtype + ' ' + name + ' is successfully deleted'
 
     def report_not_found(self, rtype, name):
         print '    ? ' + rtype + ' ' + name + ' not found (already deleted?)'
@@ -153,6 +154,8 @@ class StorageCleaner(AbstractCleaner):
                         if not self.dryrun:
                             vol.detach()
                             print '    . VOLUME ' + vol.name + ' detaching...'
+                        else:
+                            print '    . VOLUME ' + vol.name + ' to be detached...'
                         kb_detaching_volumes.append(vol)
                     else:
                         # no attachments
@@ -162,8 +165,9 @@ class StorageCleaner(AbstractCleaner):
 
             # check that the volumes are no longer attached
             if kb_detaching_volumes:
-                print '    . Waiting for %d volumes to be fully detached...' % \
-                    (len(kb_detaching_volumes))
+                if not self.dryrun:
+                    print '    . Waiting for %d volumes to be fully detached...' % \
+                        (len(kb_detaching_volumes))
                 retry_count = 2
                 while True:
                     retry_count -= 1
@@ -179,7 +183,7 @@ class StorageCleaner(AbstractCleaner):
                         if retry_count:
                             print '    . VOLUME %d left to be detached, retries left=%d...' % \
                                 (len(kb_detaching_volumes), retry_count)
-                            time.sleep(1)
+                            time.sleep(2)
                         else:
                             print '    - VOLUME detach timeout, %d volumes left:' % \
                                 (len(kb_detaching_volumes))
@@ -201,27 +205,55 @@ class ComputeCleaner(AbstractCleaner):
     def __init__(self, creds, resources, dryrun):
         creden_nova = creds.get_nova_credentials_v2()
         self.nova_client = novaclient(**creden_nova)
-
         res_desc = {
             'instances': [self.nova_client.servers.list, {"all_tenants": 1}],
             'flavors': [self.nova_client.flavors.list],
-            'keypairs': [self.nova_client.keypairs.list],
-            'sec_groups': [self.nova_client.security_groups.list]
+            'keypairs': [self.nova_client.keypairs.list]
         }
         super(ComputeCleaner, self).__init__('Compute', res_desc, resources, dryrun)
 
     def clean(self):
         print '*** COMPUTE cleanup'
         try:
+            deleting_instances = self.resources['instances']
             for id, name in self.resources['instances'].iteritems():
                 try:
                     if self.dryrun:
                         self.nova_client.servers.get(id)
+                        self.report_deletion('INSTANCE', name)
                     else:
-                        self.nova_client.servers.delete(id)
-                    self.report_deletion('INSTANCE', name)
+                        self.nova_client.servers.force_delete(id)
                 except NotFound:
+                    deleting_instances.remove(id)
                     self.report_not_found('INSTANCE', name)
+
+            if not self.dryrun and len(deleting_instances):
+                print '    . Waiting for %d instances to be fully deleted...' % \
+                    (len(deleting_instances))
+                retry_count = 5
+                while True:
+                    retry_count -= 1
+                    for ins_id in deleting_instances.keys():
+                        try:
+                            self.nova_client.servers.get(ins_id)
+                        except NotFound:
+                            self.report_deletion('INSTANCE', deleting_instances[ins_id])
+                            deleting_instances.pop(ins_id)
+
+                    if not len(deleting_instances):
+                        break
+
+                    if retry_count:
+                        print '    . INSTANCE %d left to be deleted, retries left=%d...' % \
+                            (len(deleting_instances), retry_count)
+                        time.sleep(2)
+                    else:
+                        print '    - INSTANCE deletion timeout, %d instances left:' % \
+                            (len(deleting_instances))
+                        for ins_id in deleting_instances.keys():
+                            ins = self.nova_client.servers.get(ins_id)
+                            print '         ', ins.name, ins.status, ins.id
+                        break
         except KeyError:
             pass
 
@@ -250,18 +282,6 @@ class ComputeCleaner(AbstractCleaner):
         except KeyError:
             pass
 
-        try:
-            for id, name in self.resources['sec_groups'].iteritems():
-                try:
-                    secgroup = self.nova_client.security_groups.get(id)
-                    if not self.dryrun:
-                        self.nova_client.security_groups.delete(secgroup)
-                    self.report_deletion('SECURITY GROUP', name)
-                except NotFound:
-                    self.report_not_found('SECURITY GROUP', name)
-        except KeyError:
-            pass
-
 class NetworkCleaner(AbstractCleaner):
 
     def __init__(self, creds, resources, dryrun):
@@ -277,7 +297,11 @@ class NetworkCleaner(AbstractCleaner):
         def routers_fetcher():
             return self.neutron.list_routers()['routers']
 
+        def secgroup_fetcher():
+            return self.neutron.list_security_groups()['security_groups']
+
         res_desc = {
+            'sec_groups': [secgroup_fetcher],
             'networks': [networks_fetcher],
             'routers': [routers_fetcher]
         }
@@ -293,11 +317,25 @@ class NetworkCleaner(AbstractCleaner):
         }
         try:
             self.neutron.remove_interface_router(router_id, body)
+            self.report_deletion('Router Interface', port['fixed_ips'][0]['ip_address'])
         except neutronclient.common.exceptions.NotFound:
-            self.report_not_found('Router Interface', port['fixed_ips'][0]['ip_address'])
+            pass
 
     def clean(self):
         print '*** NETWORK cleanup'
+
+        try:
+            for id, name in self.resources['sec_groups'].iteritems():
+                try:
+                    if self.dryrun:
+                        self.neutron.show_security_group(id)
+                    else:
+                        self.neutron.delete_security_group(id)
+                    self.report_deletion('SECURITY GROUP', name)
+                except NotFound:
+                    self.report_not_found('SECURITY GROUP', name)
+        except KeyError:
+            pass
 
         try:
             for id, name in self.resources['floating_ips'].iteritems():
@@ -311,14 +349,16 @@ class NetworkCleaner(AbstractCleaner):
                     self.report_not_found('FLOATING IP', name)
         except KeyError:
             pass
+
         try:
             for id, name in self.resources['routers'].iteritems():
                 try:
                     if self.dryrun:
                         self.neutron.show_router(id)
-
+                        self.report_deletion('Router Gateway', name)
                     else:
                         self.neutron.remove_gateway_router(id)
+                        self.report_deletion('Router Gateway', name)
                         # need to delete each interface before deleting the router
                         port_list = self.neutron.list_ports(id)['ports']
                         for port in port_list:
@@ -343,11 +383,8 @@ class NetworkCleaner(AbstractCleaner):
                     self.report_not_found('NETWORK', name)
                 except neutronclient.common.exceptions.NetworkInUseClient as exc:
                     self.report_error('NETWORK', name, str(exc))
-
         except KeyError:
             pass
-
-
 
 class KeystoneCleaner(AbstractCleaner):
 
@@ -405,7 +442,7 @@ class KbCleaners(object):
             print 'SELECTED RESOURCES:'
             print tabulate(table, headers="firstrow", tablefmt="psql")
         else:
-            print 'There are no resources to delete'
+            print 'There are no resources to delete.'
         print
         return count
 

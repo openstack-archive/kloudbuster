@@ -104,7 +104,7 @@ class KBConfig(object):
 
         if not self.storage_mode:
             # Ignore volume_size if not performing storage testing
-            self.config_scale.client['volume_size'] = 0
+            self.config_scale['client']['volume_size'] = 0
 
         if self.alt_cfg:
             self.config_scale = self.config_scale + AttrDict(self.alt_cfg)

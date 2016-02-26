@@ -73,7 +73,7 @@ else
     prompt_to_run;
     INSTANCE_LIST=`nova list --all-tenants | grep KB  | cut -d'|' -f2`
     SEC_GROUP_LIST=`neutron security-group-list | grep KB | cut -d'|' -f2`
-    FLAVOR_LIST=`nova flavor-list | grep kb | cut -d'|' -f3`
+    FLAVOR_LIST=`nova flavor-list | grep KB | cut -d'|' -f3`
     KEYPAIR_LIST=`nova keypair-list | grep KB | cut -d'|' -f2`
     ROUTER_LIST=`neutron router-list | grep KB | cut -d'|' -f2`
     NETWORK_LIST=`neutron net-list | grep KB | cut -d'|' -f2`
@@ -102,7 +102,7 @@ for line in $INSTANCE_LIST; do
 done
 
 for line in $FLAVOR_LIST; do
-    nova flavor-delete $line
+    nova flavor-delete $line &
 done;
 
 for line in $SEC_GROUP_LIST; do
@@ -110,7 +110,7 @@ for line in $SEC_GROUP_LIST; do
 done;
 
 for line in $KEYPAIR_LIST; do
-    nova keypair-delete "$line"
+    nova keypair-delete "$line" &
 done;
 
 if [ "$FLOATINGIP_LIST" == "" ] && [ "$1" == "" ]; then
