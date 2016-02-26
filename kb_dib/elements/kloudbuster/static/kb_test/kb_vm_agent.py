@@ -127,8 +127,8 @@ class KB_Instance(object):
 
     # Run fio
     @staticmethod
-    def run_fio(dest_path, name, mode, block_size, iodepth,
-                runtime, rate_iops=None, rate=None, status_interval=None):
+    def run_fio(dest_path, name, description, mode, block_size, iodepth, runtime,
+                rate_iops=None, rate=None, rwmixread=None, status_interval=None, extra_opts=None):
         fixed_opt = '--thread --ioengine=libaio --output-format=json+ --direct=1 '
         fixed_opt += '--filename=/mnt/volume/kb_storage_test.bin '
         required_opt = '--name=%s --rw=%s --bs=%s --iodepth=%s --runtime=%s ' %\
@@ -136,7 +136,9 @@ class KB_Instance(object):
         optional_opt = ''
         optional_opt += '--rate_iops=%s ' % rate_iops if rate_iops else ''
         optional_opt += '--rate=%s ' % rate if rate else ''
+        optional_opt += '--rwmixread=%s ' % rwmixread if rwmixread else ''
         optional_opt += '--status-interval=%s ' % status_interval if status_interval else ''
+        optional_opt += extra_opts if extra_opts else ''
         cmd = '%s %s %s %s' % (dest_path, fixed_opt, required_opt, optional_opt)
         return cmd
 
