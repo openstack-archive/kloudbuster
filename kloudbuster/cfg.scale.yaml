@@ -212,9 +212,11 @@ client:
     # (4) Sequential write
     #
     # Accepted testing parameters for each scenario:
+    # description: (Required)
+    #     A string describing the test case
     # mode: (Required)
     #     Self-explained with the name, must be one of the below:
-    #     ['randread', 'randwrite', 'read', 'write']
+    #     ['randread', 'randwrite', 'randrw', 'read', 'write', 'rw']
     # runtime: (Required)
     #     Test duration in seconds
     # block_size: (Required, default=4k)
@@ -225,27 +227,49 @@ client:
     #     Cap the bandwidth to this number of IOPS
     # rate: (Optional, default=unlimited)
     #     Cap the bandwidth to this number of bytes/sec, normal postfix rules apply
+    # rwmixread: (Required when mode is 'randrw' or 'rw')
+    #     Percentage of a mixed workload that should be reads
+    # extra_opts: (Optional, default=None)
+    #     Extra options that will be added to the FIO client
     storage_tool_configs:
-        - mode: 'randread'
+        - description: 'Random Read Test Case'
+          mode: 'randread'
           runtime: 30
           block_size: '4k'
           iodepth: 4
           rate_iops: 100
-        - mode: 'randwrite'
+        - description: 'Random Write Test Case'
+          mode: 'randwrite'
           runtime: 30
           block_size: '4k'
           iodepth: 4
           rate_iops: 100
-        - mode: 'read'
+        - description: 'Random Read/Write Test Case'
+          mode: 'randrw'
+          runtime: 30
+          block_size: '4k'
+          iodepth: 4
+          rate_iops: 100
+          rwmixread: 70
+        - description: 'Sequential Read Test Case'
+          mode: 'read'
           runtime: 30
           block_size: '64k'
           iodepth: 64
           rate: '60M'
-        - mode: 'write'
+        - description: 'Sequential Write Test Case'
+          mode: 'write'
           runtime: 30
           block_size: '64k'
           iodepth: 64
           rate: '60M'
+        - description: 'Sequential Read/Write Test Case'
+          mode: 'rw'
+          runtime: 30
+          block_size: '64k'
+          iodepth: 64
+          rate: '60M'
+          rwmixread: 70
 
     # Volumes size in GB for each VM
     # Will effect only in storage testing mode

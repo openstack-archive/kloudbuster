@@ -91,6 +91,7 @@ class KBRunner_Storage(KBRunner):
                 # Call the method in corresponding tools to consolidate results
                 LOG.kbdebug(self.result.values())
                 tc_result = perf_tool.consolidate_results(self.result.values())
+                tc_result['description'] = cur_config['description']
                 tc_result['mode'] = cur_config['mode']
                 tc_result['block_size'] = cur_config['block_size']
                 tc_result['iodepth'] = cur_config['iodepth']
