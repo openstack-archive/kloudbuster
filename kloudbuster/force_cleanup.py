@@ -50,6 +50,7 @@
 from abc import ABCMeta
 from abc import abstractmethod
 import argparse
+import re
 import sys
 import time
 
@@ -65,6 +66,7 @@ from tabulate import tabulate
 # kloudbuster base code
 import credentials
 
+resource_name_re = None
 
 def prompt_to_run():
     print "Warning: You didn't specify a resource list file as the input. "\
@@ -88,7 +90,7 @@ def fetch_resources(fetcher, options=None):
         except AttributeError:
             resid = res['id']
             resname = res['name']
-        if resname.startswith('KB'):
+        if resource_name_re.match(resname):
             resources[resid] = resname
     return resources
 
@@ -230,7 +232,7 @@ class ComputeCleaner(AbstractCleaner):
             if not self.dryrun and len(deleting_instances):
                 print '    . Waiting for %d instances to be fully deleted...' % \
                     (len(deleting_instances))
-                retry_count = 5
+                retry_count = 5 + len(deleting_instances)
                 while True:
                     retry_count -= 1
                     for ins_id in deleting_instances.keys():
@@ -251,8 +253,11 @@ class ComputeCleaner(AbstractCleaner):
                         print '    - INSTANCE deletion timeout, %d instances left:' % \
                             (len(deleting_instances))
                         for ins_id in deleting_instances.keys():
-                            ins = self.nova_client.servers.get(ins_id)
-                            print '         ', ins.name, ins.status, ins.id
+                            try:
+                                ins = self.nova_client.servers.get(ins_id)
+                                print '         ', ins.name, ins.status, ins.id
+                            except NotFound:
+                                print '         ', deleting_instances[ins_id], '(just deleted)', ins_id
                         break
         except KeyError:
             pass
@@ -482,18 +487,22 @@ def get_resources_from_cleanup_log(logfile):
 def main():
     parser = argparse.ArgumentParser(description='KloudBuster Force Cleanup')
 
+    parser.add_argument('-r', '--rc', dest='rc',
+                        action='store', required=False,
+                        help='openrc file',
+                        metavar='<file>')
     parser.add_argument('-f', '--file', dest='file',
                         action='store', required=False,
-                        help='use cleanup log file',
+                        help='get resources to delete from cleanup log file (default:discover from OpenStack)',
                         metavar='<file>')
     parser.add_argument('-d', '--dryrun', dest='dryrun',
                         action='store_true',
                         default=False,
                         help='check resources only - do not delete anything')
-    parser.add_argument('-r', '--rc', dest='rc',
+    parser.add_argument('--filter', dest='filter',
                         action='store', required=False,
-                        help='openrc file',
-                        metavar='<file>')
+                        help='resource name regular expression filter (default:"KB") - OpenStack discovery only',
+                        metavar='<any-python-regex>')
     opts = parser.parse_args()
 
     cred = credentials.Credentials(openrc_file=opts.rc)
@@ -503,6 +512,17 @@ def main():
     else:
         # None means try to find the resources from openstack directly by name
         resources = None
+    global resource_name_re
+    if opts.filter:
+        try:
+            resource_name_re = re.compile(opts.filter)
+        except Exception as exc:
+            print 'Provided filter is not a valid python regular expression: ' + opts.filter
+            print str(exc)
+            sys.exit(1)
+    else:
+        resource_name_re = re.compile('KB')
+
 
     cleaners = KbCleaners(cred, resources, opts.dryrun)
 
