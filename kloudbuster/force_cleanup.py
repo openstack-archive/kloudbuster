@@ -137,8 +137,8 @@ class StorageCleaner(AbstractCleaner):
         from cinderclient.v2 import client as cclient
         from novaclient.client import Client as nclient
         creden_nova = creds.get_nova_credentials_v2()
-        self.nova = nclient(**creden_nova)
-        self.cinder = cclient.Client(**creden_nova)
+        self.nova = nclient(endpoint_type='publicURL', **creden_nova)
+        self.cinder = cclient.Client(endpoint_type='publicURL', **creden_nova)
 
         res_desc = {'volumes': [self.cinder.volumes.list, {"all_tenants": 1}]}
         super(StorageCleaner, self).__init__('Storage', res_desc, resources, dryrun)
@@ -206,9 +206,12 @@ class StorageCleaner(AbstractCleaner):
 
 class ComputeCleaner(AbstractCleaner):
     def __init__(self, creds, resources, dryrun):
+        from neutronclient.v2_0 import client as nclient
         from novaclient.client import Client as novaclient
+        creden = creds.get_credentials()
         creden_nova = creds.get_nova_credentials_v2()
-        self.nova_client = novaclient(**creden_nova)
+        self.neutron_client = nclient.Client(endpoint_type='publicURL', **creden)
+        self.nova_client = novaclient(endpoint_type='publicURL', **creden_nova)
         res_desc = {
             'instances': [self.nova_client.servers.list, {"all_tenants": 1}],
             'flavors': [self.nova_client.flavors.list],
@@ -219,13 +222,23 @@ class ComputeCleaner(AbstractCleaner):
     def clean(self):
         print '*** COMPUTE cleanup'
         try:
+            # Get a list of floating IPs
+            fip_lst = self.neutron_client.list_floatingips()['floatingips']
             deleting_instances = self.resources['instances']
             for id, name in self.resources['instances'].iteritems():
                 try:
+                    ins_addr = self.nova_client.servers.get(id).addresses.values()[0]
+                    fips = [x['addr'] for x in ins_addr if x['OS-EXT-IPS:type'] == 'floating']
                     if self.dryrun:
                         self.nova_client.servers.get(id)
+                        for fip in fips:
+                            self.report_deletion('FLOATING IP', fip)
                         self.report_deletion('INSTANCE', name)
                     else:
+                        for fip in fips:
+                            fip_id = [x['id'] for x in fip_lst if x['floating_ip_address'] == fip]
+                            self.neutron_client.delete_floatingip(fip_id[0])
+                            self.report_deletion('FLOATING IP', fip)
                         self.nova_client.servers.force_delete(id)
                 except NotFound:
                     deleting_instances.remove(id)
