@@ -59,7 +59,6 @@ import cinderclient
 import keystoneauth1
 from keystoneclient.v2_0 import client as keystoneclient
 import neutronclient
-from novaclient.client import Client as novaclient
 from novaclient.exceptions import NotFound
 from tabulate import tabulate
 
@@ -135,10 +134,11 @@ class AbstractCleaner(object):
 
 class StorageCleaner(AbstractCleaner):
     def __init__(self, creds, resources, dryrun):
-        from cinderclient import client
-        crd = creds.get_credentials()
-        self.cinder = client.Client('2', crd['username'], crd['password'],
-                                    crd['tenant_name'], crd['auth_url'])
+        from cinderclient.v2 import client as cclient
+        from novaclient.client import Client as nclient
+        creden_nova = creds.get_nova_credentials_v2()
+        self.nova = nclient(**creden_nova)
+        self.cinder = cclient.Client(**creden_nova)
 
         res_desc = {'volumes': [self.cinder.volumes.list, {"all_tenants": 1}]}
         super(StorageCleaner, self).__init__('Storage', res_desc, resources, dryrun)
@@ -154,7 +154,8 @@ class StorageCleaner(AbstractCleaner):
                     if vol.attachments:
                         # detach the volume
                         if not self.dryrun:
-                            vol.detach()
+                            ins_id = vol.attachments[0]['server_id']
+                            self.nova.volumes.delete_server_volume(ins_id, id)
                             print '    . VOLUME ' + vol.name + ' detaching...'
                         else:
                             print '    . VOLUME ' + vol.name + ' to be detached...'
@@ -170,7 +171,7 @@ class StorageCleaner(AbstractCleaner):
                 if not self.dryrun:
                     print '    . Waiting for %d volumes to be fully detached...' % \
                         (len(kb_detaching_volumes))
-                retry_count = 2
+                retry_count = 5 + len(kb_detaching_volumes)
                 while True:
                     retry_count -= 1
                     for vol in list(kb_detaching_volumes):
@@ -205,6 +206,7 @@ class StorageCleaner(AbstractCleaner):
 
 class ComputeCleaner(AbstractCleaner):
     def __init__(self, creds, resources, dryrun):
+        from novaclient.client import Client as novaclient
         creden_nova = creds.get_nova_credentials_v2()
         self.nova_client = novaclient(**creden_nova)
         res_desc = {
@@ -362,6 +364,11 @@ class NetworkCleaner(AbstractCleaner):
                     if self.dryrun:
                         self.neutron.show_router(id)
                         self.report_deletion('Router Gateway', name)
+                        port_list = self.neutron.list_ports(id)['ports']
+                        for port in port_list:
+                            if 'fixed_ips' in port:
+                                self.report_deletion('Router Interface',
+                                                     port['fixed_ips'][0]['ip_address'])
                     else:
                         self.neutron.remove_gateway_router(id)
                         self.report_deletion('Router Gateway', name)
