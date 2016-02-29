@@ -421,8 +421,8 @@ configurations:
     section, and set "VMs/Network" to a proper value.
 
 
-Intepret the results
-^^^^^^^^^^^^^^^^^^^^
+Interpret the results
+^^^^^^^^^^^^^^^^^^^^^
 
 From the CLI, check the log and find the warning that KloudBuster gave,
 similar to this::
