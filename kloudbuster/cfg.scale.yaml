@@ -103,10 +103,16 @@ client:
     progression:
         # Enable/Disable the progression
         enabled: False
-        # The starting count of VMs
+        # The starting count of VMs:
+        #     0: Start directly from vm_multiple;
+        #     1: Start from 1 VM;
         vm_start: 1
         # The steping for the VM count for each stage
-        vm_step: 1
+        # e.g. KloudBuster will run iterations on below sequences:
+        #      {'vm_start': 1, 'vm_multiple': 2}: 1, 2, 4, 6, 8...    [DEFAULT]
+        #      {'vm_start': 1, 'vm_multiple': 5}: 1, 5, 10, 15, 20...
+        #      {'vm_start': 0, 'vm_multiple': 5}: 5, 10, 15, 20...
+        vm_multiple: 2
         # The stop condition for HTTP benchmarking, it is used for KloudBuster to
         # determine when to stop the progression, and do the cleanup if needed.
         # It defines as:

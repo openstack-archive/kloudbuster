@@ -32,17 +32,42 @@ class KBRunner_Storage(KBRunner):
         KBRunner.__init__(self, client_list, config, expected_agent_version, single_cloud=True)
 
     def header_formatter(self, stage, vm_count):
-        rr_iops = vm_count * self.config.storage_tool_configs[0].rate_iops
-        rw_iops = vm_count * self.config.storage_tool_configs[1].rate_iops
-        sr_tp = self.config.storage_tool_configs[2].rate.upper()
-        ex_unit = sr_tp[-1] if sr_tp[-1] in ['K', 'M', 'G', 'T'] else None
-        sr_tp = (str(vm_count * int(sr_tp[:-1])) + ex_unit) if ex_unit else vm_count * int(sr_tp)
-        sw_tp = self.config.storage_tool_configs[3].rate.upper()
-        ex_unit = sw_tp[-1] if sw_tp[-1] in ['K', 'M', 'G', 'T'] else None
-        sw_tp = (str(vm_count * int(sw_tp[:-1])) + ex_unit) if ex_unit else vm_count * int(sw_tp)
+        rr_iops = rw_iops = sr_tp = sw_tp = 0
+        for tc in self.config.storage_tool_configs:
+            if tc.mode == 'randread':
+                rr_iops = vm_count * tc.rate_iops
+            if tc.mode == 'randwrite':
+                rw_iops = vm_count * tc.rate_iops
+            if tc.mode == 'read':
+                sr_tp = tc.rate.upper()
+                ex_unit = sr_tp[-1] if sr_tp[-1] in ['K', 'M', 'G', 'T'] else None
+                sr_tp = (str(vm_count * int(sr_tp[:-1])) + ex_unit)\
+                    if ex_unit else vm_count * int(sr_tp)
+            if tc.mode == 'write':
+                sw_tp = tc.rate.upper()
+                ex_unit = sw_tp[-1] if sw_tp[-1] in ['K', 'M', 'G', 'T'] else None
+                sw_tp = (str(vm_count * int(sw_tp[:-1])) + ex_unit)\
+                    if ex_unit else vm_count * int(sw_tp)
 
-        msg = "Stage %d: %d VM(s), %d/%d(r/w) Expected IOPS, %sB/%sB(r/w) Expected Throughput" %\
-              (stage, vm_count, rr_iops, rw_iops, sr_tp, sw_tp)
+        if rr_iops and rw_iops:
+            iops_str = ', %d/%d(r/w) Expected IOPS' % (rr_iops, rw_iops)
+        elif rr_iops:
+            iops_str = ', %d Read Expected IOPS' % (rr_iops)
+        elif rw_iops:
+            iops_str = ', %d Write Expected IOPS' % (rw_iops)
+        else:
+            iops_str = ''
+
+        if sr_tp and sw_tp:
+            tp_str = ', %sB/%sB(r/w) Expected Throughput' % (sr_tp, sw_tp)
+        elif sr_tp:
+            tp_str = ', %sB Read Expected Throughput' % (sr_tp)
+        elif sw_tp:
+            tp_str = ', %sB Write Expected Throughput' % (sw_tp)
+        else:
+            tp_str = ''
+
+        msg = "Stage %d: %d VM(s)%s%s" % (stage, vm_count, iops_str, tp_str)
         return msg
 
     def init_volume(self, active_range, timeout=30):
@@ -116,7 +141,7 @@ class KBRunner_Storage(KBRunner):
         if self.config.progression.enabled:
             self.tool_result = {}
             start = self.config.progression.vm_start
-            step = self.config.progression.vm_step
+            multiple = self.config.progression.vm_multiple
             limit = self.config.progression.storage_stop_limit
             vm_list = self.full_client_dict.keys()
             vm_list.sort(cmp=lambda x, y: cmp(int(x[x.rfind('I') + 1:]), int(y[y.rfind('I') + 1:])))
@@ -126,7 +151,11 @@ class KBRunner_Storage(KBRunner):
             while True:
                 tc_flag = False
                 cur_vm_count = len(self.client_dict)
-                target_vm_count = start + (cur_stage - 1) * step
+                if start == 1:
+                    target_vm_count = 1 if cur_stage == 1 else (cur_stage - 1) * multiple
+                else:
+                    target_vm_count = cur_stage * multiple
+
                 if target_vm_count > len(self.full_client_dict):
                     break
 

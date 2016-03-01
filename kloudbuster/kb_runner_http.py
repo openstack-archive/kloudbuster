@@ -120,7 +120,7 @@ class KBRunner_HTTP(KBRunner):
         if self.config.progression.enabled:
             self.tool_result = {}
             start = self.config.progression.vm_start
-            step = self.config.progression.vm_step
+            multiple = self.config.progression.vm_multiple
             limit = self.config.progression.http_stop_limit
             timeout = self.config.http_tool_configs.timeout
             vm_list = self.full_client_dict.keys()
@@ -130,7 +130,10 @@ class KBRunner_HTTP(KBRunner):
 
             while True:
                 cur_vm_count = len(self.client_dict)
-                target_vm_count = start + (cur_stage - 1) * step
+                if start == 1:
+                    target_vm_count = 1 if cur_stage == 1 else (cur_stage - 1) * multiple
+                else:
+                    target_vm_count = cur_stage * multiple
                 timeout_at_percentile = 0
                 if target_vm_count > len(self.full_client_dict):
                     break

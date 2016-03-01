@@ -468,13 +468,13 @@ class KloudBuster(object):
                        "multiple runs as listed:"
             stage = 1
             start = self.client_cfg.progression.vm_start
-            step = self.client_cfg.progression.vm_step
-            cur_vm_count = start
+            multiple = self.client_cfg.progression.vm_multiple
+            cur_vm_count = 1 if start else multiple
             total_vm = self.get_tenant_vm_count(self.server_cfg) * \
                 self.server_cfg['number_tenants']
             while (cur_vm_count <= total_vm):
                 log_info += "\n" + self.kb_runner.header_formatter(stage, cur_vm_count)
-                cur_vm_count = start + stage * step
+                cur_vm_count = (stage + 1 - start) * multiple
                 stage += 1
             LOG.info(log_info)
 
