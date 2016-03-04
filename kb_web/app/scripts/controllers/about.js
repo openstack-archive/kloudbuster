@@ -79,15 +79,28 @@ angular.module('kbWebApp')
           activeNav("lognav");
 
           break;
+
         case "#/Login":
           //alert("login");
           activeNav("loginnav");
           $("#loginname").text('Log In');
           break;
+
         case "#/About":
           //alert("about");
           activeNav("aboutnav");
           break;
+
+        case "#/StorageConfig":
+          //alert("about");
+          activeNav("storageconfignav");
+          break;
+
+        case "#/StorageMode":
+          //alert("about");
+          activeNav("storagemodenav");
+          break;
+
         default:
           break;
       }
@@ -104,6 +117,9 @@ angular.module('kbWebApp')
       $("#" + "lognav").removeClass("active");
       $("#" + "loginnav").removeClass("active");
       $("#" + "aboutnav").removeClass("active");
+      $("#" + "storageconfignav").removeClass("active");
+      $("#" + "storagemodenav").removeClass("active");
+
     }
 
   })
@@ -140,7 +156,7 @@ angular.module('kbWebApp')
     this.putMethod = function (url, arg) {
       var deferred = $q.defer(); // declaration
       $http.defaults.headers.put['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';
-      $http.put(backendUrl + url, "arg=" + encodeURIComponent(JSON.stringify(arg)))
+      $http.put(backendUrl + url, "arg=" + encodeURIComponent(angular.toJson(arg)))
         .then(function (data) {
           deferred.resolve(data);  // success
         },
@@ -154,7 +170,7 @@ angular.module('kbWebApp')
       var deferred = $q.defer(); // declaration
       if (arg) {
         $http.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';
-        $http.post(backendUrl + url, "arg=" + encodeURIComponent(JSON.stringify(arg)))
+        $http.post(backendUrl + url, "arg=" + encodeURIComponent(angular.toJson(arg)))
           .then(function (data) {
             deferred.resolve(data);  // success
           },
@@ -190,7 +206,7 @@ angular.module('kbWebApp')
 
 
   })
-  .service('kbCookie', function () {
+  .service('kbCookie', function ($location) {
     //var self = this;
     this.init = function () {
       sessionID = "";
@@ -203,6 +219,7 @@ angular.module('kbWebApp')
       topology = "";
       logOffset = 0;
       logNum=0;
+      mode = "";
     };
 
     var sessionID = "";
@@ -213,6 +230,35 @@ angular.module('kbWebApp')
     this.setSessionID = function (session) {
       sessionID = session;
       return sessionID;
+    };
+
+    var mode = "";
+    this.getMode = function () {
+      return mode;
+    };
+    this.setMode = function (sto) {
+      mode = sto;
+      return mode;
+    };
+    this.checkMode = function(thisPage){
+      if(thisPage == "")
+      {
+        $(".forHttp").show();
+        $(".forStorage").hide();
+      }
+      else if (mode=='storage')
+      {
+        $(".forHttp").hide();
+        $(".forStorage").show();
+        if(mode != thisPage) $location.path('/');
+
+      }
+      else if(mode=='http'){
+        $(".forHttp").show();
+        $(".forStorage").hide();
+        if(mode != thisPage) $location.path('/StorageMode');
+      }
+
     };
 
     var status = "";

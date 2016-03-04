@@ -75,6 +75,16 @@ angular
         controller: 'LoginCtrl',
         controllerAs: 'login'
       })
+      .when('/StorageConfig', {
+        templateUrl: 'views/config_storage.html',
+        controller: 'StorageConfigCtrl',
+        controllerAs: 'config_storage'
+      })
+      .when('/StorageMode', {
+        templateUrl: 'views/run_storage.html',
+        controller: 'RunStorageCtrl',
+        controllerAs: 'run_storage'
+      })
       .otherwise({
         redirectTo: '/InteractiveMode'
       });

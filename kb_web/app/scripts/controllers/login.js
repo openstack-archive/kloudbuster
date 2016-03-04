@@ -27,6 +27,7 @@ angular.module('kbWebApp')
       'Karma'
     ];
     //if(kbCookie.getSessionID()!="") $location.path('/');
+    kbCookie.checkMode("");
     //---------------------------------top navigation bar---------------------------------
     $(window).on('hashchange', locationChange.change());
 
@@ -173,25 +174,38 @@ angular.module('kbWebApp')
 
 
     $scope.setConfig = function () {
-      if ($scope.samecloud === true) {
+
+      if ($scope.mode == "storage") {
         kbCookie.setIsOneCloud(true);
-        $scope.credentials = { "tested-passwd": $scope.inputPassword1, "tested-rc": test_rc};
+        $scope.credentials = {"tested-passwd": $scope.inputPassword1, "tested-rc": test_rc};
+        $scope.storage_mode = true;
       }
-      else {
-        kbCookie.setIsOneCloud(false);
-        $scope.credentials = {
-          "tested-passwd": $scope.inputPassword1,
-          "tested-rc": test_rc,
-          "testing-passwd": inputPassword2,
-          "testing-rc": test_rc2
-        };
+      else {//mode = http
+        $scope.storage_mode = false;
+        if ($scope.samecloud === true) {
+          kbCookie.setIsOneCloud(true);
+          $scope.credentials = {"tested-passwd": $scope.inputPassword1, "tested-rc": test_rc};
+        }
+        else {
+          kbCookie.setIsOneCloud(false);
+          $scope.credentials = {
+            "tested-passwd": $scope.inputPassword1,
+            "tested-rc": test_rc,
+            "testing-passwd": inputPassword2,
+            "testing-rc": test_rc2
+          };
+        }
       }
       //no sessionID but have cred
-      $scope.runCon = {"credentials": {}, kb_cfg: ""};
+      //$scope.runCon = {"credentials": {}, kb_cfg: ""};
+
+      $scope.runCon = {"credentials": {}, kb_cfg: "", "storage_mode": $scope.storage_mode};
       //console.log($scope.credentials);
+
       $scope.runCon.credentials = $scope.credentials;
 
       kbCookie.setCredentials($scope.credentials);
+      kbCookie.setMode($scope.mode);
 
       kbHttp.postMethod("/config/running_config", $scope.runCon)
         .then(
@@ -199,7 +213,14 @@ angular.module('kbWebApp')
           kbCookie.setSessionID(response.data);
           $scope.sessionID = kbCookie.getSessionID();
           console.log("set config & get sesID:" + $scope.sessionID);
-          $location.path('/');
+
+          if ($scope.mode == "storage") {
+
+            $location.path('/StorageMode');
+          }
+          else {
+            $location.path('/');
+          }
         },
         function (response) {  //  .reject
           //console.log("set config error:");
@@ -211,7 +232,9 @@ angular.module('kbWebApp')
             showAlert.showAlert("Error while connecting kloudbuster server!");
 
         }
-      );
+      )
+      ;
     }
-  });
+  })
+;
 

@@ -238,38 +238,38 @@ client:
     # extra_opts: (Optional, default=None)
     #     Extra options that will be added to the FIO client
     storage_tool_configs:
-        - description: 'Random Read Test Case'
+        - description: 'Random Read'
           mode: 'randread'
           runtime: 30
           block_size: '4k'
           iodepth: 4
           rate_iops: 100
-        - description: 'Random Write Test Case'
+        - description: 'Random Write'
           mode: 'randwrite'
           runtime: 30
           block_size: '4k'
           iodepth: 4
           rate_iops: 100
-        - description: 'Random Read/Write Test Case'
+        - description: 'Random Read/Write'
           mode: 'randrw'
           runtime: 30
           block_size: '4k'
           iodepth: 4
           rate_iops: 100
           rwmixread: 70
-        - description: 'Sequential Read Test Case'
+        - description: 'Sequential Read'
           mode: 'read'
           runtime: 30
           block_size: '64k'
           iodepth: 64
           rate: '60M'
-        - description: 'Sequential Write Test Case'
+        - description: 'Sequential Write'
           mode: 'write'
           runtime: 30
           block_size: '64k'
           iodepth: 64
           rate: '60M'
-        - description: 'Sequential Read/Write Test Case'
+        - description: 'Sequential Read/Write'
           mode: 'rw'
           runtime: 30
           block_size: '64k'

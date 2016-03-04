@@ -203,34 +203,30 @@
                   </md-checkbox>
                 </div>
                 <!--<br/>-->
-
                 <md-content layout-padding style="padding:0">
-                  <md-input-container class="col-md-12" style="padding-top:0">
-                    <label>VM Count Start</label>
-                    <input type="number" min="1" step="1" id="client_progression_vm_start"
-                           ng-model="config.client.progression.vm_start"
-                           ng-disabled="!config.client.progression.enabled" name="client_progression_vm_start"
-                           ng-pattern="/^[1-9][0-9]*$/i" required style="text-align:left;"/>
-
-                    <div ng-messages="interactive_progression_settings.client_progression_vm_start.$error"
-                         ng-if="interactive_progression_settings.client_progression_vm_start.$dirty">
-                      <div ng-message="required">This field is required</div>
-                      <div ng-message="pattern">Must be a number no less than 1</div>
-                    </div>
-                  </md-input-container>
 
                   <md-input-container class="col-md-12">
-                    <label>VM Increment Step</label>
-                    <input type="number" min="1" step="1" id="client_progression_vm_step"
-                           ng-model="config.client.progression.vm_step" ng-disabled="!config.client.progression.enabled"
-                           name="client_progression_vm_step" ng-pattern="/^[1-9][0-9]*$/i" required style="text-align:left;"/>
+                    <label>Series VM multiple</label>
+                    <input type="number" min="1" step="1" id="client_progression_vm_multiple"
+                           ng-model="config.client.progression.vm_multiple"
+                           ng-disabled="!config.client.progression.enabled"
+                           name="client_progression_vm_multiple" ng-pattern="/^[1-9][0-9]*$/i" required
+                           style="text-align:left;"/>
 
-                    <div ng-messages="interactive_progression_settings.client_progression_vm_step.$error"
-                         ng-if="interactive_progression_settings.client_progression_vm_step.$dirty">
+                    <div ng-messages="interactive_progression_settings.client_progression_vm_multiple.$error"
+                         ng-if="interactive_progression_settings.client_progression_vm_multiple.$dirty">
                       <div ng-message="required">This field is required</div>
                       <div ng-message="pattern">Must be a number no less than 1</div>
                     </div>
                   </md-input-container>
+
+                  <div class="input-group col-sm-12" style="margin:0 auto;padding-left: 7px">
+                    <md-checkbox id="client_progression_vm_start" ng-checked="config.client.progression.vm_start==1"
+                                 ng-click="config.client.progression.vm_start==1? config.client.progression.vm_start=0:config.client.progression.vm_start=1"
+                                 class="md-primary" ng-disabled="!config.client.progression.enabled">
+                      Start series with 1 VM
+                    </md-checkbox>
+                  </div>
 
                   <md-input-container class="col-md-12">
                     <label>Stop When Num of Err Packets ></label>
@@ -246,7 +242,8 @@
                     </div>
                   </md-input-container>
                 </md-content>
-
+                <span class="label col-md-12" style="color:grey;text-align: left">VM count series: {{config.client.progression.vm_start==1?1:''}} {{config.client.progression.vm_multiple}} {{config.client.progression.vm_multiple*2}} {{config.client.progression.vm_multiple*3}} {{config.client.progression.vm_multiple*4}} {{config.client.progression.vm_multiple*5}}...
+                </span>
                 <!--<div class="input-group col-sm-12" style="margin:0 auto" popover="The starting count of VMs"-->
                      <!--popover-trigger="mouseenter" popover-placement="right">-->
                   <!--<span class="input-group-addon">VM Count Start</span>-->

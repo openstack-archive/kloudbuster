@@ -134,6 +134,63 @@ td.ng-binding.ng-scope {
   padding:3px;
 }
 
+.panel-randread {
+  border-color: #a6bddb;
+}
+.panel-randread>.panel-heading {
+  color: #ffffff;
+  background-color: #a6bddb;
+  border-color: #a6bddb;
+}
+
+.panel-randwrite {
+  border-color: #74a9cf;
+}
+.panel-randwrite>.panel-heading {
+  color: #ffffff;
+  background-color: #74a9cf;
+  border-color: #74a9cf;
+}
+
+.panel-randrw {
+  border-color: #3690c0;
+}
+.panel-randrw>.panel-heading {
+  color: #ffffff;
+  background-color: #3690c0;
+  border-color: #3690c0;
+}
+
+.panel-read {
+  border-color: #feb24c;
+}
+.panel-read>.panel-heading {
+  color: #ffffff;
+  background-color: #feb24c;
+  border-color: #feb24c;
+}
+
+.panel-write {
+  border-color: #fd8d3c;
+}
+.panel-write>.panel-heading {
+  color: #ffffff;
+  background-color: #fd8d3c;
+  border-color: #fd8d3c;
+}
+
+.panel-rw {
+  border-color: #fc4e2a;
+}
+.panel-rw>.panel-heading {
+  color: #ffffff;
+  background-color: #fc4e2a;
+  border-color: #fc4e2a;
+}
+
+input,button,select,textarea{outline:none}
+*:focus { outline: none; }
+
 /*--------------------------top loading bar----------------------------*/
 #loading-bar-spinner {
   top: 70px;

@@ -30,6 +30,8 @@ angular.module('kbWebApp')
     ];
 
     if(kbCookie.getSessionID()==="") $location.path('/Login');
+    else kbCookie.checkMode('http');
+
     //---------------------------------top navigation bar---------------------------------
     $(window).on('hashchange', locationChange.change());
 
