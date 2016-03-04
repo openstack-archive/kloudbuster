@@ -111,6 +111,7 @@ client:
         # e.g. KloudBuster will run iterations on below sequences:
         #      {'vm_start': 1, 'vm_multiple': 2}: 1, 2, 4, 6, 8...    [DEFAULT]
         #      {'vm_start': 1, 'vm_multiple': 5}: 1, 5, 10, 15, 20...
+        #      {'vm_start': 0, 'vm_multiple': 1}: 1, 2, 3, 4, 5...
         #      {'vm_start': 0, 'vm_multiple': 5}: 5, 10, 15, 20...
         vm_multiple: 2
         # The stop condition for HTTP benchmarking, it is used for KloudBuster to
@@ -211,11 +212,13 @@ client:
 
     # Storage tool specific configs (per VM)
     # Multiple factors can impact the storage performance numbers, and KloudBuster is defining
-    # a default profile which consists of four testing scenarios:
+    # a default profile which consists of six testing scenarios:
     # (1) Random read
     # (2) Random write
-    # (3) Sequential read
-    # (4) Sequential write
+    # (3) Random mixed read/write
+    # (4) Sequential read
+    # (5) Sequential write
+    # (6) Sequential mixed read/write
     #
     # Accepted testing parameters for each scenario:
     # description: (Required)
@@ -280,6 +283,13 @@ client:
     # Volumes size in GB for each VM
     # Will effect only in storage testing mode
     volume_size: 1
+
+    # The size of the test file for doing IO tests in GiB
+    # Note: Due to the unit calculation difference and the overhead of the
+    # filesystem, the actual available space for data will be smaller than the
+    # volume size. So we picked GiB as the unit for laying out the test file,
+    # which normally should be fine.
+    io_file_size: 1
 
     # Prompt before running benchmarking tools
     prompt_before_run: False

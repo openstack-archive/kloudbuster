@@ -116,12 +116,13 @@ class KB_Instance(object):
 
     # Init volume
     @staticmethod
-    def init_volume(size):
+    def init_volume(dest_path, size):
         cmd = 'if [ ! -e /mnt/volume ]; then\n'
         cmd += 'mkfs.xfs /dev/vdb && '
         cmd += 'mkdir -p /mnt/volume && '
         cmd += 'mount /dev/vdb /mnt/volume && '
-        cmd += 'dd if=/dev/zero of=/mnt/volume/kb_storage_test.bin bs=%s count=1\n' % size
+        cmd += '%s --name=create_file --filename=/mnt/volume/kb_storage_test.bin '\
+               '--size=%s --create_only=1\n' % (dest_path, size)
         cmd += 'fi'
         return cmd
 
@@ -328,7 +329,7 @@ class KBA_Storage_Client(KBA_Client):
         return json.dumps(p_output)
 
     def exec_init_volume(self, size):
-        self.last_cmd = KB_Instance.init_volume(size)
+        self.last_cmd = KB_Instance.init_volume('/usr/local/bin/fio', size)
         return self.exec_command(self.last_cmd)
 
     def exec_run_storage_test(self, fio_configs):
