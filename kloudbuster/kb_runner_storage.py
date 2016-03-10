@@ -120,6 +120,8 @@ class KBRunner_Storage(KBRunner):
                 tc_result['mode'] = cur_config['mode']
                 tc_result['block_size'] = cur_config['block_size']
                 tc_result['iodepth'] = cur_config['iodepth']
+                if tc_result['mode'] in ['randrw', 'rw']:
+                    tc_result['rwmixread'] = cur_config['rwmixread']
                 if 'rate_iops' in cur_config:
                     tc_result['rate_iops'] = vm_count * cur_config['rate_iops']
                 if 'rate' in cur_config:
