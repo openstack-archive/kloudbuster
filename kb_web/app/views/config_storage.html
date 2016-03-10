@@ -33,7 +33,7 @@
       </li>
       <!--<li class="{{dash1status3}}" ng-click="setDash1Status(3)"><a href="" class="tab-link">CLIENT SIDE CONFIG-->
       <!--OPTIONS</a>-->
-      </li>
+      <!--</li>-->
     </ul>
   </div>
   <div id="dashboard_tabs" class="col-md-8">
@@ -67,6 +67,20 @@
                      ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left;"/>
 
               <div ng-messages="general.volume_size.$error" ng-if="general.volume_size.$dirty">
+                <div ng-message="required" style="padding-right: 0;">This field is required</div>
+                <div ng-message="pattern" style="padding-right: 0;">Must be a number between 1 and 999</div>
+              </div>
+            </md-input-container>
+          </md-content>
+
+          <md-content layout-padding>
+            <md-input-container class="col-md-12">
+              <label>IO File Size (GiB)</label>
+              <input type="number" min="1" max="1000" step="1" name="io_file_size"
+                     id="io_file_size" ng-model="config.client.io_file_size"
+                     ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left;"/>
+
+              <div ng-messages="general.io_file_size.$error" ng-if="general.io_file_size.$dirty">
                 <div ng-message="required" style="padding-right: 0;">This field is required</div>
                 <div ng-message="pattern" style="padding-right: 0;">Must be a number between 1 and 999</div>
               </div>
@@ -123,29 +137,27 @@
     <div id="dashboard-server" class="row" ng-show="dash1status2vis" style="margin-bottom: 2%">
       <h4 class="page-header" style="margin-top: 5px;">LIST OF STORAGE WORKLOADS TO EXECUTE IN SEQUENCE
 
-
         <div class="btn-group" style="text-align: center;float:right">
           <a href="" class="btn btn-xs btn-primary dropdown-toggle" style="width:150px; text-align: center"
              data-toggle="dropdown" aria-expanded="false">
             Add&nbsp;&nbsp;Workload&nbsp;&nbsp;<span class="caret"></span>
           </a>
           <ul class="dropdown-menu">
-            <li id="dropdown{{mode}}" ng-repeat="(mode,detail) in storageMode"><a ng-click="addMode(mode)">{{detail.name}}</a></li>
-
+            <li id="dropdown{{mode}}" ng-repeat="(mode,detail) in storageMode">
+              <a ng-click="addMode(mode)">{{detail.name}}</a>
+            </li>
           </ul>
         </div>
-
-
 
       </h4>
 
       <form name="server">
 
-        <div>
+        <div class="form-group">
           <div ng-repeat="item in config.client.storage_tool_configs"
                class="panel panel-primary {{storageMode[item['mode']]['type']}}">
             <div class="panel-heading">
-              <h3 class="panel-title">{{$index+1}}. {{item['description']}} -- {{storageMode[item['mode']]['name']}}&nbsp;
+              <h3 class="panel-title">{{$index+1}}. {{item['description']}} - {{storageMode[item['mode']]['name']}}&nbsp;
                 <a style="float:right;text-decoration: none;cursor: pointer; margin-left: 4%"
                    ng-click="switchIndex($index,0)">×
                 </a>
@@ -161,13 +173,96 @@
               </h3>
             </div>
             <div class="panel-body">
-              <md-content  layout-gt-sm="row" layout-padding layout-wrap>
-                <md-input-container ng-repeat="(option,result) in item" flex="33%">
-                  <label>{{options[option]['name']}}</label>
-                  <input id=$parent.$index+{{option}}"
-                         ng-model="config.client.storage_tool_configs[$parent.$index][option]" required
-                         style="text-align:left;" ng-disabled="option == 'mode'"/>
+              <md-content layout-gt-sm="row" layout-padding layout-wrap>
+                <md-input-container flex="100">
+                  <label>{{options['description']['name']}}</label>
+                  <input id="{{$index}}+description" name="{{$index}}+description" type="text"
+                         ng-model="config.client.storage_tool_configs[$index]['description']" required
+                         style="text-align:left;"/>
+
+                  <div ng-messages="server[$index+'+description'].$error" ng-if="server[$index+'+description'].$dirty">
+                    <div ng-message="required" style="padding-right: 0;">This field is required</div>
+                  </div>
                 </md-input-container>
+
+                <md-input-container flex="33%" ng-show="item['mode'].slice(0,4)=='rand'">
+                  <label>{{options['rate_iops']['name']}}</label>
+                  <input id={{$index}}+rate_iops" name="{{$index}}+rate_iops" type="number" min="1"
+                         ng-pattern="/^[1-9][0-9]{0,2}$/i"
+                         ng-model="config.client.storage_tool_configs[$index]['rate_iops']" required
+                         style="text-align:left;"/>
+
+                  <div ng-messages="server[$index+'+rate_iops'].$error" ng-if="server[$index+'+rate_iops'].$dirty">
+                    <div ng-message="required" style="padding-right: 0;">This field is required</div>
+                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 1</div>
+                  </div>
+                </md-input-container>
+
+                <md-input-container flex="33%" ng-show="item['mode'].slice(0,4)!='rand'">
+                  <label>{{options['rate']['name']}}</label>
+                  <input id={{$index}}+rate" name="{{$index}}+rate"
+                         ng-model="config.client.storage_tool_configs[$index]['rate']" required
+                         style="text-align:left;"/>
+                </md-input-container>
+
+                <md-input-container flex="33%">
+                  <label>{{options['block_size']['name']}}</label>
+                  <input id={{$index}}+block_size" name="{{$index}}+block_size"
+                         ng-model="config.client.storage_tool_configs[$index]['block_size']" required
+                         style="text-align:left;"/>
+                </md-input-container>
+
+                <md-input-container flex="33%">
+                  <label>{{options['iodepth']['name']}}</label>
+                  <input id={{$index}}+iodepth" name="{{$index}}+iodepth" type="number" min="1"
+                         ng-pattern="/^[1-9][0-9]{0,2}$/i"
+                         ng-model="config.client.storage_tool_configs[$index]['iodepth']" required
+                         style="text-align:left;"/>
+
+                  <div ng-messages="server[$index+'+iodepth'].$error" ng-if="server[$index+'+iodepth'].$dirty">
+                    <div ng-message="required" style="padding-right: 0;">This field is required</div>
+                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 1</div>
+                  </div>
+                </md-input-container>
+
+                <md-input-container flex="33%" ng-show="item['mode']=='rw' || item['mode']=='randrw'">
+                  <label>{{options['rwmixread']['name']}}</label>
+                  <input id={{$index}}+rwmixread" name="{{$index}}+rwmixread" type="number" min="1" max="99"
+                         ng-pattern="/^[1-9][0-9]{0,2}$/i"
+                         ng-model="config.client.storage_tool_configs[$index]['rwmixread']" required
+                         style="text-align:left;"/>
+
+                  <div ng-messages="server[$index+'+rwmixread'].$error" ng-if="server[$index+'+rwmixread'].$dirty">
+                    <div ng-message="required" style="padding-right: 0;">This field is required</div>
+                    <div ng-message="pattern" style="padding-right: 0;">Must be a number between 1 and 99</div>
+                  </div>
+                </md-input-container>
+
+                <md-input-container flex="33%">
+                  <label>{{options['runtime']['name']}}</label>
+                  <input id={{$index}}+runtime" name="{{$index}}+runtime" type="number" min="1"
+                         ng-pattern="/^[1-9][0-9]{0,2}$/i"
+                         ng-model="config.client.storage_tool_configs[$index]['runtime']" required
+                         style="text-align:left;"/>
+
+                  <div ng-messages="server[$index+'+runtime'].$error" ng-if="server[$index+'+runtime'].$dirty">
+                    <div ng-message="required" style="padding-right: 0;">This field is required</div>
+                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 1</div>
+                  </div>
+                </md-input-container>
+
+                <md-input-container flex="33%">
+                  <label>{{options['extra_opts']['name']}}</label>
+                  <input id={{$index}}+extra_opts" name="{{$index}}+extra_opts"
+                         ng-model="config.client.storage_tool_configs[$index]['extra_opts']"
+                         style="text-align:left;"/>
+                </md-input-container>
+                <!--<md-input-container ng-repeat="(option,result) in item" flex="33%">-->
+                <!--<label>{{options[option]['name']}}</label>-->
+                <!--<input id=$parent.$index+{{option}}"-->
+                <!--ng-model="config.client.storage_tool_configs[$parent.$index][option]" required-->
+                <!--style="text-align:left;" ng-disabled="option == 'mode'"/>-->
+                <!--</md-input-container>-->
               </md-content>
             </div>
           </div>

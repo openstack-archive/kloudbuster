@@ -89,7 +89,6 @@ angular.module('kbWebApp')
         kbCookie.setStatus("");
       }
     };
-    $scope.checkStatus();
 
 
     var disabledStagingConfig = false;
@@ -97,6 +96,7 @@ angular.module('kbWebApp')
     $scope.disableConfig = function (disableId) {
       $("#" + disableId).find("input,button,a").each(function () {//show Config
         $(this).attr("disabled", "disabled");
+        console.log(this);
         //$(this).removeAttr("disabled");
       });
     };
@@ -115,8 +115,6 @@ angular.module('kbWebApp')
           disabledStagingConfig = false;
           $scope.enableConfig("stagingConfig3");
           $scope.enableConfig("getButton");
-          $("md-radio-button").removeAttr("disabled");
-
         }
       }
       else//no config can be modified
@@ -126,7 +124,6 @@ angular.module('kbWebApp')
           disabledStagingConfig = true;
           $scope.disableConfig("stagingConfig3");
           $scope.disableConfig("getButton");
-          $("md-radio-button").attr("disabled", "disabled");
         }
       }
 
@@ -135,12 +132,12 @@ angular.module('kbWebApp')
     $("#dropdownrandrw").append('<li class="divider"></li>');
 
     $scope.storageMode = {
-      "randread":{"name":"Random Read","type":"panel-randread","para":["block_size","description","iodepth","runtime","rate_iops","extra_opts"]},
-      "randwrite":{"name":"Random Write","type":"panel-randwrite","para":["block_size","description","iodepth","runtime","rate_iops","extra_opts"]},
-      "randrw":{"name":"Random Read/Write","type":"panel-randrw","para":["block_size","description","iodepth","runtime","rate","rwmixread","extra_opts"]},
-      "read":{"name":"Seq Read","type":"panel-read","para":["block_size","description","iodepth","runtime","rate","extra_opts"]},
-      "write":{"name":"Seq Write","type":"panel-write","para":["block_size","description","iodepth","runtime","rate","extra_opts"]},
-      "rw":{"name":"Seq Read/Write","type":"panel-rw","para":["block_size","description","iodepth","runtime","rate","rwmixread","extra_opts"]}
+      "randread":{"name":"Random Read","type":"panel-randread","para":["description","rate_iops","block_size","iodepth","runtime","extra_opts"]},
+      "randwrite":{"name":"Random Write","type":"panel-randwrite","para":["description","rate_iops","block_size","iodepth","runtime","extra_opts"]},
+      "randrw":{"name":"Random Read/Write","type":"panel-randrw","para":["description","rate_iops","block_size","iodepth","rwmixread","runtime","extra_opts"]},
+      "read":{"name":"Seq Read","type":"panel-read","para":["description","rate","block_size","iodepth","runtime","extra_opts"]},
+      "write":{"name":"Seq Write","type":"panel-write","para":["description","rate","block_size","iodepth","runtime","extra_opts"]},
+      "rw":{"name":"Seq Read/Write","type":"panel-rw","para":["description","rate","block_size","iodepth","rwmixread","runtime","extra_opts"]}
     };
 
     $scope.options = {
@@ -149,9 +146,9 @@ angular.module('kbWebApp')
       "runtime":{"name":"Run Time","default":30},
       "block_size":{"name":"Block Size","default":"4k"},
       "iodepth":{"name":"IO Depth","default":"1"},
-      "rate_iops":{"name":"IOPS","default":100},
+      "rate_iops":{"name":"IOPs","default":100},
       "rate":{"name":"BW","default":"60M"},
-      "rwmixread":{"name":"Read Percentage(%)","default":70},
+      "rwmixread":{"name":"Read %","default":70},
       "extra_opts":{"name":"Extra Options","default":""}
     };
 
@@ -202,6 +199,8 @@ angular.module('kbWebApp')
         function (response) {  //  .resolve
           kbCookie.setConfig(response.data);
           $scope.config = response.data;
+
+          $scope.checkStatus();
 
           console.log("get & save running config");
         },

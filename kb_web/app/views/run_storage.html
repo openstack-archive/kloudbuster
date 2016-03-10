@@ -35,21 +35,6 @@
       </li>
     </ul>
 
-    <div style="margin:1% 1%">
-      <a style="font-weight:bold;text-decoration: none;cursor: pointer;color:black"
-         ng-show="current_mode['name']==current_mode_name">| {{current_mode['title']}} |</a>
-
-      <a style="text-decoration: none;cursor: pointer;color:black" ng-click="handleEvent($event, current_index,'read')"
-         ng-show="current_mode['name']!=current_mode_name && current_mode_name =='rw'" ng-style="current_mode['name']=='read'?{'font-weight':'bold'}:{};">| Seq Read </a>
-      <a style="text-decoration: none;cursor: pointer;color:black" ng-click="handleEvent($event, current_index,'write')"
-         ng-show="current_mode['name']!=current_mode_name && current_mode_name =='rw'" ng-style="current_mode['name']=='write'?{'font-weight':'bold'}:{};">| Seq Write |</a>
-
-      <a style="text-decoration: none;cursor: pointer;color:black" ng-click="handleEvent($event, current_index,'read')"
-         ng-show="current_mode['name']!=current_mode_name && current_mode_name =='randrw'" ng-style="current_mode['name']=='randread'?{'font-weight':'bold'}:{};">| Rand Read </a>
-      <a style="text-decoration: none;cursor: pointer;color:black" ng-click="handleEvent($event, current_index,'write')"
-         ng-show="current_mode['name']!=current_mode_name && current_mode_name =='randrw'" ng-style="current_mode['name']=='randwrite'?{'font-weight':'bold'}:{};">| Rand Write |</a>
-    </div>
-
   </div>
 
   <div class="col-md-3">
@@ -189,12 +174,46 @@
         <span id="littleglyph" class="bar glyphicon glyphicon-triangle-right" style="color:white"></span>
       </a>
 
+
       <div class="content" id="content">
         <div class="row">
-          <div class="my-chart" style="height: 500px;">
+          <div class="my-chart" style="">
+
+            <!--<ul class="nav nav-pills" ng-style="{height:current_mode_name =='rw' || current_mode_name =='randrw'?'':0, width:current_mode_name =='rw' || current_mode_name =='randrw'?'':0}">-->
+              <!--<li  ng-show="current_mode_name =='rw' || current_mode_name =='randrw'" ng-class="{active:current_mode['name']=='read' || current_mode['name']=='randread'}">-->
+                <!--<a  ng-click="handleEvent($event, current_index,'read')">Read</a>-->
+              <!--</li>-->
+              <!--<li ng-show="current_mode_name =='rw' || current_mode_name =='randrw'" ng-class="{active:current_mode['name']=='write' || current_mode['name']=='randwrite'}">-->
+                <!--<a ng-click="handleEvent($event, current_index,'write')">Write</a>-->
+              <!--</li>-->
+            <!--</ul>-->
+
+            <ul class="nav nav-tabs" ng-style="{height:current_mode_name =='rw' || current_mode_name =='randrw'?'':0, width:current_mode_name =='rw' || current_mode_name =='randrw'?'':0}">
+              <li  ng-show="current_mode_name =='rw' || current_mode_name =='randrw'" ng-class="{active:current_mode['name']=='read' || current_mode['name']=='randread'}">
+                <a  ng-click="handleEvent($event, current_index,'read')">Read</a>
+              </li>
+              <li ng-show="current_mode_name =='rw' || current_mode_name =='randrw'" ng-class="{active:current_mode['name']=='write' || current_mode['name']=='randwrite'}">
+                <a ng-click="handleEvent($event, current_index,'write')">Write</a>
+              </li>
+            </ul>
+
+            <!--<div>-->
+              <!--<a style="text-decoration: none;cursor: pointer;color:black"-->
+                 <!--ng-show="current_mode['name']!=current_mode_name && current_mode_name =='rw'" ng-style="current_mode['name']=='read'?{'font-weight':'bold'}:{};">| Read </a>-->
+              <!--<a style="text-decoration: none;cursor: pointer;color:black" ng-click="handleEvent($event, current_index,'write')"-->
+                 <!--ng-show="current_mode['name']!=current_mode_name && current_mode_name =='rw'" ng-style="current_mode['name']=='write'?{'font-weight':'bold'}:{};">| Write |</a>-->
+
+              <!--<a style="text-decoration: none;cursor: pointer;color:black" ng-click="handleEvent($event, current_index,'read')"-->
+                 <!--ng-show="current_mode['name']!=current_mode_name && current_mode_name =='randrw'" ng-style="current_mode['name']=='randread'?{'font-weight':'bold'}:{};">| Read </a>-->
+              <!--<a style="text-decoration: none;cursor: pointer;color:black" ng-click="handleEvent($event, current_index,'write')"-->
+                 <!--ng-show="current_mode['name']!=current_mode_name && current_mode_name =='randrw'" ng-style="current_mode['name']=='randwrite'?{'font-weight':'bold'}:{};">| Write |</a>-->
+            <!--</div>-->
+
+            <h4 style="text-align: center">{{modes[current_mode_name]['title']}} {{current_title}} ({{current_mode_description}})</h4>
+
             <h6 style="margin-bottom:0"><span>{{current_mode["y_axis"]}}</span><span
               style="float:right">Latency(ms)</span></h6>
-            <linechart data="data" options="options"></linechart>
+            <linechart data="data" options="options" height="500"></linechart>
           </div>
         </div>
       </div>
