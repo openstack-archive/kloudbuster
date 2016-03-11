@@ -507,11 +507,11 @@ class KloudBuster(object):
         # Function that print all the provisioning info
         self.print_provision_info()
 
-    def run_test(self, http_test_only=False):
+    def run_test(self, test_only=False):
         self.final_result = []
         self.kb_runner.config = self.client_cfg
         # Run the runner to perform benchmarkings
-        for run_result in self.kb_runner.run(http_test_only):
+        for run_result in self.kb_runner.run(test_only):
             self.final_result.append(self.kb_runner.tool_result)
         LOG.info('SUMMARY: %s' % self.final_result)
 

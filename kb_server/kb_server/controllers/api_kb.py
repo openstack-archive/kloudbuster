@@ -82,6 +82,7 @@ class KBController(object):
         kloudbuster = kb_session.kloudbuster
         try:
             kloudbuster.cleanup()
+            kloudbuster.final_result = []
         except Exception:
             pass
 
