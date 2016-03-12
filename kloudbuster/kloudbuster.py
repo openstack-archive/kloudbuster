@@ -668,12 +668,10 @@ def create_html(hfp, template, task_re):
     cur_time = time.strftime('%Y-%m-%d %A %X %Z', time.localtime(time.time()))
     for line in template:
         line = line.replace('[[time]]', cur_time)
-        if CONF.label and CONF.storage:
-            line = line.replace('[[label]]', ' - ' + CONF.label)
-        elif CONF.label:
+        if CONF.label:
             line = line.replace('[[label]]', CONF.label)
         else:
-            line = line.replace('[[label]]', '')
+            line = line.replace('[[label]]', 'Report')
         line = line.replace('[[result]]', task_re)
         hfp.write(line)
     if not CONF.headless:
