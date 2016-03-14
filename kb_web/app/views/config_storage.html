@@ -185,10 +185,10 @@
                   </div>
                 </md-input-container>
 
-                <md-input-container flex="33%" ng-show="item['mode'].slice(0,4)=='rand'">
+                <md-input-container flex="33%" ng-if="item['mode'].slice(0,4)=='rand'">
                   <label>{{options['rate_iops']['name']}}</label>
                   <input id={{$index}}+rate_iops" name="{{$index}}+rate_iops" type="number" min="1"
-                         ng-pattern="/^[1-9][0-9]{0,2}$/i"
+                         ng-pattern="/^[1-9][0-9]*$/i"
                          ng-model="config.client.storage_tool_configs[$index]['rate_iops']" required
                          style="text-align:left;"/>
 
@@ -198,24 +198,35 @@
                   </div>
                 </md-input-container>
 
-                <md-input-container flex="33%" ng-show="item['mode'].slice(0,4)!='rand'">
+                <md-input-container flex="33%" ng-if="item['mode'].slice(0,4)!='rand'">
                   <label>{{options['rate']['name']}}</label>
-                  <input id={{$index}}+rate" name="{{$index}}+rate"
-                         ng-model="config.client.storage_tool_configs[$index]['rate']" required
+                  <input id={{$index}}+rate" name="{{$index}}+rate" type="number" min="1"
+                         ng-pattern="/^[1-9][0-9]*$/i" ng-model="tem_rate" required
+                         ng-init="tem_rate = parseInt(config.client.storage_tool_configs[$index]['rate'].slice(0,-1))"
+                         ng-change="config.client.storage_tool_configs[$index]['rate'] = tem_rate + 'M'"
                          style="text-align:left;"/>
+                  <div ng-messages="server[$index+'+rate'].$error" ng-if="server[$index+'+rate'].$dirty">
+                    <div ng-message="required" style="padding-right: 0;">This field is required</div>
+                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 1</div>
+                  </div>
                 </md-input-container>
-
                 <md-input-container flex="33%">
                   <label>{{options['block_size']['name']}}</label>
-                  <input id={{$index}}+block_size" name="{{$index}}+block_size"
-                         ng-model="config.client.storage_tool_configs[$index]['block_size']" required
-                         style="text-align:left;"/>
+                  <input id={{$index}}+block_size" name="{{$index}}+block_size" type="number" min="1"
+                         ng-pattern="/^[1-9][0-9]*/i" ng-model="tem_block_size" required
+                         style="text-align:left;"
+                         ng-init="tem_block_size = parseInt(config.client.storage_tool_configs[$index]['block_size'].slice(0,-1))"
+                         ng-change="config.client.storage_tool_configs[$index]['block_size'] = tem_block_size + 'k'"/>
+                <div ng-messages="server[$index+'+block_size'].$error" ng-if="server[$index+'+block_size'].$dirty">
+                  <div ng-message="required" style="padding-right: 0;">This field is required</div>
+                  <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 1</div>
+                </div>
                 </md-input-container>
 
                 <md-input-container flex="33%">
                   <label>{{options['iodepth']['name']}}</label>
                   <input id={{$index}}+iodepth" name="{{$index}}+iodepth" type="number" min="1"
-                         ng-pattern="/^[1-9][0-9]{0,2}$/i"
+                         ng-pattern="/^[1-9][0-9]*$/i"
                          ng-model="config.client.storage_tool_configs[$index]['iodepth']" required
                          style="text-align:left;"/>
 
@@ -225,10 +236,10 @@
                   </div>
                 </md-input-container>
 
-                <md-input-container flex="33%" ng-show="item['mode']=='rw' || item['mode']=='randrw'">
+                <md-input-container flex="33%" ng-if="item['mode']=='rw' || item['mode']=='randrw'">
                   <label>{{options['rwmixread']['name']}}</label>
                   <input id={{$index}}+rwmixread" name="{{$index}}+rwmixread" type="number" min="1" max="99"
-                         ng-pattern="/^[1-9][0-9]{0,2}$/i"
+                         ng-pattern="/^[1-9][0-9]{0,1}$/i"
                          ng-model="config.client.storage_tool_configs[$index]['rwmixread']" required
                          style="text-align:left;"/>
 
@@ -247,7 +258,7 @@
 
                   <div ng-messages="server[$index+'+runtime'].$error" ng-if="server[$index+'+runtime'].$dirty">
                     <div ng-message="required" style="padding-right: 0;">This field is required</div>
-                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 1</div>
+                    <div ng-message="pattern" style="padding-right: 0;">Must be a number between 1 and 999</div>
                   </div>
                 </md-input-container>
 

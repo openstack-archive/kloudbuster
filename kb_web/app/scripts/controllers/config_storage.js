@@ -68,6 +68,7 @@ angular.module('kbWebApp')
       //}
     };
 
+    $scope.parseInt = parseInt;
 
     $scope.checkStatus = function () {
       if ($scope.sessionID) {
@@ -144,10 +145,10 @@ angular.module('kbWebApp')
       "description":{"name":"Description","default":""},
       "mode":{"name":"Mode"},
       "runtime":{"name":"Run Time","default":30},
-      "block_size":{"name":"Block Size","default":"4k"},
+      "block_size":{"name":"Block Size (KB)","default":"4k"},
       "iodepth":{"name":"IO Depth","default":"1"},
       "rate_iops":{"name":"IOPs","default":100},
-      "rate":{"name":"BW","default":"60M"},
+      "rate":{"name":"BW (MB/s)","default":"60M"},
       "rwmixread":{"name":"Read %","default":70},
       "extra_opts":{"name":"Extra Options","default":""}
     };
@@ -215,31 +216,36 @@ angular.module('kbWebApp')
 
     $scope.changeConfig = function () {
       if ($scope.status === "READY" || $scope.status === "") {
-        kbCookie.setConfig($scope.config);
+        if ($scope.server.$valid == true && $scope.general.$valid == true) {
+          kbCookie.setConfig($scope.config);
 
 
-        $scope.chaCon = {"kb_cfg": {}, "topo_cfg": {}};
-        $scope.chaCon.kb_cfg = kbCookie.getConfig();
+          $scope.chaCon = {"kb_cfg": {}, "topo_cfg": {}};
+          $scope.chaCon.kb_cfg = kbCookie.getConfig();
 
-        kbCookie.setTopology({"servers_rack": "", "clients_rack": ""});
-        $scope.chaCon.topo_cfg = kbCookie.getTopology();
-        $scope.config.server.availability_zone = "";
-        $scope.config.client.availability_zone = "";
+          kbCookie.setTopology({"servers_rack": "", "clients_rack": ""});
+          $scope.chaCon.topo_cfg = kbCookie.getTopology();
+          $scope.config.server.availability_zone = "";
+          $scope.config.client.availability_zone = "";
 
-        console.log($scope.chaCon);
-        kbHttp.putMethod("/config/running_config/" + $scope.sessionID, $scope.chaCon)
-          .then(
-          function (response) {  //  .resolve
-            console.log("change running config");
-            //showAlert.showAlert("Configuration updated successfully!");
+          console.log($scope.chaCon);
+          kbHttp.putMethod("/config/running_config/" + $scope.sessionID, $scope.chaCon)
+            .then(
+            function (response) {  //  .resolve
+              console.log("change running config");
+              //showAlert.showAlert("Configuration updated successfully!");
 
-          },
-          function (response) {  //  .reject
-            //console.log("change running config error:");
-            //console.log(response);
-            showAlert.showAlert("Failed to update configuration!");
-          }
-        )
+            },
+            function (response) {  //  .reject
+              //console.log("change running config error:");
+              //console.log(response);
+              showAlert.showAlert("Failed to update configuration!");
+            }
+          )
+        }
+        else{
+          showAlert.showAlert("Please check your inputs!");
+        }
       }
       else {
         //console.log("config not allow to change now!");

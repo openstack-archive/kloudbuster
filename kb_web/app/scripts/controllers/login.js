@@ -27,7 +27,8 @@ angular.module('kbWebApp')
       'Karma'
     ];
     //if(kbCookie.getSessionID()!="") $location.path('/');
-    kbCookie.checkMode("");
+    kbCookie.checkMode('http');
+
     //---------------------------------top navigation bar---------------------------------
     $(window).on('hashchange', locationChange.change());
 
@@ -201,7 +202,7 @@ angular.module('kbWebApp')
 
       $scope.runCon = {"credentials": {}, kb_cfg: "", "storage_mode": $scope.storage_mode};
       //console.log($scope.credentials);
-    
+
       $scope.runCon.credentials = $scope.credentials;
 
       kbCookie.setCredentials($scope.credentials);
