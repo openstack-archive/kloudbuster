@@ -411,6 +411,9 @@ definitions:
                 type: string
                 format: json
                 description: Tenant and User list for reusing
+            storage_mode:
+                type: boolean
+                description: Running web UI for storage testing
     Configuration_Update:
         properties:
             kb_cfg:
