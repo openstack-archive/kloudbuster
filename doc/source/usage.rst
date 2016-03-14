@@ -336,6 +336,9 @@ kb_server/kloudbuster-swagger.yaml, and paste into the left panel of
 http://editor.swagger.io. Then you will see the specification of all Rest
 APIs in the right panel of the web page.
 
+A static HTML version can be found 
+`here <https://github.com/openstack/kloudbuster/blob/master/doc/source/_static/kloudbuster-swagger.html>`_.
+
 .. _start_kloudbuster_server:
 
 KloudBuster integrates a Python based web server
