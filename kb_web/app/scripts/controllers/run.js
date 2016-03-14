@@ -110,7 +110,7 @@ angular.module('kbWebApp')
     $scope.setConfig = function(ifRun) {
       var deferred = $q.defer();
 
-      if($scope.status==="READY") {
+      if ($scope.status === "READY") {
         kbCookie.setConfig($scope.config);
         $scope.chaCon = {"kb_cfg": {}};
         $scope.chaCon.kb_cfg = kbCookie.getConfig();
@@ -131,7 +131,7 @@ angular.module('kbWebApp')
             if (ifRun != 1) {
               if (response.status == 400)
                 showAlert.showAlert("Error while parsing configurations! Please check your inputs!");
-              else if(response.status == 403)
+              else if (response.status == 403)
                 showAlert.showAlert("Cannot update configuration if KloudBuster is busy or in error state");
               else if (response.status == -1)
                 showAlert.showAlert("Error while connecting kloudbuster server!");

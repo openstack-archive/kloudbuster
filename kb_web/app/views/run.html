@@ -13,9 +13,7 @@
 <!--under the License.-->
 
 <!--<alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)" style="background-color:#ffcc99;color:white">{{alert.msg}}</alert>-->
-
 <!--<h6></h6>-->
-
 <div class="row">
   <div class="col-md-8">
   </div>
@@ -52,8 +50,7 @@
               <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': !status1.open, 'glyphicon-chevron-up': status1.open}"></i>
             </accordion-heading>
             <div class="col-lg-14" id="stagingConfig">
-              <form class="bs-component" name="interactive_staging_settings">
-
+              <form class="bs-component" name="interactive_staging_settings" novalidate>
                 <md-content layout-padding style="padding:0">
                   <md-input-container class="col-md-12" style="padding-top:0">
                     <label>Tenants</label>

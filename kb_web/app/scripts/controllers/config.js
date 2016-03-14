@@ -443,42 +443,47 @@ angular.module('kbWebApp')
 
     $scope.changeConfig = function() {
       if($scope.status==="READY"|| $scope.status==="") {
-        kbCookie.setConfig($scope.config);
+        if ($scope.server.$valid == true && $scope.general.$valid == true && $scope.client.$valid == true) {
+          kbCookie.setConfig($scope.config);
 
-        if($scope.availability_zone==3) {
-          $scope.topology = {"servers_rack": [], "clients_rack": []};
-          for (var t in $scope.listC) {
-            $scope.topology.servers_rack.push($scope.listC[t].firstName);
+          if ($scope.availability_zone == 3) {
+            $scope.topology = {"servers_rack": [], "clients_rack": []};
+            for (var t in $scope.listC) {
+              $scope.topology.servers_rack.push($scope.listC[t].firstName);
+            }
+            for (var t in $scope.listB) {
+              $scope.topology.clients_rack.push($scope.listB[t].firstName);
+            }
+
+            kbCookie.setTopology($scope.topology);
+            //console.log($scope.topology);
           }
-          for (var t in $scope.listB) {
-            $scope.topology.clients_rack.push($scope.listB[t].firstName);
+          else {
+            kbCookie.setTopology({"servers_rack": "", "clients_rack": ""});
           }
 
-          kbCookie.setTopology($scope.topology);
-          //console.log($scope.topology);
+          $scope.chaCon = {"kb_cfg": {}, "topo_cfg": {}};
+          $scope.chaCon.kb_cfg = kbCookie.getConfig();
+          $scope.chaCon.topo_cfg = kbCookie.getTopology();
+
+          console.log($scope.chaCon);
+          kbHttp.putMethod("/config/running_config/" + $scope.sessionID, $scope.chaCon)
+            .then(
+            function (response) {  //  .resolve
+              console.log("change running config");
+              //showAlert.showAlert("Configuration updated successfully!");
+
+            },
+            function (response) {  //  .reject
+              //console.log("change running config error:");
+              //console.log(response);
+              showAlert.showAlert("Failed to update configuration!");
+            }
+          )
         }
         else{
-          kbCookie.setTopology({"servers_rack":"", "clients_rack": ""});
+          showAlert.showAlert("Please check your inputs!");
         }
-
-        $scope.chaCon = {"kb_cfg": {},"topo_cfg":{}};
-        $scope.chaCon.kb_cfg = kbCookie.getConfig();
-        $scope.chaCon.topo_cfg = kbCookie.getTopology();
-
-        console.log($scope.chaCon);
-        kbHttp.putMethod("/config/running_config/" + $scope.sessionID, $scope.chaCon)
-          .then(
-          function (response) {  //  .resolve
-            console.log("change running config");
-            //showAlert.showAlert("Configuration updated successfully!");
-
-          },
-          function (response) {  //  .reject
-            //console.log("change running config error:");
-            //console.log(response);
-            showAlert.showAlert("Failed to update configuration!");
-          }
-        )
       }
       else{
         //console.log("config not allow to change now!");
