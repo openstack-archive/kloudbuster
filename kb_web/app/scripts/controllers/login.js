@@ -27,7 +27,7 @@ angular.module('kbWebApp')
       'Karma'
     ];
     //if(kbCookie.getSessionID()!="") $location.path('/');
-    kbCookie.checkMode('');
+    kbCookie.checkMode('login');
 
     //---------------------------------top navigation bar---------------------------------
     $(window).on('hashchange', locationChange.change());
@@ -220,7 +220,7 @@ angular.module('kbWebApp')
             $location.path('/StorageMode');
           }
           else {
-            $location.path('/');
+            $location.path('/InteractiveMode');
           }
         },
         function (response) {  //  .reject

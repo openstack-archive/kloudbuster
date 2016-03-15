@@ -241,7 +241,7 @@ angular.module('kbWebApp')
       return mode;
     };
     this.checkMode = function(thisPage){
-      if(thisPage == "")
+      if(thisPage == "login")
       {
         $(".forHttp").hide();
         $(".forStorage").show();
@@ -250,13 +250,14 @@ angular.module('kbWebApp')
       {
         $(".forHttp").hide();
         $(".forStorage").show();
-        if(mode != thisPage) $location.path('/');
+        if(mode != thisPage) $location.path('/StorageMode');
       }
       else if(mode=='http'){
         $(".forStorage").hide();
         $(".forHttp").show();
-        if(mode != thisPage) $location.path('/');
+        if(mode != thisPage) $location.path('/InteractiveMode');
       }
+      else $location.path('/Login');
 
     };
 

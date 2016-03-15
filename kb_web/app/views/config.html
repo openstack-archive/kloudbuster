@@ -261,12 +261,12 @@
             <md-input-container class="col-md-12">
               <label>Html Payload Size (Bytes)</label>
               <input type="number" min="0" step="1024" name="http_server_configs" id="html_size"
-                     ng-model="config.server.http_server_configs.html_size" ng-pattern="/^[1-9][0-9]*$/i"
+                     ng-model="config.server.http_server_configs.html_size" ng-pattern="/^[0-9]*$/i"
                      required style="text-align:left;"/>
 
               <div ng-messages="server.http_server_configs.$error" ng-if="server.http_server_configs.$dirty">
                 <div ng-message="required" style="padding-right: 0;">This field is required</div>
-                <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 1</div>
+                <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 0</div>
               </div>
             </md-input-container>
           </md-content>
@@ -299,23 +299,23 @@
                 <md-input-container class="col-md-4">
                   <label>RAM (MB)</label>
                   <input type="number" min="0" max="" step="128" name="server_ram" id="server_ram"
-                         ng-model="config.server.flavor.ram" ng-pattern="/^[1-9][0-9]*$/i" required
+                         ng-model="config.server.flavor.ram" ng-pattern="/^[0-9]*$/i" required
                          style="text-align:left;"/>
 
                   <div ng-messages="server.server_ram.$error" ng-if="server.server_ram.$dirty">
                     <div ng-message="required" style="padding-right: 0;">This field is required</div>
-                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 1</div>
+                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than </div>
                   </div>
                 </md-input-container>
                 <md-input-container class="col-md-4">
                   <label>DISK (GB)</label>
                   <input type="number" min="0" max="" step="" name="server_disk" id="server_disk"
-                         ng-model="config.server.flavor.disk" ng-pattern="/^[1-9][0-9]*$/i" required
+                         ng-model="config.server.flavor.disk" ng-pattern="/^[0-9]*$/i" required
                          style="text-align:left;"/>
 
                   <div ng-messages="server.server_disk.$error" ng-if="server.server_disk.$dirty" role="alert">
                     <div ng-message="required" style="padding-right: 0;">This field is required</div>
-                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 1</div>
+                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than </div>
                   </div>
                 </md-input-container>
               </md-content>
@@ -396,23 +396,23 @@
                 <md-input-container class="col-md-4">
                   <label>RAM (MB)</label>
                   <input type="number" min="0" max="" step="128" name="client_ram" id="client_ram"
-                         ng-model="config.client.flavor.ram" ng-pattern="/^[1-9][0-9]*$/i" required
+                         ng-model="config.client.flavor.ram" ng-pattern="/^[0-9]*$/i" required
                          style="text-align:left;"/>
 
                   <div ng-messages="client.client_ram.$error" ng-if="client.client_ram.$dirty">
                     <div ng-message="required" style="padding-right: 0;">This field is required</div>
-                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 1</div>
+                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 0</div>
                   </div>
                 </md-input-container>
                 <md-input-container class="col-md-4">
                   <label>DISK (GB)</label>
                   <input type="number" min="0" max="" step="" name="client_disk" id="client_disk"
-                         ng-model="config.client.flavor.disk" ng-pattern="/^[1-9][0-9]*$/i" required
+                         ng-model="config.client.flavor.disk" ng-pattern="/^[0-9]*$/i" required
                          style="text-align:left;"/>
 
                   <div ng-messages="client.client_disk.$error" ng-if="client.client_disk.$dirty" role="alert">
                     <div ng-message="required" style="padding-right: 0;">This field is required</div>
-                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 1</div>
+                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 0</div>
                   </div>
                 </md-input-container>
               </md-content>
