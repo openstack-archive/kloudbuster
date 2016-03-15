@@ -20,7 +20,7 @@ to run KloudBuster:
 
 Regardless of the way you launch KloudBuster, you will need the access info and the credentials to the cloud under test.
 This information can be downloaded from a Horizon dashboard
-(Project|Acces&Security!Api Access|Download OpenStack RC File). Save it to
+(Project|Access&Security|Api Access|Download OpenStack RC File). Save it to
 your local filesystem for future use.
 
 
@@ -70,7 +70,10 @@ KloudBuster uses the
 server and the KloudBuster front-end website (which listens to
 port 8080 by default).
 
-From the root of the KloudBuster repository, go to the kb_server directory.
+From the root of the KloudBuster repository, go to the kb_server directory. If this is the first time to start the server, run below command once to setup the environment::
+
+    $ python setup.py develop
+
 Then start the server by doing::
 
     $ pecan serve config.py
