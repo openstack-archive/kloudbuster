@@ -255,7 +255,7 @@ angular.module('kbWebApp')
       else if(mode=='http'){
         $(".forStorage").hide();
         $(".forHttp").show();
-        if(mode != thisPage) $location.path('/StorageMode');
+        if(mode != thisPage) $location.path('/');
       }
 
     };

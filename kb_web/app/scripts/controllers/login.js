@@ -27,7 +27,7 @@ angular.module('kbWebApp')
       'Karma'
     ];
     //if(kbCookie.getSessionID()!="") $location.path('/');
-    kbCookie.checkMode('http');
+    kbCookie.checkMode('');
 
     //---------------------------------top navigation bar---------------------------------
     $(window).on('hashchange', locationChange.change());
