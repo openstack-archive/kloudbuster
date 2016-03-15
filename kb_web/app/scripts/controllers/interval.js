@@ -133,16 +133,16 @@ angular.module('kbWebApp')
         );
       }
       else if ($scope.status === "STAGED") {
-        //if ($scope.config.client.progression.enabled === true) {
-        //  alert("Can't Run Monitor Test Now! You have chosen Progression Test. Click Unstage Button First!");
-        //  deferred.reject(0);
-        //  return deferred.promise;
-        //}
-        //if ($scope.config.client.progression.report_interval === 0) {
-        //  alert("Can't Run Monitor Test Now! Report interval must be a number no less than 1.");
-        //  deferred.reject(0);
-        //  return deferred.promise;
-        //}
+        if ($scope.config.client.progression.enabled === true) {
+          alert("Can't Run Monitor Test Now! You have chosen Progression Test. Click Unstage Button First!");
+          deferred.reject(0);
+          return deferred.promise;
+        }
+        if ($scope.config.client.progression.report_interval === 0) {
+          alert("Can't Run Monitor Test Now! Report interval must be a number no less than 1.");
+          deferred.reject(0);
+          return deferred.promise;
+        }
         kbCookie.setConfig($scope.config);
         $scope.chaCon = {
           "kb_cfg": {
@@ -659,7 +659,7 @@ angular.module('kbWebApp')
         var myresult = '<!--Copyright 2015 Cisco Systems, Inc. All rights reserved.--> <!--Licensed under the Apache License, Version 2.0 (the "License"); you may--> <!--not use this file except in compliance with the License. You may obtain--> <!--a copy of the License at--> <!--http://www.apache.org/licenses/LICENSE-2.0--> <!--Unless required by applicable law or agreed to in writing, software--> <!--distributed under the License is distributed on an "AS IS" BASIS, WITHOUT--> <!--WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the--> <!--License for the specific language governing permissions and limitations--> <!--under the License.--> <!DOCTYPE html> <html lang="en-US" ng-app="app"> <head> <meta charset="utf-8"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <meta name="viewport" content="width=device-width, initial-scale=1"> <title>KloudBuster Report</title> <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.2/angular.min.js"></script> <script src="https://d3js.org/d3.v3.min.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/line-chart/2.0.3/LineChart.min.js"></script> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/line-chart/2.0.3/LineChart.min.css"> <link rel="stylesheet" href="https://bootswatch.com/flatly/bootstrap.min.css"> <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script> <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script> <style rel="stylesheet"> .hidden { display: inline !important; } .label { padding: 0; font-size: 110%; font-weight: normal; line-height: 16; color: #000000; text-align: center; } .chart .area-series { opacity: .9; } </style> </head> <body ng-controller="MainCtrl"> <nav class="navbar navbar-default"> <div class="container-fluid"> <div class="navbar-header"> <a class="navbar-brand" href="#">KloudBuster Report</a> </div> <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1"> <ul class="nav navbar-nav navbar-right"> <li><a href="#">'+m+'-'+d + ' ' + h +':'+ min +'</a></li> </ul> </div> </div> </nav> <div class="container"> <div class="my-chart" style="height: 500px;margin-bottom: 10%"> <linechart data="data" options="options"></linechart> </div> </div> <script type="text/javascript"> angular.module("app", ["n3-line-chart"]).controller("MainCtrl", function ($scope) { $scope.result ='+JSON.stringify(monitorMode.getResult()) +'; var x; for(x in $scope.result) { $scope.result[x]["x"]=new Date($scope.result[x]["x"]); } $scope.data = {dataset0: $scope.result}; $scope.options = { series: [ {axis: "y", dataset: "dataset0",interpolation: {mode: "cardinal", tension: 0.7}, key: "val_6",id: "val_6",label: "99.999%", type: ["line", "area"],color: "#222222"}, {axis: "y", dataset: "dataset0",interpolation: {mode: "cardinal", tension: 0.7}, key: "val_5",id: "val_5",label: "99.99%", type: ["line", "area"], color: "#084594"}, {axis: "y", dataset: "dataset0",interpolation: {mode: "cardinal", tension: 0.7}, key: "val_4",id: "val_4",label: "99.9%", type: ["line", "area"],color: "#0074D9"}, {axis: "y", dataset: "dataset0",interpolation: {mode: "cardinal", tension: 0.7}, key: "val_3",id: "val_3",label: "99%", type: ["line", "area"], color: "#79afe1"}, {axis: "y", dataset: "dataset0",interpolation: {mode: "cardinal", tension: 0.7}, key: "val_2",id: "val_2",label: "90%", type: ["line", "area"], color: "#9ecae1"}, {axis: "y", dataset: "dataset0",interpolation: {mode: "cardinal", tension: 0.7}, key: "val_1",id: "val_1",label: "75%", type: ["line", "area"], color: "#c6dbef"}, {axis: "y", dataset: "dataset0",interpolation: {mode: "cardinal", tension: 0.7}, key: "val_0",id: "val_0",label: "50%", type: ["line", "area"], color: "#eff3ff"} ], axes: { x: { key: "x", type: "date" }, y: { key:"y",type: "log", ticksFormat: "d", ticks: 10, tickFormat: function (value, index) { return value; } } }, margin: {top: 20, right: 30, bottom: 20, left: 30}, grid: {x: false, y: true} }; }); </script> </body> </html>';
         downloadFile(filename, myresult);
       }
-      else console.log("no file to save");
+      else showAlert.showAlert("No result to save!");
     };
 
     function to2(num){
