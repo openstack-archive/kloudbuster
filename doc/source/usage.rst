@@ -8,33 +8,40 @@ needs the least learning to get started. **CLI** is the traditional way
 to run applications. It has the most comprehensive feature sets when compared
 to the other two ways. **Rest API** gives another way to access
 and control KloudBuster from another application.
-All APIs provided are well documented, and the
-built-in web UI is fully implemented on top of these APIs.
+The built-in Web UI is fully implemented on top of the REST API.
 
 The default scale settings of KloudBuster is at minimal scale, which is
 generally safe to run on any cloud, small or large. It should also work on
 an all-in-one devstack cloud installation as well. The minimal pre-requisites
 to run KloudBuster:
 
-    * Admin access to the cloud under test
-    * 3 available floating IPs
+    * Admin access to the cloud under test (non-admin might work with some tweaks and limitations)
+    * 3 available floating IPs (for HTTP data plane test only)
+
+Regardless of the way you launch KloudBuster, you will need the access info and the credentials to the cloud under test.
+This information can be downloaded from a Horizon dashboard
+(Project|Acces&Security!Api Access|Download OpenStack RC File). Save it to
+your local filesystem for future use.
 
 
-Running KloudBuster as a Web Server
------------------------------------
+Running KloudBuster as a Web/REST Server
+----------------------------------------
 
-The easiest way to use KloudBuster is to run it as a web server application.
-The KloudBuster qcow2 image has the Web server built-in and is ready to use once up running. 
-To get the KloudBuster Web serverI running from scratch:
+Starting the KloudBuster Server from a VM Image
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The easiest way to use KloudBuster is to run it as a web server application running in a VM.
+The pre-built KloudBuster qcow2 image contains the Web server and is ready to service HTTP and REST requests once up and running. 
+To get the KloudBuster Web server running in any OpenStack cloud:
 
 1. Follow the steps :ref:`here <upload_kb_image>` to upload the KloudBuster
-   image to the openstack cloud that will host your kloudbuster web server
+   image to the openstack cloud that will host your KloudBuster web server
    (note that this could be the same as the cloud under test or could be a different cloud)
 
-2. If necessary, and as for any web server bringup, create and configure the Neutron router and network 
+2. If necessary, and as for any VM-based web server application bringup, create and configure the Neutron router and network 
    where the KloudBuster web server VM instance will be attached
 
-3. Create or reuse a security group which allows the ingress TCP traffic on
+3. Create or reuse a security group which allows ingress TCP traffic on
    port 8080
 
 4. Launch an instance using the KloudBuster image，with the proper security group
@@ -44,66 +51,99 @@ To get the KloudBuster Web serverI running from scratch:
 5. Associate a floating IP to the newly created VM instance so that it can be accessible from
    an external browser
 
-6. Open your browser, and type the below address to get started::
+The base URL to use for REST access is::
+
+    http://<floating_ip>:8080
+
+
+The Web UI URL to use from any browser is::
 
     http://<floating_ip>:8080/ui/index.html
 
 
-Alternatively, you could also run KloudBuster as a local web server from a clone
-of the KloudBuster git repository. 
-The Web UI is developed using AngularJS framework, which needs to be built
-before serving. If you want the web app to run on localhost, you have to
-build it from source, and start the KloudBuster server. Refer to
-:ref:`here <build_web_ui>` for the steps to build the web app, and refer to
-:ref:`below section <start_kloudbuster_server>` for the steps to start the
-KloudBuster server.
+Starting the KloudBuster Server from a git clone
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Running KloudBuster with CLI
-----------------------------
+If you use git clone, you can bring up the KloudBuster Web/REST server fron the CLI.
+KloudBuster uses the 
+`Pecan <http://www.pecanpy.org/>`_ web server to host both the KloudBuster REST 
+server and the KloudBuster front-end website (which listens to
+port 8080 by default).
 
-KloudBuster needs the access info and the credentials to the cloud uner test,
-and these information can be downloaded from a Horizon dashboard
-(Project|Acces&Security!Api Access|Download OpenStack RC File). Save it to
-your local filesystem for future use.
+From the root of the KloudBuster repository, go to the kb_server directory.
+Then start the server by doing::
+
+    $ pecan serve config.py
+
+You should see a message similar to the one below, which indicates the server
+is up running::
+
+    Starting server in PID 26431
+    serving on 0.0.0.0:8080, view at http://127.0.0.1:8080
+
+Using the KloudBuster Web UI
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Using any browser, point to the provided URL at port 8080. You will get a Login page where you will need to enter
+
+   * the type of scale test (HTTP data plane or storage)
+   * the credentials openrc file of the cloud under test
+
+
+Interacting with the KloudBuster Server REST Interface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Once the server is started, you can use different HTTP methods
+(GET/PUT/POST/DELETE) to interact with the KloudBuster REST interface using the provided URL at port 8080.
+
+`KloudBuster REST API Dcumentaton <https://github.com/openstack/kloudbuster/blob/master/doc/source/_static/kloudbuster-swagger.html>`_
+
+
+Running the KloudBuster HTTP Data Plane Scale Test from CLI
+-----------------------------------------------------------
+If you do not really need a Web UI or REST interface, you can simply run KloudBuster scale test straight from CLI.
 
 KloudBuster is ready to run with the default configuration, which can be
 displayed from the command line using *--show-config* option. By default,
-KloudBuster will run on a single cloud mode and create:
+KloudBuster will run on a single cloud and run the default HTTP data plane scale test:
 
-    * 2 tenants, 2 users, and 2 routers;
-    * 1 shared network for both servers and clients tenants
-    * 1 VM running as an HTTP server
-    * 1 VM running the Redis server (for orchestration)
-    * 1 VM running the HTTP traffic generator (default to 1000 connections,
-      1000 requests per second, and 30 seconds duration)
+    * create 2 tenants, 2 users, and 2 routers;
+    * create 1 shared network for both servers and clients tenants
+    * create 1 VM running as an HTTP server
+    * create 1 VM running the Redis server (for orchestration)
+    * create 1 VM running the HTTP traffic generator (default to 1000 connections,
+      1000 requests per second, and 30 seconds duration
+    * measure/aggegate throughput and latency 
+    * bring down and cleanup
 
-Run kloudbuster with the following options::
+
+Run KloudBuster with the following options::
 
     kloudbuster --tested-rc <path_to_the_admin_rc_file> --tested-passwd <admin_password>
 
-The run should take couple of minutes (depending on how fast of the cloud to
-create resources) and you should see the actions taken by KloudBuster
-displayed on the console. Once the test is done, all resources will be
-cleaned up and results will be displayed.
+The run should take couple of minutes (depending on how fast the cloud can create the resources)
+and you should see the actions taken by KloudBuster
+displayed on the console.
 
 Once this minimal scale test passes, you can tackle more elaborate scale
 testing by increasing the scale numbers or providing various traffic shaping
 options. See below sections for more details about configuring KloudBuster.
 
 
-Configure KloudBuster
-^^^^^^^^^^^^^^^^^^^^^
+KloudBuster Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Usually, we can create our own configuration file based on the default
-by redirecting the output of *--show-config* to a new file. Modify
-the new file to satisfy our own needs, and pass it to the KlousBuster
-command line using the *--config*.
+To create a custom scale test configuration, make a copy of the default configuration
+and modify that file to satisfy our own needs. A copy of the default configuration can
+be obtained by redirecting the output of *--show-config* to a new file.
+Once done, provide that custom configuration file to the KloudBuster command line using the *--config <file>* option.
 
 .. note::
 
     Note that the default configuration is always loaded by KloudBuster and
     any default option can be overridden by providing a custom configuration
-    file that only contains modified options.
+    file that only contains modified options. So you can delete all the lines 
+    in the configuration file that you do not intend to change
 
 Each item in cfg.scale.yaml is well documented and self-explained. Below is
 just a quick-start on some important config items that need to be paid more
@@ -170,7 +210,7 @@ run only if **ALL** below conditions are satisfied:
 * **client:http_tool_configs**
 
 This section is IMPORTANT, as it controls how the HTTP traffic will be
-generated. Below are the two values which determines the traffic::
+generated. Below are the two values which determine the traffic::
 
     # Connections to be kept concurrently per VM
     connections: 1000
@@ -310,6 +350,7 @@ Example 3: Single-cloud Mode, Customized VM placements
     $ kloudbuster --tested-rc ~/admin_openrc.sh --tested-passwd admin -t cfg.topo.yaml
 
 
+<<<<<<< 18e555dbd3ff384ff34baa341b2dfa544eaae760
 Interpret the Results
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -358,12 +399,17 @@ Then start the server by doing::
 
 Idealy, you should see a message like below, which indicates the server
 is up running::
+=======
+Displaying the Results
+^^^^^^^^^^^^^^^^^^^^^^
+>>>>>>> Update doc for storage
 
-    Starting server in PID 26431
-    serving on 0.0.0.0:8080, view at http://127.0.0.1:8080
+Results can be saved in a file in json format or in html format. The json format is more appropriate for usage by any post-processing tool or script
+while the html file is more adapted for human usage.
 
-Once the server is started, you can use different HTTP methods
-(GET/PUT/POST/DELETE) to interactive with KloudBuster.
+The KloudBuster Web UI will display the results using charts and tables when the test is finished running.
+The KloudBuster CLI provides an option to generate the html file from the results (--html option).
+It can also generate the html file from the json results (--charts-from-json option).
 
 
 KloudBuster Standard Scale Profile
@@ -438,4 +484,59 @@ number in the "total_server_vms" field.
 From the Web UI, in ihe "Interactive Mode" tab, you will see how many sets
 of data are you getting. The second last set of data shows the last successful
 run, which has the number in the "Server VMs" column.
+
+
+Running the KloudBuster Storage Scale Test from CLI
+---------------------------------------------------
+
+To run the storage scale test you need to pass the following options on the command line.
+
+--storage::
+
+    this option enables the storage scale test (and disables the http data plane scale test)
+
+--tested-rc::
+
+    to provide the OpenStack openrc credential file to use
+
+--tested_passwd::
+
+    to provide the OpenStack password
+
+--json (optional)::
+
+    save results in the passed json file
+
+--html (optional)::
+
+    generate results in HTML format with Javascript charts
+
+
+Example of run (git clone, with pip install you can directly invoke the kloudbuster wrapper script instead of "python kloudbuster.py")::
+
+    python kloudbuster.py --tested-rc ../../aio-openrc.sh --tested-passwd lab --storage --json ../../aio.json
+
+A custom configuration file can be created and modified to adjust several storage scale test parameters (use the *--show-config* option and redirect to a new custom configuration file then pass it using *--config*):
+
+server|vms_per_network::
+
+    specify how many VMs you want to test for storage access
+
+client|progression::
+
+    can be enabled to get progression scale numbers for storage test
+
+client|storage_tool_configs::
+
+    can be modified to fit the exact storage workload suite you want to test
+
+client|volume_size::
+
+    size of the Cinder volume to be attached to each VM instance (in GB)
+
+client|io_file_size::
+
+    size of the test file to be used for the storage tests (in GB)
+
+
 
