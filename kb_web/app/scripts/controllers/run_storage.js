@@ -915,7 +915,7 @@ angular.module('kbWebApp')
         downloadFile(filename, myresult);
 
       }
-      else console.log("no file to save");
+      else showAlert.showAlert("No result to save!");
     };
 
     setInterval(function(){
