@@ -129,6 +129,6 @@ Links
 * Source: `<http://git.openstack.org/cgit/openstack/kloudbuster>`_
 * Supports/Bugs: `<http://launchpad.net/kloudbuster>`_
 * Mailing List: kloudbuster-core@lists.launchpad.net
-* `The KloudBuster REST API documentation <https://github.com/openstack/kloudbuster/blob/master/doc/source/_static/kloudbuster-swagger.html>`_
+* `KloudBuster REST API documentation Preview <https://htmlpreview.github.io/?https://github.com/openstack/kloudbuster/blob/master/doc/source/_static/kloudbuster-swagger.html>`_
 
 
