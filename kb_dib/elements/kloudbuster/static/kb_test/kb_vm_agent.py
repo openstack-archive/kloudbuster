@@ -31,7 +31,7 @@ import redis
 #
 # This version must be incremented if the interface changes or if new features
 # are added to the agent VM
-__version__ = '5'
+__version__ = '6'
 
 # TODO(Logging on Agent)
 

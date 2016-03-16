@@ -68,7 +68,16 @@ The Web UI URL to use from any browser is::
 Starting the KloudBuster Server from PyPI installation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-<TODO>
+From the virtual environment which hosts KloudBuster, run::
+
+    $ kb_start_server
+
+You should see a message similar to the one below, which indicates the server
+is up running::
+
+    Starting server in PID 27873
+    serving on 0.0.0.0:8080, view at http://127.0.0.1:8080
+
 
 Starting the KloudBuster Server from a git clone
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -226,32 +235,34 @@ in the upper sections, or the stop limit.
 The stop limit is used for KloudBuster to determine when to stop the
 progression, and do the cleanup if needed earlier.
 
-In the case of HTTP testing, it is defines as: [number_of_err_packets,
-percentile_of_packet_not_timeout(%)]. For example: [50, 99.99] means,
-KloudBuster will continue the progression run only if **ALL** below conditions
-are satisfied:
+In the case of HTTP testing:
 
-(1) The error count of packets are less or equal than 50;
+    It is defines as: [number_of_err_packets,
+    percentile_of_packet_not_timeout(%)]. For example: [50, 99.99] means,
+    KloudBuster will continue the progression run only if **ALL** below
+    conditions are satisfied:
 
-(2) 99.99% of the packets are within the timeout range;
+    (1) The error count of packets are less or equal than 50;
 
-In the case of Storage testing, it is a single integer indicating the degrading
-percentile. In the mode of random read and random write, this value indicates
-the percentile of degrading on IOPS, while in the mode of sequential read and
-sequential write, this value indicates the percentile of degrading on
-throughput.
+    (2) 99.99% of the packets are within the timeout range;
 
-Assume the IOPS or throughput per VM is a fixed value, usually we are expecting
-higher values when the VM count grows. At certain point where the capacity of
-storage is reached, the overall performance will start to degrade.
+In the case of Storage testing:
 
-e.g. In the randread and randwrite mode, for example the IOPS is limited to 100
-IOPS/VM. In the iteration of 10 VMs, the requested IOPS for the system is 100 *
-10 = 1000. However, the measured IOPS is degraded to only 800 IOPS. So the
-degraded percentile is calculated as 800/1000=20% for this set of data.
+    It is a single integer indicating the degrading percentile. In the mode of
+    random read and random write, this value indicates the percentile of
+    degrading on IOPS, while in the mode of sequential read and sequential
+    write, this value indicates the percentile of degrading on throughput.
 
-KloudBuster will continue the progression run if the degrading percentile is
-within (less or equal) the range as defined.
+    Assume the IOPS or throughput per VM is a fixed value, usually we are
+    expecting higher values when the VM count grows. At certain point where the
+    capacity of storage is reached, the overall performance will start to
+    degrade.
+
+    e.g. In the randread and randwrite mode, for example the IOPS is limited to
+    100 IOPS/VM. In the iteration of 10 VMs, the requested IOPS for the system
+    is 100 * 10 = 1000. However, the measured IOPS is degraded to only 800 IOPS.
+    So the degraded percentile is calculated as 800/1000=20% for this set of
+    data.
 
 
 HTTP Tool Specific Options
