@@ -23,12 +23,14 @@ def exec_command(cmd, cwd=None, show_console=False):
         for line in iter(p.stdout.readline, b""):
             print line,
 
-    p.communicate()
+    (_, stderr) = p.communicate()
+    if p.returncode:
+        print stderr
     return p.returncode
 
 def main():
-    cwd = resource_filename(__name__, '__init__.py')
-    cwd = cwd[:cwd.rfind('/')] + '/..'
+    cwd = resource_filename(__name__, 'config.py')
+    cwd = cwd[:cwd.rfind('/')] + '/../kb_server'
     cmd = ['stdbuf', '-oL', 'python', 'setup.py', 'develop']
     rc = exec_command(cmd, cwd=cwd)
     if not rc:

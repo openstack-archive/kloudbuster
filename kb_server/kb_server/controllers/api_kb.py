@@ -15,15 +15,11 @@
 import functools
 import json
 import logging
-import os
-import sys
 import threading
 import traceback
-kb_main_path = os.path.split(os.path.abspath(__file__))[0] + "/../../../kloudbuster"
-sys.path.append(kb_main_path)
 
 from kb_session import KBSessionManager
-from kloudbuster import __version__ as kb_version
+from kloudbuster.kloudbuster import __version__ as kb_version
 
 from pecan import expose
 from pecan import response

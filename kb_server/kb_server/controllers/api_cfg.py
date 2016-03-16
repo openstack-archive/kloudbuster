@@ -15,20 +15,15 @@
 import functools
 import hashlib
 import json
-import os
-import sys
 import traceback
-kb_main_path = os.path.split(os.path.abspath(__file__))[0] + "/../../../kloudbuster"
-sys.path.append(kb_main_path)
 
 from attrdict import AttrDict
-from credentials import Credentials
 from kb_session import KBSession
 from kb_session import KBSessionManager
-import log as logging
-
-from kb_config import KBConfig
-from kloudbuster import KloudBuster
+from kloudbuster.credentials import Credentials
+from kloudbuster.kb_config import KBConfig
+from kloudbuster.kloudbuster import KloudBuster
+import kloudbuster.log as logging
 from pecan import expose
 from pecan import response
 

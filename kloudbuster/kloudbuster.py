@@ -22,7 +22,6 @@ import time
 import traceback
 import webbrowser
 
-from __init__ import __version__
 import base_compute
 import base_network
 import glanceclient.exc as glance_exception
@@ -38,6 +37,7 @@ from keystoneclient.v2_0 import client as keystoneclient
 import log as logging
 from novaclient.client import Client as novaclient
 from oslo_config import cfg
+import pbr.version
 from pkg_resources import resource_filename
 from pkg_resources import resource_string
 from tabulate import tabulate
@@ -45,6 +45,7 @@ import tenant
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
+__version__ = pbr.version.VersionInfo('kloudbuster').version_string_with_vcs()
 
 
 class KBVMCreationException(Exception):
