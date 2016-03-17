@@ -642,13 +642,17 @@ class KloudBuster(object):
 
     def calc_cinder_quota(self):
         total_vm = self.get_tenant_vm_count(self.server_cfg)
+        svr_disk = self.server_cfg['flavor']['disk']\
+            if self.server_cfg['flavor']['disk'] != 0 else 20
         server_quota = {}
-        server_quota['gigabytes'] = total_vm * self.server_cfg['flavor']['disk']
+        server_quota['gigabytes'] = total_vm * svr_disk
         server_quota['volumes'] = total_vm
 
-        client_quota = {}
         total_vm = total_vm * self.server_cfg['number_tenants']
-        client_quota['gigabytes'] = total_vm * self.client_cfg['flavor']['disk'] + 20
+        clt_disk = self.client_cfg['flavor']['disk']\
+            if self.client_cfg['flavor']['disk'] != 0 else 20
+        client_quota = {}
+        client_quota['gigabytes'] = total_vm * clt_disk + 20
         client_quota['volumes'] = total_vm
 
         return [server_quota, client_quota]

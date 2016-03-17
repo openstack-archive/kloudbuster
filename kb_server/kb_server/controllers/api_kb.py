@@ -65,7 +65,7 @@ class KBController(object):
         kloudbuster = kb_session.kloudbuster
         try:
             kb_session.sync_cfg(["client_cfg"])
-            kloudbuster.run_test(http_test_only=not kb_session.first_run)
+            kloudbuster.run_test(test_only=not kb_session.first_run)
             kb_session.first_run = False
             kb_session.kb_status = 'STAGED'
         except Exception:

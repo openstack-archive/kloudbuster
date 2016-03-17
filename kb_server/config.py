@@ -37,7 +37,7 @@ logging = {
     'root': {'level': 'INFO', 'handlers': ['console']},
     'loggers': {
         'kb_server': {'level': 'DEBUG', 'handlers': ['console']},
-        'pecan': {'level': 'DEBUG', 'handlers': ['console']},
+        'pecan': {'level': 'CRITICAL', 'handlers': ['console']},
         'py.warnings': {'handlers': ['console']},
         '__force_dict__': True
     },

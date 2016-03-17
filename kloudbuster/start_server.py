@@ -18,14 +18,12 @@ import subprocess
 import sys
 
 def exec_command(cmd, cwd=None, show_console=False):
-    p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if show_console:
         for line in iter(p.stdout.readline, b""):
             print line,
 
-    (_, stderr) = p.communicate()
-    if p.returncode:
-        print stderr
+    p.communicate()
     return p.returncode
 
 def main():

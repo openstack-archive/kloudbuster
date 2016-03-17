@@ -55,9 +55,7 @@ def setup(product_name, logfile=None):
         fmt = logging.Formatter(fmt=CONF.logging_default_format_string)
         hdlr = logging.FileHandler(logfile)
         hdlr.setFormatter(fmt)
-        for name in oslogging._loggers:
-            if name:
-                oslogging.getLogger(name).logger.addHandler(hdlr)
+        oslogging._loggers[product_name].logger.addHandler(hdlr)
 
     if CONF.kb_debug:
         oslogging.getLogger(
