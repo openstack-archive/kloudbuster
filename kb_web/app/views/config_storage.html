@@ -18,7 +18,8 @@
     <input type="button" value="Default/Reset" class="btn btn-default btn-sm" ng-click="getDefaultConfig()"
            style="width:110px"/>
     <!--<button type="submit" class="btn btn-default btn-sm" ng-click="getRunConfig()">Get Current Config</button>-->
-    <input type="button" value="Save" class="btn btn-primary btn-sm" ng-click="changeConfig()" style="width:80px"/>
+    <input type="button" value="Save" class="btn btn-primary btn-sm" ng-click="changeConfig()" style="width:80px"
+      ng-disabled="general.$pristine && server.$pristine"/>
   </div>
 </div>
 <br/>
@@ -47,7 +48,7 @@
           <md-content layout-padding>
             <md-input-container class="col-md-12">
               <label>VM Creation Concurrency</label>
-              <input type="number" min="1" max="1000" step="1" name="vm_creation_concurrency"
+              <input type="number" min="1" max="999" step="1" name="vm_creation_concurrency"
                      id="vm_creation_concurrency" ng-model="config.vm_creation_concurrency"
                      ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left;"/>
 
@@ -61,13 +62,13 @@
           <md-content layout-padding>
             <md-input-container class="col-md-12">
               <label>Volume Size (GB)</label>
-              <input type="number" min="0" max="1000" step="1" name="volume_size"
+              <input type="number" min="1" max="999" step="1" name="volume_size"
                      id="volume_size" ng-model="config.client.volume_size"
-                     ng-pattern="/^[0-9]{0,2}$/i" required style="text-align:left;"/>
+                     ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left;"/>
 
               <div ng-messages="general.volume_size.$error" ng-if="general.volume_size.$dirty">
                 <div ng-message="required" style="padding-right: 0;">This field is required</div>
-                <div ng-message="pattern" style="padding-right: 0;">Must be a number between 0 and 999</div>
+                <div ng-message="pattern" style="padding-right: 0;">Must be a number between 1 and 999</div>
               </div>
             </md-input-container>
           </md-content>
@@ -75,7 +76,7 @@
           <md-content layout-padding>
             <md-input-container class="col-md-12">
               <label>IO File Size (GiB)</label>
-              <input type="number" min="1" max="1000" step="1" name="io_file_size"
+              <input type="number" min="1" max="999" step="1" name="io_file_size"
                      id="io_file_size" ng-model="config.client.io_file_size"
                      ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left;"/>
 
@@ -97,7 +98,7 @@
                          id="client_vcpus" ng-model="config.client.flavor.vcpus" ng-pattern="/^[1-9][0-9]{0,2}$/i"
                          required style="text-align:left;"/>
 
-                  <div ng-messages="client.client_vcpus.$error" ng-if="client.client_vcpus.$dirty">
+                  <div ng-messages="general.client_vcpus.$error" ng-if="general.client_vcpus.$dirty">
                     <div ng-message="required" style="padding-right: 0;">This field is required</div>
                     <div ng-message="pattern" style="padding-right: 0;">Must be a number between 1 and 999</div>
                   </div>
@@ -108,7 +109,7 @@
                          ng-model="config.client.flavor.ram" ng-pattern="/^[0-9]*$/i" required
                          style="text-align:left;"/>
 
-                  <div ng-messages="client.client_ram.$error" ng-if="client.client_ram.$dirty">
+                  <div ng-messages="general.client_ram.$error" ng-if="general.client_ram.$dirty">
                     <div ng-message="required" style="padding-right: 0;">This field is required</div>
                     <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 0</div>
                   </div>
@@ -119,7 +120,7 @@
                          ng-model="config.client.flavor.disk" ng-pattern="/^[0-9]*$/i" required
                          style="text-align:left;"/>
 
-                  <div ng-messages="client.client_disk.$error" ng-if="client.client_disk.$dirty" role="alert">
+                  <div ng-messages="general.client_disk.$error" ng-if="general.client_disk.$dirty" role="alert">
                     <div ng-message="required" style="padding-right: 0;">This field is required</div>
                     <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 0</div>
                   </div>

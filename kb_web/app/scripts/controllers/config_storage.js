@@ -146,7 +146,7 @@ angular.module('kbWebApp')
       "mode":{"name":"Mode"},
       "runtime":{"name":"Run Time","default":30},
       "block_size":{"name":"Block Size (KB)","default":"4k"},
-      "iodepth":{"name":"IO Depth","default":"1"},
+      "iodepth":{"name":"IO Depth","default":1},
       "rate_iops":{"name":"IOPs","default":100},
       "rate":{"name":"BW (MB/s)","default":"60M"},
       "rwmixread":{"name":"Read %","default":70},
