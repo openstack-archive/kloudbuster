@@ -109,8 +109,8 @@ class Kloud(object):
             nova_client = self.tenant_list[0].user_list[0].nova_client
             flavor_manager = base_compute.Flavor(nova_client)
             flavor_dict = self.scale_cfg.flavor
-            if self.scale_cfg.get('storage_target') == 'ephemeral':
-                flavor_dict['ephemeral'] = self.scale_cfg.get('disk_size')
+            flavor_dict['ephemeral'] = self.scale_cfg.get('disk_size') \
+                if self.scale_cfg.get('storage_target') == 'ephemeral' else 0
             if self.testing_side:
                 flv = flavor_manager.create_flavor('KB.client', override=True, **flavor_dict)
                 self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
