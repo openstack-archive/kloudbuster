@@ -79,7 +79,7 @@ mv /usr/local/lib/libhdr_histogram.so /usr/lib/
 
 # Install fio
 cd /tmp
-FIO='fio-2.6'
+FIO='fio-2.8'
 wget http://brick.kernel.dk/snaps/$FIO.tar.gz
 tar xzf $FIO.tar.gz
 cd $FIO

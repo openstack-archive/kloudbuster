@@ -97,14 +97,17 @@ class KBConfig(object):
                 LOG.warning('No public key is found or specified to instantiate VMs. '
                             'You will not be able to access the VMs spawned by KloudBuster.')
 
-        if self.storage_mode and not self.config_scale.client['volume_size']:
-            LOG.error('You have to specify a volumn size in order to run '
-                      'storage performance tests.')
-            raise KBConfigParseException()
+        if self.storage_mode:
+            if not self.config_scale.client.disk_size:
+                LOG.error('You have to specify a disk size in order to run storage tests.')
+                raise KBConfigParseException()
 
-        if not self.storage_mode:
+            if self.config_scale.client.io_file_size > self.config_scale.client.disk_size:
+                LOG.error('io_file_size must be less or eqaul than disk_size.')
+                raise KBConfigParseException()
+        else:
             # Ignore volume_size if not performing storage testing
-            self.config_scale['client']['volume_size'] = 0
+            self.config_scale['client']['disk_size'] = 0
 
         if self.alt_cfg:
             self.config_scale = self.config_scale + AttrDict(self.alt_cfg)

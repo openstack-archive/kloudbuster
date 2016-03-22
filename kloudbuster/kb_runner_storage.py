@@ -71,8 +71,11 @@ class KBRunner_Storage(KBRunner):
         return msg
 
     def init_volume(self, active_range, timeout=30):
+        parameter = {'size': str(self.config.io_file_size) + 'GiB'}
+        parameter['mkfs'] = True if self.config.storage_target == 'volume' else False
+
         func = {'cmd': 'init_volume', 'active_range': active_range,
-                'parameter': str(self.config.io_file_size) + 'GiB'}
+                'parameter': parameter}
         self.send_cmd('EXEC', 'storage', func)
         cnt_succ = self.polling_vms(timeout)[0]
         if cnt_succ != len(self.client_dict):
@@ -96,7 +99,10 @@ class KBRunner_Storage(KBRunner):
     def single_run(self, active_range=None, test_only=False):
         try:
             if not test_only:
-                LOG.info("Initilizing volume and setting up filesystem...")
+                if self.config.storage_target == 'volume':
+                    LOG.info("Initializing volume and setting up filesystem...")
+                else:
+                    LOG.info("Initializing ephermeral disk...")
                 self.init_volume(active_range)
 
                 if self.config.prompt_before_run:
