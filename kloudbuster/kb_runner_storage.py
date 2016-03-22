@@ -148,6 +148,7 @@ class KBRunner_Storage(KBRunner):
 
         if self.config.progression.enabled:
             self.tool_result = {}
+            tc_flag = True
             start = self.config.progression.vm_start
             multiple = self.config.progression.vm_multiple
             limit = self.config.progression.storage_stop_limit
@@ -156,8 +157,7 @@ class KBRunner_Storage(KBRunner):
             self.client_dict = {}
             cur_stage = 1
 
-            while True:
-                tc_flag = False
+            while tc_flag:
                 cur_vm_count = len(self.client_dict)
                 if start == 1:
                     target_vm_count = 1 if cur_stage == 1 else (cur_stage - 1) * multiple
@@ -193,10 +193,8 @@ class KBRunner_Storage(KBRunner):
                            or (cur_tc['mode'] in ['read', 'write'] and degrade_rate > limit)):
                             LOG.warning('KloudBuster is stopping the iteration because the result '
                                         'reaches the stop limit.')
-                            tc_flag = True
+                            tc_flag = False
                             break
-                    if tc_flag:
-                        break
 
                 yield self.tool_result
         else:
