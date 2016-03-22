@@ -246,11 +246,12 @@ class Flavor(object):
     def list(self):
         return self.novaclient.flavors.list()
 
-    def create_flavor(self, name, ram, vcpus, disk, override=False):
+    def create_flavor(self, name, ram, vcpus, disk, ephemeral, override=False):
         # Creating flavors
         if override:
             self.delete_flavor(name)
-        return self.novaclient.flavors.create(name=name, ram=ram, vcpus=vcpus, disk=disk)
+        return self.novaclient.flavors.create(name=name, ram=ram, vcpus=vcpus,
+                                              disk=disk, ephemeral=ephemeral)
 
     def delete_flavor(self, name):
         try:

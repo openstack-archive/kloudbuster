@@ -116,12 +116,12 @@ class KB_Instance(object):
 
     # Init volume
     @staticmethod
-    def init_volume(dest_path, size):
-        cmd = 'if [ ! -e /mnt/volume ]; then\n'
-        cmd += 'mkfs.xfs /dev/vdb && '
-        cmd += 'mkdir -p /mnt/volume && '
-        cmd += 'mount /dev/vdb /mnt/volume && '
-        cmd += '%s --name=create_file --filename=/mnt/volume/kb_storage_test.bin '\
+    def init_volume(dest_path, size, mkfs):
+        cmd = 'if [ ! -e /kb_mnt ]; then\n'
+        cmd += 'mkfs.xfs /dev/vdb && ' if mkfs else ''
+        cmd += 'mkdir -p /kb_mnt && '
+        cmd += 'mount /dev/vdb /kb_mnt && '
+        cmd += '%s --name=create_file --filename=/kb_mnt/kb_storage_test.bin '\
                '--size=%s --create_only=1\n' % (dest_path, size)
         cmd += 'fi'
         return cmd
@@ -131,7 +131,7 @@ class KB_Instance(object):
     def run_fio(dest_path, name, description, mode, block_size, iodepth, runtime,
                 rate_iops=None, rate=None, rwmixread=None, status_interval=None, extra_opts=None):
         fixed_opt = '--thread --ioengine=libaio --output-format=json+ --direct=1 '
-        fixed_opt += '--filename=/mnt/volume/kb_storage_test.bin '
+        fixed_opt += '--filename=/kb_mnt/kb_storage_test.bin '
         required_opt = '--name=%s --rw=%s --bs=%s --iodepth=%s --runtime=%s ' %\
             (name, mode, block_size, iodepth, runtime)
         optional_opt = ''
@@ -328,8 +328,10 @@ class KBA_Storage_Client(KBA_Client):
 
         return json.dumps(p_output)
 
-    def exec_init_volume(self, size):
-        self.last_cmd = KB_Instance.init_volume('/usr/local/bin/fio', size)
+    def exec_init_volume(self, vol_init_configs):
+        self.last_cmd = KB_Instance.init_volume(
+            dest_path='/usr/local/bin/fio',
+            **vol_init_configs)
         return self.exec_command(self.last_cmd)
 
     def exec_run_storage_test(self, fio_configs):

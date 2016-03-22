@@ -54,7 +54,7 @@ server:
         # Memory for the flavor in MB
         ram: 2048
         # Size of local disk in GB
-        disk: 20
+        disk: 0
 
     # Number of tenants to be created on the cloud
     # KloudBuster will also create 1 user automatically for each tenant
@@ -165,7 +165,7 @@ client:
         # Memory for the flavor in MB
         ram: 2048
         # Size of local disk in GB
-        disk: 20
+        disk: 0
 
     # Traffic shaping - VM Placement hint
     # Availability zone to use for clients in the client cloud
@@ -280,11 +280,20 @@ client:
           rate: '60M'
           rwmixread: 70
 
-    # Volumes size in GB for each VM
-    # Will effect only in storage testing mode
-    volume_size: 1
+    # KloudBuster supports to run the storage performance test on Cinder
+    # Volumes or Ephemeral Disks.
+    #
+    # Available options here: ['volume', 'ephemeral']
+    storage_target: 'volume'
 
-    # The size of the test file for doing IO tests in GiB
+    # Volumes size in GB for each VM
+    #
+    # Note: Will effect only in storage testing.
+    disk_size: 1
+
+    # The size of the test file for doing IO tests in GiB. Must be less or
+    # equal than disk_size.
+    #
     # Note: Due to the unit calculation difference and the overhead of the
     # filesystem, the actual available space for data will be smaller than the
     # volume size. So we picked GiB as the unit for laying out the test file,
