@@ -54,7 +54,7 @@ server:
         # Memory for the flavor in MB
         ram: 2048
         # Size of local disk in GB
-        disk: 0
+        disk: 20
 
     # Number of tenants to be created on the cloud
     # KloudBuster will also create 1 user automatically for each tenant
