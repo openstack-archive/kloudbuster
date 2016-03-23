@@ -95,6 +95,7 @@ Limitations and Non-Goals
 -------------------------
 
 * Requires Neutron networking (does not support Nova networking)
+
 * Only supports HTTP and storage traffic in this version
 
 Unlike some other scaling test frameworks, KloudBuster does *not* attempt to:
@@ -102,14 +103,13 @@ Unlike some other scaling test frameworks, KloudBuster does *not* attempt to:
 * provide a scale test framework that works across different cloud technologies
   (OpenStack + AWS + Google Cloud + ...) - we are only focusing on OpenStack
 
-* provide a scale test framework that is flexible and programmable to do everything - 
+* provide a scale test framework that is flexible and programmable to do everything -
   we just focus on opinionated and well targeted performance and scale areas
   with sensible use cases and available in a fully integrated and easy to consume
   packaged format
 
-* replace bare metal and domain specific native performance and scale frameworks 
+* replace bare metal and domain specific native performance and scale frameworks
   (line level traffic generators, ceph specific performance and scale tools...)
-
 
 
 Contributions and Feedbacks

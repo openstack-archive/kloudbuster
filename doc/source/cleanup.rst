@@ -43,8 +43,8 @@ that matches a given regular expression:
     * users
     * tenants
 
-In some cases, because of timing reasons, you may have to run the force_cleanup script a few times
-to get rid of all selected resources.
+In some cases, because of timing reasons, you may have to run the force_cleanup
+script a few times to get rid of all selected resources.
 
 How to Select Resources to Delete
 ---------------------------------
@@ -139,16 +139,23 @@ of the kloudbuster installation method to install the script.
 Known Issues and Limitations
 ----------------------------
 
-Volumes attached to instances that are no longer present cannot be deleted thorugh the Nova or Cinder APIs.
-Such volumes will show up as attached to "None" and in the "in-use" or "available" state in the Horizon dashboard.
-In this case, the script will print a warning with the volume ID:
+Volumes attached to instances that are no longer present cannot be deleted
+thorugh Nova or Cinder APIs. Such volumes will show up as attached to "None"
+and in the "in-use" or "available" state from the Horizon dashboard.  In this
+case, the script will print a warning with the volume ID::
 
    WARNING: Volume 6080fdce-f894-4c41-9bc0-70120e8560a8 attached to an instance that no longer exists  (will require manual cleanup of the database)
 
-Cleanup of such volumes will require first setting the attach_status of the corresponding volume to "detached" in the Ciner database directly 
-(using a mysql cli such as "MariaDB [cinder]> UPDATE volumes SET attach_status='detached' WHERE id='18ed7f10-be49-4569-9e04-2fc4a654efee';")
-then re-run the script (or manually delete the volume from Horizon).
+Cleanup of such volumes will require first setting the attach_status of the
+corresponding volume to "detached" in the Cinder database directly. You have
+to SSH to the controller host, and login to the MySQL shell:
 
+.. code-block:: bash
+
+    [root@gg34-2 ~]# mysql cinder
+    MariaDB [cinder]> UPDATE volumes SET attach_status='detached' WHERE id='18ed7f10-be49-4569-9e04-2fc4a654efee';
+
+Then re-run the script (or manually delete the volume from Horizon).
 
 
 Examples
@@ -156,7 +163,7 @@ Examples
 
 KloudBuster resources cleanup::
 
-  $ python force_cleanup.py -r admin-oper.sh
+  $ python force_cleanup.py -r admin-openrc.sh
   Please enter your OpenStack Password:
   Discovering Storage resources...
   Discovering Compute resources...
@@ -273,7 +280,7 @@ KloudBuster resources cleanup::
 
 Delete all resources with a name starting with "HA"::
 
-  $ python force_cleanup.py -r admin-openrc.sh  --filter 'HA'
+  $ python force_cleanup.py -r admin-openrc.sh --filter 'HA'
   Discovering Storage resources...
   Discovering Compute resources...
   Discovering Network resources...

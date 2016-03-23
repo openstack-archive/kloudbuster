@@ -54,7 +54,7 @@ server:
         # Memory for the flavor in MB
         ram: 2048
         # Size of local disk in GB
-        disk: 20
+        disk: 0
 
     # Number of tenants to be created on the cloud
     # KloudBuster will also create 1 user automatically for each tenant
@@ -165,7 +165,7 @@ client:
         # Memory for the flavor in MB
         ram: 2048
         # Size of local disk in GB
-        disk: 20
+        disk: 0
 
     # Traffic shaping - VM Placement hint
     # Availability zone to use for clients in the client cloud
@@ -291,11 +291,6 @@ client:
 
     # The size of the test file for running IO tests in GB. Must be less or
     # equal than disk_size.
-    #
-    # Note: Due to the unit calculation difference and the overhead of the
-    # filesystem, the actual available space for data will be smaller than the
-    # volume size. So we picked GiB as the unit for laying out the test file,
-    # which normally should be fine.
     io_file_size: 1
 
     # Prompt before running benchmarking tools
