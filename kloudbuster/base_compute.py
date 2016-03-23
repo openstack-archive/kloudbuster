@@ -111,7 +111,9 @@ class BaseCompute(object):
 
     def detach_vol(self):
         if self.instance and self.vol:
-            self.novaclient.volumes.delete_server_volume(self.instance.id, self.vol.id)
+            attached_vols = self.novaclient.volumes.get_server_volumes(self.instance.id)
+            if len(attached_vols):
+                self.novaclient.volumes.delete_server_volume(self.instance.id, self.vol.id)
 
     def find_image(self, image_name):
         """

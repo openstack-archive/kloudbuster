@@ -246,7 +246,7 @@ class ComputeCleaner(AbstractCleaner):
                             fip_id = [x['id'] for x in fip_lst if x['floating_ip_address'] == fip]
                             self.neutron_client.delete_floatingip(fip_id[0])
                             self.report_deletion('FLOATING IP', fip)
-                        self.nova_client.servers.force_delete(id)
+                        self.nova_client.servers.delete(id)
                 except NotFound:
                     deleting_instances.remove(id)
                     self.report_not_found('INSTANCE', name)

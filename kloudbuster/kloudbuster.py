@@ -13,8 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from concurrent.futures import ThreadPoolExecutor
 import json
-from multiprocessing.pool import ThreadPool
 import os
 import sys
 import threading
@@ -77,11 +77,12 @@ class Kloud(object):
         else:
             self.prefix = 'KBs'
             self.name = 'Server Kloud'
-        LOG.info("Creating kloud: " + self.prefix)
-
         # pre-compute the placement az to use for all VMs
         self.placement_az = scale_cfg['availability_zone'] \
             if scale_cfg['availability_zone'] else None
+        self.exc_info = None
+
+        LOG.info("Creating kloud: " + self.prefix)
         if self.placement_az:
             LOG.info('%s Availability Zone: %s' % (self.name, self.placement_az))
 
@@ -181,7 +182,8 @@ class Kloud(object):
         LOG.info("Creating Instance: " + instance.vm_name)
         instance.create_server(**instance.boot_info)
         if not instance.instance:
-            raise KBVMCreationException()
+            raise KBVMCreationException(
+                'Instance %s takes too long to become ACTIVE.' % instance.vm_name)
 
         if instance.vol:
             instance.attach_vol()
@@ -205,9 +207,12 @@ class Kloud(object):
             instance.ssh_ip = instance.fixed_ip
 
     def create_vms(self, vm_creation_concurrency):
-        tpool = ThreadPool(processes=vm_creation_concurrency)
-        for _ in tpool.imap(self.create_vm, self.get_all_instances()):
-            self.vm_up_count += 1
+        try:
+            with ThreadPoolExecutor(max_workers=vm_creation_concurrency) as executor:
+                for feature in executor.map(self.create_vm, self.get_all_instances()):
+                    self.vm_up_count += 1
+        except Exception:
+            self.exc_info = sys.exc_info()
 
 
 class KloudBuster(object):
@@ -267,7 +272,8 @@ class KloudBuster(object):
         creden_nova['auth_url'] = cred_dict['auth_url']
         creden_nova['project_id'] = cred_dict['tenant_name']
         creden_nova['version'] = 2
-        nova_client = novaclient(**creden_nova)
+        nova_client = novaclient(endpoint_type='publicURL',
+                                 http_log_debug=True, **creden_nova)
         for hypervisor in nova_client.hypervisors.list():
             if vars(hypervisor)['status'] == 'enabled':
                 ret_list.append(vars(hypervisor)['hypervisor_hostname'])
@@ -283,7 +289,8 @@ class KloudBuster(object):
         creden_nova['auth_url'] = cred_dict['auth_url']
         creden_nova['project_id'] = cred_dict['tenant_name']
         creden_nova['version'] = 2
-        nova_client = novaclient(**creden_nova)
+        nova_client = novaclient(endpoint_type='publicURL',
+                                 http_log_debug=True, **creden_nova)
         for az in nova_client.availability_zones.list():
             zoneName = vars(az)['zoneName']
             isAvail = vars(az)['zoneState']['available']
@@ -413,6 +420,8 @@ class KloudBuster(object):
             LOG.error(e.message)
         except Exception:
             traceback.print_exc()
+        except KeyboardInterrupt:
+            LOG.info('Terminating KloudBuster...')
         finally:
             if self.server_cfg['cleanup_resources'] and self.client_cfg['cleanup_resources']:
                 self.cleanup()
@@ -506,6 +515,12 @@ class KloudBuster(object):
             self.client_vm_create_thread.start()
             self.server_vm_create_thread.join()
             self.client_vm_create_thread.join()
+
+        if self.testing_kloud and self.testing_kloud.exc_info:
+            raise self.testing_kloud.exc_info[1], None, self.testing_kloud.exc_info[2]
+
+        if self.kloud and self.kloud.exc_info:
+            raise self.kloud.exc_info[1], None, self.kloud.exc_info[2]
 
         # Function that print all the provisioning info
         self.print_provision_info()

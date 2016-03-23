@@ -167,7 +167,7 @@ class BaseNetwork(object):
         Security groups, keypairs and instances
         """
         flag = True
-        if self.instance_list[0].vol:
+        if self.instance_list and self.instance_list[0].vol:
             bs_obj = base_storage.BaseStorage(self.cinder_client)
 
         # Delete the instances first

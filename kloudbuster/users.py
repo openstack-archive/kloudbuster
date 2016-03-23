@@ -20,7 +20,7 @@ from cinderclient.v2 import client as cinderclient
 from keystoneclient import exceptions as keystone_exception
 import log as logging
 from neutronclient.v2_0 import client as neutronclient
-from novaclient.client import Client
+from novaclient import client as novaclient
 
 LOG = logging.getLogger(__name__)
 
@@ -207,7 +207,8 @@ class User(object):
         creden_nova['project_id'] = self.tenant.tenant_name
         creden_nova['version'] = 2
 
-        self.nova_client = Client(endpoint_type='publicURL', **creden_nova)
+        self.nova_client = novaclient.Client(endpoint_type='publicURL',
+                                             http_log_debug=True, **creden_nova)
         self.cinder_client = cinderclient.Client(endpoint_type='publicURL', **creden_nova)
 
         if self.tenant.kloud.reusing_tenants:

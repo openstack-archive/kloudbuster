@@ -48,7 +48,7 @@ def setup(product_name, logfile=None):
     CONF.logging_default_format_string = '%(asctime)s %(levelname)s %(message)s'
 
     oslogging.setup(CONF, product_name)
-    # Adding the FileHandler to all known loggers inside KloudBuster
+    # Adding FileHandler to KloudBuster if logfile is supplied
     if logfile:
         if os.path.exists(logfile):
             os.remove(logfile)
@@ -62,7 +62,6 @@ def setup(product_name, logfile=None):
             project=product_name).logger.setLevel(logging.KBDEBUG)
 
 def getLogger(name="unknown", version="unknown"):
-
     if name not in oslogging._loggers:
         oslogging._loggers[name] = KloudBusterContextAdapter(
             logging.getLogger(name), {"project": "kloudbuster",
