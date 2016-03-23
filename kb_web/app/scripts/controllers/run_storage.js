@@ -670,7 +670,7 @@ angular.module('kbWebApp')
         }
       ],
       axes: {
-        x: {key: 'x', type: 'linear',ticksFormatter:  function(x) {
+        x: {key: 'x', type: 'linear', ticks: $scope.xaxisList, ticksFormatter:  function(x) {
           if($.inArray(x, $scope.xaxisList)!=-1) {
             if (x == 0) return "1";
             else return x;
