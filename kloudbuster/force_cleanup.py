@@ -153,13 +153,17 @@ class StorageCleaner(AbstractCleaner):
                     vol = self.cinder.volumes.get(id)
                     if vol.attachments:
                         # detach the volume
-                        if not self.dryrun:
-                            ins_id = vol.attachments[0]['server_id']
-                            self.nova.volumes.delete_server_volume(ins_id, id)
-                            print '    . VOLUME ' + vol.name + ' detaching...'
-                        else:
-                            print '    . VOLUME ' + vol.name + ' to be detached...'
-                        kb_detaching_volumes.append(vol)
+                        try:
+                            if not self.dryrun:
+                                ins_id = vol.attachments[0]['server_id']
+                                self.nova.volumes.delete_server_volume(ins_id, id)
+                                print '    . VOLUME ' + vol.name + ' detaching...'
+                            else:
+                                print '    . VOLUME ' + vol.name + ' to be detached...'
+                            kb_detaching_volumes.append(vol)
+                        except NotFound:
+                            print 'WARNING: Volume %s attached to an instance that no longer '\
+                                  'exists (will require manual cleanup of the database)' % (id)
                     else:
                         # no attachments
                         kb_volumes.append(vol)

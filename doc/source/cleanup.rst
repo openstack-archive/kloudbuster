@@ -43,6 +43,8 @@ that matches a given regular expression:
     * users
     * tenants
 
+In some cases, because of timing reasons, you may have to run the force_cleanup script a few times
+to get rid of all selected resources.
 
 How to Select Resources to Delete
 ---------------------------------
@@ -133,6 +135,20 @@ kloudbuster/force_cleanup.py. If you need to run the script outside of the usual
 KloudBuster installation, the script requires the usual OpenStack python client
 libraries and credentials.py (from the kloudbuster module).  Otherwise, pick one
 of the kloudbuster installation method to install the script.
+
+Known Issues and Limitations
+----------------------------
+
+Volumes attached to instances that are no longer present cannot be deleted thorugh the Nova or Cinder APIs.
+Such volumes will show up as attached to "None" and in the "in-use" or "available" state in the Horizon dashboard.
+In this case, the script will print a warning with the volume ID:
+
+   WARNING: Volume 6080fdce-f894-4c41-9bc0-70120e8560a8 attached to an instance that no longer exists  (will require manual cleanup of the database)
+
+Cleanup of such volumes will require first setting the attach_status of the corresponding volume to "detached" in the Ciner database directly 
+(using a mysql cli such as "MariaDB [cinder]> UPDATE volumes SET attach_status='detached' WHERE id='18ed7f10-be49-4569-9e04-2fc4a654efee';")
+then re-run the script (or manually delete the volume from Horizon).
+
 
 
 Examples
