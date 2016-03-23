@@ -231,8 +231,11 @@ class ComputeCleaner(AbstractCleaner):
             deleting_instances = self.resources['instances']
             for id, name in self.resources['instances'].iteritems():
                 try:
-                    ins_addr = self.nova_client.servers.get(id).addresses.values()[0]
-                    fips = [x['addr'] for x in ins_addr if x['OS-EXT-IPS:type'] == 'floating']
+                    if self.nova_client.servers.get(id).addresses.values():
+                        ins_addr = self.nova_client.servers.get(id).addresses.values()[0]
+                        fips = [x['addr'] for x in ins_addr if x['OS-EXT-IPS:type'] == 'floating']
+                    else:
+                        fips = []
                     if self.dryrun:
                         self.nova_client.servers.get(id)
                         for fip in fips:

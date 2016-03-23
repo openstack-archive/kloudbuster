@@ -285,7 +285,7 @@
             <div class="panel-heading">Flavor (per instance)</div>
             <div class="panel-body">
               <md-content layout-padding>
-                <md-input-container class="col-md-4">
+                <md-input-container class="col-md-6">
                   <label>vCPUs</label>
                   <input type="number" min="1" max="999" step="1" name="server_vcpus"
                          id="server_vcpus" ng-model="config.server.flavor.vcpus" ng-pattern="/^[1-9][0-9]{0,2}$/i"
@@ -296,7 +296,7 @@
                     <div ng-message="pattern" style="padding-right: 0;">Must be a number between 1 and 999</div>
                   </div>
                 </md-input-container>
-                <md-input-container class="col-md-4">
+                <md-input-container class="col-md-6">
                   <label>RAM (MB)</label>
                   <input type="number" min="0" max="" step="128" name="server_ram" id="server_ram"
                          ng-model="config.server.flavor.ram" ng-pattern="/^[0-9]*$/i" required
@@ -307,18 +307,30 @@
                     <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than </div>
                   </div>
                 </md-input-container>
-                <md-input-container class="col-md-4">
-                  <label>DISK (GB)</label>
-                  <input type="number" min="0" max="" step="" name="server_disk" id="server_disk"
-                         ng-model="config.server.flavor.disk" ng-pattern="/^[0-9]*$/i" required
-                         style="text-align:left;"/>
-
-                  <div ng-messages="server.server_disk.$error" ng-if="server.server_disk.$dirty" role="alert">
-                    <div ng-message="required" style="padding-right: 0;">This field is required</div>
-                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than </div>
-                  </div>
-                </md-input-container>
               </md-content>
+
+              <div class="panel panel-default" style="margin: 0">
+                <div class="panel-body">
+                  <md-radio-group ng-model="choose_disk_size1" ng-init="choose_disk_size1=0">
+                    <md-radio-button value="0" ng-click="config.server.flavor.disk=20" class="md-primary" style="margin:5px">Use default root disk size</md-radio-button>
+                    <md-radio-button value="1" class="md-primary" style="margin:5px">Use specific root disk size</md-radio-button>
+                  </md-radio-group>
+
+                  <md-content layout-padding ng-if="choose_disk_size1==1">
+                    <md-input-container class="col-md-6">
+                      <label>Root Disk Size (GB)</label>
+                      <input type="number" min="1" max="" step="" name="server_disk" id="server_disk"
+                             ng-model="config.server.flavor.disk" ng-pattern="/^[1-9][0-9]*$/i" required
+                             style="text-align:left;"/>
+
+                      <div ng-messages="server.server_disk.$error" role="alert">
+                        <div ng-message="required" style="padding-right: 0;">This field is required</div>
+                        <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 1</div>
+                      </div>
+                    </md-input-container>
+                  </md-content>
+                </div>
+              </div>
             </div>
           </div>
           <!--<div class="well bs-component">-->
@@ -382,7 +394,7 @@
             <div class="panel-heading">Flavor (per instance)</div>
             <div class="panel-body">
               <md-content layout-padding>
-                <md-input-container class="col-md-4">
+                <md-input-container class="col-md-6">
                   <label>vCPUs</label>
                   <input type="number" min="1" max="999" step="1" name="client_vcpus"
                          id="client_vcpus" ng-model="config.client.flavor.vcpus" ng-pattern="/^[1-9][0-9]{0,2}$/i"
@@ -393,7 +405,7 @@
                     <div ng-message="pattern" style="padding-right: 0;">Must be a number between 1 and 999</div>
                   </div>
                 </md-input-container>
-                <md-input-container class="col-md-4">
+                <md-input-container class="col-md-6">
                   <label>RAM (MB)</label>
                   <input type="number" min="0" max="" step="128" name="client_ram" id="client_ram"
                          ng-model="config.client.flavor.ram" ng-pattern="/^[0-9]*$/i" required
@@ -404,18 +416,30 @@
                     <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 0</div>
                   </div>
                 </md-input-container>
-                <md-input-container class="col-md-4">
-                  <label>DISK (GB)</label>
-                  <input type="number" min="0" max="" step="" name="client_disk" id="client_disk"
-                         ng-model="config.client.flavor.disk" ng-pattern="/^[0-9]*$/i" required
-                         style="text-align:left;"/>
-
-                  <div ng-messages="client.client_disk.$error" ng-if="client.client_disk.$dirty" role="alert">
-                    <div ng-message="required" style="padding-right: 0;">This field is required</div>
-                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 0</div>
-                  </div>
-                </md-input-container>
               </md-content>
+
+              <div class="panel panel-default" style="margin: 0">
+                <div class="panel-body">
+                  <md-radio-group ng-model="choose_disk_size2" ng-init="choose_disk_size2=0">
+                    <md-radio-button value="0" ng-click="config.client.flavor.disk=20" class="md-primary" style="margin:5px">Use default root disk size</md-radio-button>
+                    <md-radio-button value="1" class="md-primary" style="margin:5px">Use specific root disk size</md-radio-button>
+                  </md-radio-group>
+
+                  <md-content layout-padding ng-if="choose_disk_size2==1">
+                    <md-input-container class="col-md-6">
+                      <label>Root Disk Size (GB)</label>
+                      <input type="number" min="1" max="" step="" name="client_disk" id="client_disk"
+                             ng-model="config.client.flavor.disk" ng-pattern="/^[1-9][0-9]*$/i" required
+                             style="text-align:left;"/>
+
+                      <div ng-messages="client.client_disk.$error" role="alert">
+                        <div ng-message="required" style="padding-right: 0;">This field is required</div>
+                        <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 1</div>
+                      </div>
+                    </md-input-container>
+                  </md-content>
+                </div>
+              </div>
             </div>
           </div>
           <!--<div class="well bs-component">-->
