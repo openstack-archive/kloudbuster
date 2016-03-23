@@ -59,23 +59,36 @@
             </md-input-container>
           </md-content>
 
+          <div class="panel panel-default" style="margin: 0">
+            <div class="panel-body">
+              <h6>Volume Types Used for Storage Test:</h6>
+              <md-radio-group ng-model="config.client.storage_target">
+                <md-radio-button value="volume" class="md-primary" style="display: inline">Cinder Volume (Block Storage)</md-radio-button>
+                <md-radio-button value="ephemeral" class="md-primary" style="display: inline" >Ephemeral Volume</md-radio-button>
+              </md-radio-group>
+
+              <md-content layout-padding>
+                <md-input-container class="col-md-12">
+                  <label>Volume Size (GB)</label>
+                  <input type="number" min="1" max="999" step="1" name="disk_size"
+                         id="disk_size" ng-model="config.client.disk_size"
+                         ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left;"/>
+
+                  <div ng-messages="general.disk_size.$error" ng-if="general.disk_size.$dirty">
+                    <div ng-message="required" style="padding-right: 0;">This field is required</div>
+                    <div ng-message="pattern" style="padding-right: 0;">Must be a number between 1 and 999</div>
+                  </div>
+                </md-input-container>
+              </md-content>
+
+            </div>
+          </div>
+
+
+
           <md-content layout-padding>
             <md-input-container class="col-md-12">
-              <label>Volume Size (GB)</label>
-              <input type="number" min="1" max="999" step="1" name="volume_size"
-                     id="volume_size" ng-model="config.client.volume_size"
-                     ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left;"/>
-
-              <div ng-messages="general.volume_size.$error" ng-if="general.volume_size.$dirty">
-                <div ng-message="required" style="padding-right: 0;">This field is required</div>
-                <div ng-message="pattern" style="padding-right: 0;">Must be a number between 1 and 999</div>
-              </div>
-            </md-input-container>
-          </md-content>
-
-          <md-content layout-padding>
-            <md-input-container class="col-md-12">
-              <label>IO File Size (GiB)</label>
+              <label>Storage Test IO File Size (GB)</label>
               <input type="number" min="1" max="999" step="1" name="io_file_size"
                      id="io_file_size" ng-model="config.client.io_file_size"
                      ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left;"/>
@@ -84,6 +97,7 @@
                 <div ng-message="required" style="padding-right: 0;">This field is required</div>
                 <div ng-message="pattern" style="padding-right: 0;">Must be a number between 1 and 999</div>
               </div>
+
             </md-input-container>
           </md-content>
           <div class="panel panel-default">
@@ -92,7 +106,7 @@
             <div class="panel-body">
 
               <md-content layout-padding>
-                <md-input-container class="col-md-4">
+                <md-input-container class="col-md-6">
                   <label>vCPUs</label>
                   <input type="number" min="1" max="999" step="1" name="client_vcpus"
                          id="client_vcpus" ng-model="config.client.flavor.vcpus" ng-pattern="/^[1-9][0-9]{0,2}$/i"
@@ -103,7 +117,7 @@
                     <div ng-message="pattern" style="padding-right: 0;">Must be a number between 1 and 999</div>
                   </div>
                 </md-input-container>
-                <md-input-container class="col-md-4">
+                <md-input-container class="col-md-6">
                   <label>RAM (MB)</label>
                   <input type="number" min="0" max="" step="128" name="client_ram" id="client_ram"
                          ng-model="config.client.flavor.ram" ng-pattern="/^[0-9]*$/i" required
@@ -114,18 +128,33 @@
                     <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 0</div>
                   </div>
                 </md-input-container>
-                <md-input-container class="col-md-4">
-                  <label>DISK (GB)</label>
-                  <input type="number" min="0" max="" step="" name="client_disk" id="client_disk"
-                         ng-model="config.client.flavor.disk" ng-pattern="/^[0-9]*$/i" required
-                         style="text-align:left;"/>
-
-                  <div ng-messages="general.client_disk.$error" ng-if="general.client_disk.$dirty" role="alert">
-                    <div ng-message="required" style="padding-right: 0;">This field is required</div>
-                    <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 0</div>
-                  </div>
-                </md-input-container>
               </md-content>
+
+              <div class="panel panel-default" style="margin: 0">
+                <div class="panel-body">
+                  <md-radio-group ng-model="choose_disk_size" ng-init="choose_disk_size=0">
+                    <md-radio-button value="0" ng-click="config.client.flavor.disk=20" class="md-primary" style="margin:5px">Use default root disk size</md-radio-button>
+                    <md-radio-button value="1" class="md-primary" style="margin:5px">Use specific root disk size</md-radio-button>
+                  </md-radio-group>
+
+                  <md-content layout-padding ng-if="choose_disk_size==1">
+                  <md-input-container>
+                    <label>Root Disk Size (GB)</label>
+                    <input type="number" min="1" max="" step="" name="client_disk" id="client_disk"
+                           ng-model="config.client.flavor.disk" ng-pattern="/^[1-9][0-9]*$/i" required
+                           style="text-align:left;"/>
+
+                    <div ng-messages="general.client_disk.$error" role="alert">
+                      <div ng-message="required" style="padding-right: 0;">This field is required</div>
+                      <div ng-message="pattern" style="padding-right: 0;">Must be a number no less than 1</div>
+                    </div>
+                  </md-input-container>
+                  </md-content>
+
+                </div>
+              </div>
+
+
             </div>
           </div>
         </div>
@@ -180,7 +209,7 @@
                          ng-model="config.client.storage_tool_configs[$index]['description']" required
                          style="text-align:left;"/>
 
-                  <div ng-messages="server[$index+'+description'].$error" ng-if="server[$index+'+description'].$dirty">
+                  <div ng-messages="server[$index+'+description'].$error">
                     <div ng-message="required" style="padding-right: 0;">This field is required</div>
                   </div>
                 </md-input-container>

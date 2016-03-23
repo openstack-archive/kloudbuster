@@ -130,6 +130,10 @@ md-input-container{
   padding-bottom:5px;
 }
 
+div[ng-messages]{
+  min-height: 5px;
+}
+
 td.ng-binding.ng-scope {
   padding:3px;
 }

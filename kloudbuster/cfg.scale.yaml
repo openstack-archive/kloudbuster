@@ -165,7 +165,7 @@ client:
         # Memory for the flavor in MB
         ram: 2048
         # Size of local disk in GB
-        disk: 0
+        disk: 20
 
     # Traffic shaping - VM Placement hint
     # Availability zone to use for clients in the client cloud
@@ -287,9 +287,9 @@ client:
     # Volumes size in GB for each VM
     #
     # Note: Will effect only in storage testing.
-    disk_size: 1
+    disk_size: 20
 
-    # The size of the test file for running IO tests in GiB. Must be less or
+    # The size of the test file for running IO tests in GB. Must be less or
     # equal than disk_size.
     #
     # Note: Due to the unit calculation difference and the overhead of the
