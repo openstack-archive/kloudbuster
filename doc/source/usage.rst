@@ -314,14 +314,19 @@ This section controls how the Storage tests will be performed. All the fields
 are self-explained, and you can create your own test case with customized
 parameters.
 
-* **client:volume_size**
+* **client:storage_target**
 
-This controls the size of the Cinder volume to be attached to each VM instance.
-(in GB)
+KloudBuster supports to test the storage performance on Cinder volumes or
+ephemeral disks. Specify the testing target here.
+
+* **client:disk_size**
+
+This controls the size of the Cinder volume or ephemeral disk to be attached to
+each VM instance. (in GB)
 
 * **client:io_file_size**
 
-This controls the size of the test file to be used for storage testing. (in GiB)
+This controls the size of the test file to be used for storage testing. (in GB)
 
 
 Advanced Features
