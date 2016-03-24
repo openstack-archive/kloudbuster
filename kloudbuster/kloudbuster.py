@@ -262,6 +262,7 @@ class KloudBuster(object):
         self.client_vm_create_thread = None
         self.kb_runner = None
         self.fp_logfile = None
+        self.kloud = None
 
     def get_hypervisor_list(self, cred):
         creden_nova = {}

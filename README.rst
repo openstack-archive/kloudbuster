@@ -2,14 +2,17 @@
 Overview
 ========
 
-How good is your OpenStack data or storage plane under real heavy load?
+How good is your OpenStack data plane or storage plane under real heavy load?
 
 KloudBuster is a tool that can load the data or storage plane of any OpenStack
 cloud at massive scale and can measure how well the cloud behaves under load.
 
-Anybody with very basic knowledge of OpenStack, data plane and storage
+Anybody with basic knowledge of OpenStack, data plane and storage
 performance concepts can use the tool and get scale numbers for any OpenStack
-cloud straight off the box wth pre-defined default workloads.
+cloud straight off the box with pre-defined default workloads.
+
+No need for complex installation as the KloudBuster installation takes care of
+all the dependencies.
 
 
 Features
@@ -30,6 +33,7 @@ Features
   that much)
 
 * Data plane with HTTP traffic load:
+
    * Can load the data plane with one OpenStack cloud (single-cloud operations
      for L3 East-West scale) or 2 OpenStack clouds (dual-cloud operations with
      one cloud hosting the HTTP servers and the other loading HTTP traffic for
@@ -53,10 +57,11 @@ Features
    * Can support periodic reporting and aggregation of results
 
 * Storage load:
-   * VM-level Cinder volume file I/O using FIO running inside VMs (not bare
-     metal)
 
-   * Supports random amd sequential file access mode
+   * VM-level Cinder volume (block storage) or Ephemeral disk file I/O performance measurement
+     using FIO running inside VMs (not bare metal)
+
+   * Supports random and sequential file access mode
 
    * Supports read, write and read/write mix
 
@@ -65,7 +70,7 @@ Features
    * User configurable storage workload profiles
 
 * Supports automated scale progressions (VM count series in any multiple
-  increment)
+  increment) to reduce dramatically scale testing time
 
 * Highly efficient and scalable metric aggregation
 
@@ -73,10 +78,11 @@ Features
 
 * Manual cleanup script
 
-* KloudBuster Web Server with Web UI to drive scale test from your browser
+* KloudBuster Server to drive scale test:
 
-* KloudBuster REST Server allows external programs to drive scale automation
-  using REST
+    * from any browser (KloudBuster Web UI)
+
+    * from any external programs (KloudBuster REST API)
 
 * Aggregated results provide an easy to understand way to assess the scale of
   the cloud under test
@@ -85,11 +91,25 @@ Features
   Catalog (https://apps.openstack.org/)
 
 
-Limitations
------------
+Limitations and Non-Goals
+-------------------------
 
 * Requires Neutron networking (does not support Nova networking)
 * Only supports HTTP and storage traffic in this version
+
+Unlike some other scaling test frameworks, KloudBuster does *not* attempt to:
+
+* provide a scale test framework that works across different cloud technologies
+  (OpenStack + AWS + Google Cloud + ...) - we are only focusing on OpenStack
+
+* provide a scale test framework that is flexible and programmable to do everything - 
+  we just focus on opinionated and well targeted performance and scale areas
+  with sensible use cases and available in a fully integrated and easy to consume
+  packaged format
+
+* replace bare metal and domain specific native performance and scale frameworks 
+  (line level traffic generators, ceph specific performance and scale tools...)
+
 
 
 Contributions and Feedbacks
@@ -126,8 +146,9 @@ KloudBuster VM images contain multiple open source license components:
 Although the VM image includes a binary copy of the FIO code, it does not
 include the source code used to build it.  In accordance to the GPL V2 license
 related to the inclusion of binary copies of FIO, the source code used to build
-the binary copy was not modified and can be found directly at
-`<https://github.com/axboe/fio>`_.
+the FIO binary copy was not modified and can be found directly at
+`<https://github.com/axboe/fio>`_ or can be obtained by email request to the
+maintainer of KloudBuster.
 
 
 Links
