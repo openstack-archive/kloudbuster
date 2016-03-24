@@ -14,6 +14,7 @@
 #    under the License.
 
 from concurrent.futures import ThreadPoolExecutor
+import datetime
 import json
 import os
 import sys
@@ -257,7 +258,7 @@ class KloudBuster(object):
             LOG.info('Automatically setting "use_floatingip" to True for server cloud...')
 
         self.kb_proxy = None
-        self.final_result = []
+        self.final_result = {}
         self.server_vm_create_thread = None
         self.client_vm_create_thread = None
         self.kb_runner = None
@@ -414,6 +415,15 @@ class KloudBuster(object):
                     not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)
 
+    def gen_metadata(self):
+        self.final_result = {}
+        self.final_result['time'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.final_result['test_mode'] = 'storage' if self.storage_mode else 'http'
+        if self.storage_mode:
+            self.final_result['storage_target'] = self.client_cfg.storage_target
+        self.final_result['version'] = __version__
+        self.final_result['kb_result'] = []
+
     def run(self):
         try:
             self.stage()
@@ -528,11 +538,11 @@ class KloudBuster(object):
         self.print_provision_info()
 
     def run_test(self, test_only=False):
-        self.final_result = []
+        self.gen_metadata()
         self.kb_runner.config = self.client_cfg
         # Run the runner to perform benchmarkings
         for run_result in self.kb_runner.run(test_only):
-            self.final_result.append(self.kb_runner.tool_result)
+            self.final_result['kb_result'].append(self.kb_runner.tool_result)
         LOG.info('SUMMARY: %s' % self.final_result)
 
     def stop_test(self):
