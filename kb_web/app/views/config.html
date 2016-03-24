@@ -311,12 +311,12 @@
 
               <div class="panel panel-default" style="margin: 0">
                 <div class="panel-body">
-                  <md-radio-group ng-model="choose_disk_size1" ng-init="choose_disk_size1=0">
+                  <md-radio-group ng-model="choose_disk_size1" ng-init="config.server.flavor.disk==0?choose_disk_size1=0:choose_disk_size1=1">
                     <md-radio-button value="0" ng-click="config.server.flavor.disk=20" class="md-primary" style="margin:5px">Use default root disk size</md-radio-button>
                     <md-radio-button value="1" class="md-primary" style="margin:5px">Use specific root disk size</md-radio-button>
                   </md-radio-group>
 
-                  <md-content layout-padding ng-if="choose_disk_size1==1">
+                  <md-content layout-padding ng-if="choose_disk_size1==1" ng-init="config.server.flavor.disk==0?config.server.flavor.disk=20:''">
                     <md-input-container class="col-md-6">
                       <label>Root Disk Size (GB)</label>
                       <input type="number" min="1" max="" step="" name="server_disk" id="server_disk"
@@ -420,12 +420,12 @@
 
               <div class="panel panel-default" style="margin: 0">
                 <div class="panel-body">
-                  <md-radio-group ng-model="choose_disk_size2" ng-init="choose_disk_size2=0">
+                  <md-radio-group ng-model="choose_disk_size2" ng-init="config.client.flavor.disk==0?choose_disk_size2=0:choose_disk_size2=1">
                     <md-radio-button value="0" ng-click="config.client.flavor.disk=20" class="md-primary" style="margin:5px">Use default root disk size</md-radio-button>
                     <md-radio-button value="1" class="md-primary" style="margin:5px">Use specific root disk size</md-radio-button>
                   </md-radio-group>
 
-                  <md-content layout-padding ng-if="choose_disk_size2==1">
+                  <md-content layout-padding ng-if="choose_disk_size2==1"  ng-init="config.client.flavor.disk==0?config.client.flavor.disk=20:''">
                     <md-input-container class="col-md-6">
                       <label>Root Disk Size (GB)</label>
                       <input type="number" min="1" max="" step="" name="client_disk" id="client_disk"
