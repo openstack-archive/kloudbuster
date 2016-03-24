@@ -70,7 +70,9 @@ class KBRunner_Storage(KBRunner):
         msg = "Stage %d: %d VM(s)%s%s" % (stage, vm_count, iops_str, tp_str)
         return msg
 
-    def init_volume(self, active_range, timeout=30):
+    def init_volume(self, active_range):
+        # timeout is calculated as 30s/GB
+        timeout = 30 * self.config.io_file_size
         parameter = {'size': str(self.config.io_file_size) + 'GiB'}
         parameter['mkfs'] = True if self.config.storage_target == 'volume' else False
 
@@ -102,7 +104,7 @@ class KBRunner_Storage(KBRunner):
                 if self.config.storage_target == 'volume':
                     LOG.info("Initializing volume and setting up filesystem...")
                 else:
-                    LOG.info("Initializing ephermeral disk...")
+                    LOG.info("Initializing ephemeral disk...")
                 self.init_volume(active_range)
 
                 if self.config.prompt_before_run:
