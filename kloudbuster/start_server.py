@@ -29,12 +29,15 @@ def exec_command(cmd, cwd=None, show_console=False):
 def main():
     cwd = resource_filename(__name__, 'config.py')
     cwd = cwd[:cwd.rfind('/')] + '/../kb_server'
-    cmd = ['stdbuf', '-oL', 'python', 'setup.py', 'develop']
-    rc = exec_command(cmd, cwd=cwd)
-    if not rc:
-        cmd = ['stdbuf', '-oL', 'pecan', 'serve', 'config.py']
-        rc = exec_command(cmd, cwd=cwd, show_console=True)
-        sys.exit(rc)
+    try:
+        cmd = ['stdbuf', '-oL', 'python', 'setup.py', 'develop']
+        rc = exec_command(cmd, cwd=cwd)
+        if not rc:
+            cmd = ['stdbuf', '-oL', 'pecan', 'serve', 'config.py']
+            rc = exec_command(cmd, cwd=cwd, show_console=True)
+            sys.exit(rc)
+    except KeyboardInterrupt:
+        print 'Terminating server...'
 
 if __name__ == '__main__':
     main()

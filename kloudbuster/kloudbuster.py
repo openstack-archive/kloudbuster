@@ -713,13 +713,16 @@ def create_html(hfp, template, task_re):
 
 def generate_charts(json_results, html_file_name):
     '''Save results in HTML format file.'''
-    LOG.info('Saving results in HTML file: ' + html_file_name + "...")
-    if json_results['test_mode'] == "storage":
-        template_path = resource_filename(__name__, 'template_storage.html')
-    elif json_results['test_mode'] == "http":
-        template_path = resource_filename(__name__, 'template_http.html')
-    else:
-        LOG.error('Error parsing the json file')
+    LOG.info('Saving results to HTML file: ' + html_file_name + '...')
+    try:
+        if json_results['test_mode'] == "storage":
+            template_path = resource_filename(__name__, 'template_storage.html')
+        elif json_results['test_mode'] == "http":
+            template_path = resource_filename(__name__, 'template_http.html')
+        else:
+            raise
+    except Exception:
+        LOG.error('Invalid json file.')
         sys.exit(1)
     with open(html_file_name, 'w') as hfp, open(template_path, 'r') as template:
         create_html(hfp,
@@ -783,10 +786,11 @@ def main():
     CONF.set_default("verbose", True)
     full_version = __version__ + ', VM image: ' + kb_vm_agent.get_image_name()
     CONF(sys.argv[1:], project="kloudbuster", version=full_version)
+    logging.setup("kloudbuster")
 
     if CONF.charts_from_json:
         if not CONF.html:
-            print 'Error: you must specify the destination html file name using --html'
+            LOG.error('Destination html filename must be specified using --html.')
             sys.exit(1)
         with open(CONF.charts_from_json, 'r') as jfp:
             json_results = json.load(jfp)
@@ -797,7 +801,6 @@ def main():
         print resource_string(__name__, "cfg.scale.yaml")
         sys.exit(0)
 
-    logging.setup("kloudbuster")
     try:
         kb_config = KBConfig()
         kb_config.init_with_cli()

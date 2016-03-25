@@ -52,7 +52,7 @@
 </nav>
 
 <div class="container">
-
+    <h3>KloudBuster Storage Testing Report</h3>
     <ul class="nav nav-tabs">
         <li ng-repeat="title in titleList" ng-class="{active: current_index==$index}" ng-click="handleEvent($event, $index,'')">
             <a data-toggle="tab" aria-expanded="true">
@@ -165,7 +165,7 @@
         }
     };
 
-    var storage_target = {"volume":"Cinder Volume","ephemeral":"Ephemeral Volume"};
+    var storage_target = {"volume":"Cinder Volume","ephemeral":"Ephemeral Disk"};
 
     angular.module("app", ["n3-line-chart", "ngTable"]).controller("MainCtrl", function ($scope, ngTableParams) {
         $scope.current_index = 0;

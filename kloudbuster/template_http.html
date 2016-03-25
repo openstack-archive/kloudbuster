@@ -46,18 +46,25 @@
 <body ng-controller="MainCtrl">
 <nav class="navbar navbar-default">
     <div class="container-fluid">
-        <div class="navbar-header">
-            <a class="navbar-brand" href="#">KloudBuster Report</a>
-        </div>
+        <a class="navbar-brand" ng-href="#/" style="font-family: Arial">
+            <span style="color:#DF314D">K</span>loudBuster
+        </a>
+
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <li class="active">
+                    <a><span class="glyphicon" aria-hidden="true" ></span>[[label]]</a>
+                </li>
+            </ul>
             <!--<ul class="nav navbar-nav navbar-right">-->
                 <!--<li><a href="#"></a></li>-->
             <!--</ul>-->
         </div>
     </div>
 </nav>
+
 <div class="container">
-    <h3>[[label]]</h3>
+    <h3>KloudBuster HTTP Testing Report</h3>
     <div class="my-chart" style="height: 400px;margin-bottom: 10%">
         <linechart data="data" options="options"></linechart>
     </div>
