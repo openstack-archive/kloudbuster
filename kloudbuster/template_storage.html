@@ -44,9 +44,9 @@
                     <a><span class="glyphicon" aria-hidden="true" ></span>[[label]]</a>
                 </li>
             </ul>
-            <ul class="nav navbar-nav navbar-right">
-                <li><a href="#">[[time]]</a></li>
-            </ul>
+            <!--<ul class="nav navbar-nav navbar-right">-->
+                <!--<li><a href="#"></a></li>-->
+            <!--</ul>-->
         </div>
     </div>
 </nav>
@@ -70,7 +70,8 @@
         </li>
     </ul>
 
-    <h4 style="text-align: center">{{modes[current_mode_name]["title"]}} {{current_title}} ({{current_mode_description}})</h4>
+    <h4 style="text-align: center"> {{current_mode_description}}</h4>
+    <h5 style="text-align: center">{{modes[current_mode_name]["title"]}} {{current_title}} ({{storage_target[from_outside.storage_target]}})</h5>
 
     <div class="my-chart" style="height: 550px;margin-bottom: 5%">
         <h6 style="margin-bottom:0"><span>{{current_mode["y_axis"]}}</span><span style="float:right">Latency(ms)</span></h6>
@@ -102,6 +103,11 @@
         </tr>
     </table>
 </div>
+
+<footer style="text-align: center;">
+    <hr style="margin:2px"/>
+    <h6 style="color:gray">{{from_outside["time"]}} - KloudBuster {{from_outside["version"]}}</h6>
+</footer>
 
 <script type="text/javascript">
     var num = -1;
@@ -159,13 +165,17 @@
         }
     };
 
+    var storage_target = {"volume":"Cinder Volume","ephemeral":"Ephemeral Volume"};
 
     angular.module("app", ["n3-line-chart", "ngTable"]).controller("MainCtrl", function ($scope, ngTableParams) {
         $scope.current_index = 0;
         $scope.modes = modes;
+        $scope.storage_target = storage_target;
 
-        content = [[result]];
 
+        $scope.from_outside = [[result]];
+
+        content = $scope.from_outside["kb_result"];
         $scope.titleList = [];
         get_title($scope,content);
 

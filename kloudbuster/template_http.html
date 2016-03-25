@@ -50,9 +50,9 @@
             <a class="navbar-brand" href="#">KloudBuster Report</a>
         </div>
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav navbar-right">
-                <li><a href="#">[[time]]</a></li>
-            </ul>
+            <!--<ul class="nav navbar-nav navbar-right">-->
+                <!--<li><a href="#"></a></li>-->
+            <!--</ul>-->
         </div>
     </div>
 </nav>
@@ -78,9 +78,18 @@
     </table>
 </div>
 
+<footer style="text-align: center;">
+    <hr style="margin:2px"/>
+    <h6 style="color:gray">{{from_outside["time"]}} - KloudBuster {{from_outside["version"]}}</h6>
+</footer>
+
 <script type="text/javascript">
     angular.module("app", ["n3-line-chart", "ngTable"]).controller("MainCtrl", function ($scope, color, ngTableParams) {
-        $scope.result = [[result]];
+
+        $scope.from_outside = [[result]];
+
+        $scope.result = $scope.from_outside["kb_result"];
+
         var countRep = $scope.result.length;
         $scope.data = {dataset0: [{x: 0}, {x: 10}, {x: 20}, {x: 30}, {x: 40}, {x: 50}, {x: 60}]};
         $scope.options = {

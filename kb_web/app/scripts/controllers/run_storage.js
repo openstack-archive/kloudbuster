@@ -738,9 +738,9 @@ angular.module('kbWebApp')
           //response.data=
           //response.data = JSON.parse(response.data);
           //console.log(response.data);
-          if(response.data.length>0 && countRep < response.data.length) {
-            console.log("get report totally:"+response.data.length);
-            countRep = response.data.length;
+          if(response.data["kb_result"].length>0 && countRep < response.data["kb_result"].length) {
+            console.log("get report totally:"+response.data["kb_result"].length);
+            countRep = response.data["kb_result"].length;
 
             storageMode.setResult(response.data);
 
@@ -757,7 +757,7 @@ angular.module('kbWebApp')
     };
 
     $scope.draw = function(results){
-      $scope.results = results;
+      $scope.results = results["kb_result"];
       var countRep = $scope.results.length;
       var countRep2 = $scope.results[0].length;
       var mode = $scope.current_mode['name'];

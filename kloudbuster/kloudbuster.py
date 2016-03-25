@@ -699,9 +699,7 @@ class KloudBuster(object):
         return quota_dict
 
 def create_html(hfp, template, task_re):
-    cur_time = time.strftime('%Y-%m-%d %A %X %Z', time.localtime(time.time()))
     for line in template:
-        line = line.replace('[[time]]', cur_time)
         if CONF.label:
             line = line.replace('[[label]]', CONF.label)
         else:
@@ -716,10 +714,13 @@ def create_html(hfp, template, task_re):
 def generate_charts(json_results, html_file_name):
     '''Save results in HTML format file.'''
     LOG.info('Saving results in HTML file: ' + html_file_name + "...")
-    if CONF.storage:
+    if json_results['test_mode'] == "storage":
         template_path = resource_filename(__name__, 'template_storage.html')
-    else:
+    elif json_results['test_mode'] == "http":
         template_path = resource_filename(__name__, 'template_http.html')
+    else:
+        LOG.error('Error parsing the json file')
+        sys.exit(1)
     with open(html_file_name, 'w') as hfp, open(template_path, 'r') as template:
         create_html(hfp,
                     template,

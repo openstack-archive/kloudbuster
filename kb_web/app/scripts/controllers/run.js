@@ -586,10 +586,10 @@ angular.module('kbWebApp')
       kbHttp.getMethod2("/kloudbuster/report/"+$scope.sessionID+"?final=true")
         .then(
         function(response) {  //  .resolve
-          console.log("get report totally:"+response.data.length);
+          console.log("get report totally:"+response.data["kb_result"].length);
           //console.log(response.data);
-          if(response.data.length>0 && countRep < response.data.length) {
-            countRep = response.data.length;
+          if(response.data["kb_result"].length>0 && countRep < response.data["kb_result"].length) {
+            countRep = response.data["kb_result"].length;
 
             $scope.refreshChart();
             //console.log($scope.data);
@@ -598,7 +598,7 @@ angular.module('kbWebApp')
 
             for(var i = 0 ; i < countRep; i++)
             {
-              $scope.result = response.data[i];
+              $scope.result = response.data["kb_result"][i];
               var pickColor = color.getColor();
               if($scope.config.client.progression.enabled) {
                 //$scope.name = $scope.config.client.progression.vm_start + $scope.config.client.progression.vm_step * i;
