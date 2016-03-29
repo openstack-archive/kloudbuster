@@ -89,7 +89,7 @@ def fetch_resources(fetcher, options=None):
         except AttributeError:
             resid = res['id']
             resname = res['name']
-        if resource_name_re.match(resname):
+        if resname and resource_name_re.match(resname):
             resources[resid] = resname
     return resources
 

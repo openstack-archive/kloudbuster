@@ -19,12 +19,15 @@ import log as logging
 
 LOG = logging.getLogger(__name__)
 
+class KBVolAttachException(Exception):
+    pass
+
+
 class BaseCompute(object):
     """
     The Base class for nova compute resources
     1. Creates virtual machines with specific configs
     """
-
 
     def __init__(self, vm_name, network):
         self.novaclient = network.router.user.nova_client
@@ -92,6 +95,8 @@ class BaseCompute(object):
             time.sleep(2)
 
     def attach_vol(self):
+        if self.vol.status != 'available':
+            raise KBVolAttachException('Volume must be in available status before attaching.')
         for _ in range(10):
             try:
                 self.novaclient.volumes.create_server_volume(self.instance.id, self.vol.id)
