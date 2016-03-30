@@ -16,7 +16,7 @@
 # <version> is the KloudBuster test VM image version (e.g. "kloudbuster_v3")
 # Leave empty to use the default test VM image (recommended).
 # If non empty use quotes if there are space characters in the name (e.g. 'my image')
-image_name:
+image_name: kloudbuster_v6
 
 # Keystone admin role name (default should work in most deployments)
 keystone_admin_role: "admin"
@@ -54,7 +54,7 @@ server:
         # Memory for the flavor in MB
         ram: 2048
         # Size of local disk in GB
-        disk: 0
+        disk: 20
 
     # Number of tenants to be created on the cloud
     # KloudBuster will also create 1 user automatically for each tenant
@@ -70,6 +70,7 @@ server:
 
     # Number of VM instances to be created within the context of each Network
     vms_per_network: 1
+    vms_per_network_multicast: 1
 
     # Number of security groups per network
     secgroups_per_network: 1
@@ -102,18 +103,11 @@ client:
     # unless it reaches the scale defined in the upper sections, or the stop limit.
     progression:
         # Enable/Disable the progression
-        enabled: False
-        # The starting count of VMs:
-        #     0: Start directly from vm_multiple;
-        #     1: Start from 1 VM;
+        enabled: Disabled
+        # The starting count of VMs
         vm_start: 1
         # The steping for the VM count for each stage
-        # e.g. KloudBuster will run iterations on below sequences:
-        #      {'vm_start': 1, 'vm_multiple': 2}: 1, 2, 4, 6, 8...    [DEFAULT]
-        #      {'vm_start': 1, 'vm_multiple': 5}: 1, 5, 10, 15, 20...
-        #      {'vm_start': 0, 'vm_multiple': 1}: 1, 2, 3, 4, 5...
-        #      {'vm_start': 0, 'vm_multiple': 5}: 5, 10, 15, 20...
-        vm_multiple: 2
+        vm_step: 1
         # The stop condition for HTTP benchmarking, it is used for KloudBuster to
         # determine when to stop the progression, and do the cleanup if needed.
         # It defines as:
@@ -153,6 +147,7 @@ client:
         # KloudBuster will continue the progression run if the degrading percentile
         # is within (less or equal) the range defined below.
         storage_stop_limit: 20
+        
 
     # Assign floating IP for every client side test VM
     # Default: no floating IP (only assign internal fixed IP)
@@ -165,7 +160,7 @@ client:
         # Memory for the flavor in MB
         ram: 2048
         # Size of local disk in GB
-        disk: 0
+        disk: 20
 
     # Traffic shaping - VM Placement hint
     # Availability zone to use for clients in the client cloud
@@ -209,23 +204,38 @@ client:
         report_interval: 0
         # Duration of testing tools (seconds)
         duration: 30
+        
+    multicast_tool_configs:
+        multicast_address_start: '231.0.0.1'
+        external_sender_test_mode: False
+        external_sender: '0.0.0.0' #Disabled. Set to use a custom nuttcp server
+        external_sender_port: 5200 #Disabled. Set to use a custom nuttcp server 
+        receivers: [1]
+        addresses: [1]
+        ports: [1]
+        pktsizes: [64, 1316, 4096, 9000]
+        bitrates: [ 0.1, 1, 10, 100, 270, 500, 1000, 1500, 3000, 10000] #in Mbps
+        address_test_pattern: [1]
+        port_test_pattern: [1]
+        ntp_clocks: ["0.north-america.pool.ntp.org", "1.north-america.pool.ntp.org"] #The closer the better.
+        
+        duration: 4
+        
+        
+        
 
     # Storage tool specific configs (per VM)
     # Multiple factors can impact the storage performance numbers, and KloudBuster is defining
-    # a default profile which consists of six testing scenarios:
+    # a default profile which consists of four testing scenarios:
     # (1) Random read
     # (2) Random write
-    # (3) Random mixed read/write
-    # (4) Sequential read
-    # (5) Sequential write
-    # (6) Sequential mixed read/write
+    # (3) Sequential read
+    # (4) Sequential write
     #
     # Accepted testing parameters for each scenario:
-    # description: (Required)
-    #     A string describing the test case
     # mode: (Required)
     #     Self-explained with the name, must be one of the below:
-    #     ['randread', 'randwrite', 'randrw', 'read', 'write', 'rw']
+    #     ['randread', 'randwrite', 'read', 'write']
     # runtime: (Required)
     #     Test duration in seconds
     # block_size: (Required, default=4k)
@@ -236,62 +246,33 @@ client:
     #     Cap the bandwidth to this number of IOPS
     # rate: (Optional, default=unlimited)
     #     Cap the bandwidth to this number of bytes/sec, normal postfix rules apply
-    # rwmixread: (Required when mode is 'randrw' or 'rw')
-    #     Percentage of a mixed workload that should be reads
-    # extra_opts: (Optional, default=None)
-    #     Extra options that will be added to the FIO client
     storage_tool_configs:
-        - description: 'Random Read'
-          mode: 'randread'
+        - mode: 'randread'
           runtime: 30
           block_size: '4k'
           iodepth: 4
           rate_iops: 100
-        - description: 'Random Write'
-          mode: 'randwrite'
+        - mode: 'randwrite'
           runtime: 30
           block_size: '4k'
           iodepth: 4
           rate_iops: 100
-        - description: 'Random Read/Write'
-          mode: 'randrw'
-          runtime: 30
-          block_size: '4k'
-          iodepth: 4
-          rate_iops: 100
-          rwmixread: 70
-        - description: 'Sequential Read'
-          mode: 'read'
+        - mode: 'read'
           runtime: 30
           block_size: '64k'
           iodepth: 64
           rate: '60M'
-        - description: 'Sequential Write'
-          mode: 'write'
+        - mode: 'write'
           runtime: 30
           block_size: '64k'
           iodepth: 64
           rate: '60M'
-        - description: 'Sequential Read/Write'
-          mode: 'rw'
-          runtime: 30
-          block_size: '64k'
-          iodepth: 64
-          rate: '60M'
-          rwmixread: 70
-
-    # KloudBuster supports to run storage tests on Cinder Volumes or Ephemeral
-    # Disks. Available options to be configured: ['volume', 'ephemeral'].
-    storage_target: 'volume'
 
     # Volumes size in GB for each VM
-    #
-    # Note: Will effect only in storage testing.
-    disk_size: 20
-
-    # The size of the test file for running IO tests in GB. Must be less or
-    # equal than disk_size.
-    io_file_size: 1
+    # Will effect only in storage testing mode
+    volume_size: 1
 
     # Prompt before running benchmarking tools
     prompt_before_run: False
+    
+    

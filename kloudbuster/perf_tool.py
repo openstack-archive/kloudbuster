@@ -19,7 +19,6 @@ import log as logging
 
 LOG = logging.getLogger(__name__)
 
-
 # A base class for all tools that can be associated to an instance
 class PerfTool(object):
     __metaclass__ = abc.ABCMeta

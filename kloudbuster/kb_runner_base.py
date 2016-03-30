@@ -16,11 +16,11 @@ from __future__ import division
 import abc
 from collections import deque
 from distutils.version import LooseVersion
-import threading
-import time
-
+import json
 import log as logging
 import redis
+import threading
+import time
 
 # A set of warned VM version mismatches
 vm_version_mismatches = set()
@@ -68,7 +68,7 @@ class KBRunner(object):
             self.message_queue.append(message)
 
     def setup_redis(self, redis_server, redis_server_port=6379, timeout=120):
-        LOG.info("Setting up the redis connections...")
+        LOG.info("Setting up the redis connections..." + redis_server)
         connection_pool = redis.ConnectionPool(
             host=redis_server, port=redis_server_port, db=0)
 
@@ -112,6 +112,8 @@ class KBRunner(object):
         LOG.kbdebug(message)
         self.redis_obj.publish(self.orches_chan_name, message)
 
+
+
     def polling_vms(self, timeout, polling_interval=None):
         '''
         Polling all VMs for the status of execution
@@ -124,6 +126,8 @@ class KBRunner(object):
         clist = self.client_dict.copy()
         samples = []
         perf_tool = self.client_dict.values()[0].perf_tool
+        if not self.result:
+            self.result = {}
 
         while (retry < retry_count and len(clist)):
             time.sleep(polling_interval)
@@ -166,6 +170,14 @@ class KBRunner(object):
                     else:
                         # Command returned with zero, command succeed
                         cnt_succ = cnt_succ + 1
+
+                elif cmd == 'DONE_MC':  # Multicast Done with batch.
+                    instance = self.client_dict[vm_name]
+                    try:
+                        self.result = json.loads(payload['data']['stdout'])
+                    except Exception:
+                        LOG.error(payload['data']['stderr'])
+                    clist = []
                 elif cmd == 'DEBUG':
                     LOG.info('[%s] %s' + (vm_name, payload['data']))
                 else:
@@ -176,7 +188,8 @@ class KBRunner(object):
             if sample_count != 0:
                 log_msg += " (%d sample(s) received)" % sample_count
             LOG.info(log_msg)
-
+            if not self.report:
+                self.report = {}
             if sample_count != 0:
                 report = perf_tool.consolidate_samples(samples, len(self.client_dict))
                 self.report['seq'] = self.report['seq'] + 1

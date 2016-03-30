@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright 2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright 2016 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -13,9 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from concurrent.futures import ThreadPoolExecutor
-import datetime
 import json
+from multiprocessing.pool import ThreadPool
 import os
 import sys
 import threading
@@ -23,6 +22,7 @@ import time
 import traceback
 import webbrowser
 
+from __init__ import __version__
 import base_compute
 import base_network
 import glanceclient.exc as glance_exception
@@ -31,6 +31,7 @@ from kb_config import KBConfig
 from kb_res_logger import KBResLogger
 from kb_runner_base import KBException
 from kb_runner_http import KBRunner_HTTP
+from kb_runner_multicast import KBRunner_Multicast
 from kb_runner_storage import KBRunner_Storage
 from kb_scheduler import KBScheduler
 import kb_vm_agent
@@ -38,7 +39,6 @@ from keystoneclient.v2_0 import client as keystoneclient
 import log as logging
 from novaclient.client import Client as novaclient
 from oslo_config import cfg
-import pbr.version
 from pkg_resources import resource_filename
 from pkg_resources import resource_string
 from tabulate import tabulate
@@ -46,12 +46,9 @@ import tenant
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
-__version__ = pbr.version.VersionInfo('kloudbuster').version_string_with_vcs()
-
 
 class KBVMCreationException(Exception):
     pass
-
 
 def create_keystone_client(creds):
     """
@@ -60,17 +57,19 @@ def create_keystone_client(creds):
     creds = creds.get_credentials()
     return (keystoneclient.Client(endpoint_type='publicURL', **creds), creds['auth_url'])
 
-
 class Kloud(object):
-    def __init__(self, scale_cfg, cred, reusing_tenants, testing_side=False, storage_mode=False):
+    def __init__(self, scale_cfg, cred, reusing_tenants,
+                 testing_side=False, storage_mode=False, multicast_mode=False):
         self.tenant_list = []
         self.testing_side = testing_side
         self.scale_cfg = scale_cfg
         self.reusing_tenants = reusing_tenants
         self.storage_mode = storage_mode
+        self.multicast_mode = multicast_mode
         self.keystone, self.auth_url = create_keystone_client(cred)
         self.flavor_to_use = None
         self.vm_up_count = 0
+        self.n_servers = 0
         self.res_logger = KBResLogger()
         if testing_side:
             self.prefix = 'KBc'
@@ -78,12 +77,11 @@ class Kloud(object):
         else:
             self.prefix = 'KBs'
             self.name = 'Server Kloud'
+        LOG.info("Creating kloud: " + self.prefix)
+
         # pre-compute the placement az to use for all VMs
         self.placement_az = scale_cfg['availability_zone'] \
             if scale_cfg['availability_zone'] else None
-        self.exc_info = None
-
-        LOG.info("Creating kloud: " + self.prefix)
         if self.placement_az:
             LOG.info('%s Availability Zone: %s' % (self.name, self.placement_az))
 
@@ -111,16 +109,14 @@ class Kloud(object):
             nova_client = self.tenant_list[0].user_list[0].nova_client
             flavor_manager = base_compute.Flavor(nova_client)
             flavor_dict = self.scale_cfg.flavor
-            flavor_dict['ephemeral'] = self.scale_cfg.get('disk_size') \
-                if self.scale_cfg.get('storage_target') == 'ephemeral' else 0
             if self.testing_side:
-                flv = flavor_manager.create_flavor('KB.client', override=True, **flavor_dict)
+                flv = flavor_manager.create_flavor('kb.client', override=True, **flavor_dict)
                 self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
-                flv = flavor_manager.create_flavor('KB.proxy', override=True,
-                                                   ram=2048, vcpus=1, disk=0, ephemeral=0)
+                flv = flavor_manager.create_flavor('kb.proxy', override=True,
+                                                   ram=2048, vcpus=1, disk=20)
                 self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
             else:
-                flv = flavor_manager.create_flavor('KB.server', override=True, **flavor_dict)
+                flv = flavor_manager.create_flavor('kb.server', override=True, **flavor_dict)
                 self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
 
     def delete_resources(self):
@@ -135,10 +131,10 @@ class Kloud(object):
         if not self.reusing_tenants:
             flavor_manager = base_compute.Flavor(nova_client)
             if self.testing_side:
-                flavor_manager.delete_flavor('KB.client')
-                flavor_manager.delete_flavor('KB.proxy')
+                flavor_manager.delete_flavor('kb.client')
+                flavor_manager.delete_flavor('kb.proxy')
             else:
-                flavor_manager.delete_flavor('KB.server')
+                flavor_manager.delete_flavor('kb.server')
 
         for tnt in self.tenant_list:
             flag = flag & tnt.delete_resources()
@@ -183,14 +179,14 @@ class Kloud(object):
         LOG.info("Creating Instance: " + instance.vm_name)
         instance.create_server(**instance.boot_info)
         if not instance.instance:
-            raise KBVMCreationException(
-                'Instance %s takes too long to become ACTIVE.' % instance.vm_name)
+            raise KBVMCreationException()
 
         if instance.vol:
             instance.attach_vol()
 
         instance.fixed_ip = instance.instance.networks.values()[0][0]
-        if (instance.vm_name == "KB-PROXY") and (not instance.config['use_floatingip']):
+        u_fip = instance.config['use_floatingip']
+        if instance.vm_name == "KB-PROXY" and not u_fip and not self.multicast_mode:
             neutron_client = instance.network.router.user.neutron_client
             external_network = base_network.find_external_network(neutron_client)
             instance.fip = base_network.create_floating_ip(neutron_client, external_network)
@@ -207,14 +203,17 @@ class Kloud(object):
             # Store the fixed ip as ssh ip since there is no floating ip
             instance.ssh_ip = instance.fixed_ip
 
-    def create_vms(self, vm_creation_concurrency):
-        try:
-            with ThreadPoolExecutor(max_workers=vm_creation_concurrency) as executor:
-                for feature in executor.map(self.create_vm, self.get_all_instances()):
-                    self.vm_up_count += 1
-        except Exception:
-            self.exc_info = sys.exc_info()
+        if not instance.vm_name == "KB-PROXY" and self.multicast_mode:
+            nc = instance.network.router.user.neutron_client
+            base_network.disable_port_security(nc, instance.fixed_ip)
 
+
+
+    def create_vms(self, vm_creation_concurrency, mapping="1:1"):
+        tpool = ThreadPool(processes=vm_creation_concurrency)
+        insts = self.get_all_instances()
+        for _ in tpool.imap(self.create_vm, insts):
+            self.vm_up_count += 1
 
 class KloudBuster(object):
     """
@@ -227,13 +226,16 @@ class KloudBuster(object):
     """
 
     def __init__(self, server_cred, client_cred, server_cfg, client_cfg,
-                 topology, tenants_list, storage_mode=False):
+                 topology, tenants_list, storage_mode=False, multicast_mode=False):
         # List of tenant objects to keep track of all tenants
         self.server_cred = server_cred
         self.client_cred = client_cred
         self.server_cfg = server_cfg
         self.client_cfg = client_cfg
         self.storage_mode = storage_mode
+        self.multicast_mode = multicast_mode
+
+
         if topology and tenants_list:
             self.topology = None
             LOG.warning("REUSING MODE: Topology configs will be ignored.")
@@ -258,13 +260,11 @@ class KloudBuster(object):
             LOG.info('Automatically setting "use_floatingip" to True for server cloud...')
 
         self.kb_proxy = None
-        self.final_result = {}
+        self.final_result = []
         self.server_vm_create_thread = None
         self.client_vm_create_thread = None
         self.kb_runner = None
         self.fp_logfile = None
-        self.kloud = None
-        self.testing_kloud = None
 
     def get_hypervisor_list(self, cred):
         creden_nova = {}
@@ -275,8 +275,7 @@ class KloudBuster(object):
         creden_nova['auth_url'] = cred_dict['auth_url']
         creden_nova['project_id'] = cred_dict['tenant_name']
         creden_nova['version'] = 2
-        nova_client = novaclient(endpoint_type='publicURL',
-                                 http_log_debug=True, **creden_nova)
+        nova_client = novaclient(**creden_nova)
         for hypervisor in nova_client.hypervisors.list():
             if vars(hypervisor)['status'] == 'enabled':
                 ret_list.append(vars(hypervisor)['hypervisor_hostname'])
@@ -292,8 +291,7 @@ class KloudBuster(object):
         creden_nova['auth_url'] = cred_dict['auth_url']
         creden_nova['project_id'] = cred_dict['tenant_name']
         creden_nova['version'] = 2
-        nova_client = novaclient(endpoint_type='publicURL',
-                                 http_log_debug=True, **creden_nova)
+        nova_client = novaclient(**creden_nova)
         for az in nova_client.availability_zones.list():
             zoneName = vars(az)['zoneName']
             isAvail = vars(az)['zoneState']['available']
@@ -377,13 +375,39 @@ class KloudBuster(object):
     def gen_server_user_data(self, test_mode):
         LOG.info("Preparing metadata for VMs... (Server)")
         server_list = self.kloud.get_all_instances()
+        idx = 0
         KBScheduler.setup_vm_placement('Server', server_list, self.topology,
                                        self.kloud.placement_az, "Round-robin")
         if test_mode == 'http':
             for ins in server_list:
-                ins.user_data['role'] = 'Server'
+                ins.user_data['role'] = 'HTTP_Server'
                 ins.user_data['http_server_configs'] = ins.config['http_server_configs']
-                ins.boot_info['flavor_type'] = 'KB.server' if \
+                ins.boot_info['flavor_type'] = 'kb.server' if \
+                    not self.tenants_list['server'] else self.kloud.flavor_to_use
+                ins.boot_info['user_data'] = str(ins.user_data)
+        elif test_mode == 'multicast':
+                # Nuttcp tests over first /25
+                # Multicast Listeners over second /25
+            mc_ad_st = self.client_cfg['multicast_tool_configs']['multicast_address_start']
+            listener_addr_start = mc_ad_st.split(".")
+            listener_addr_start[-1] = "128"
+            naddrs = self.client_cfg['multicast_tool_configs']['addresses'][-1]
+            clocks = " ".join(self.client_cfg['multicast_tool_configs']['ntp_clocks'])
+            nports = self.client_cfg['multicast_tool_configs']['ports'][-1]
+            cfgs = self.client_cfg['multicast_tool_configs']
+            listener_addr_start = ".".join(listener_addr_start)
+            for ins in server_list:
+                ins.user_data['role'] = 'Multicast_Server'
+                ins.user_data['n_id'] = idx
+                idx += 1
+                ins.user_data['multicast_server_configs'] = cfgs
+                ins.user_data['multicast_addresses'] = naddrs
+                ins.user_data['multicast_ports'] = nports
+                ins.user_data['multicast_start_address'] = mc_ad_st
+                ins.user_data['multicast_listener_address_start'] = listener_addr_start
+                ins.user_data['ntp_clocks'] = clocks
+                ins.user_data['pktsizes'] = self.client_cfg.multicast_tool_configs.pktsizes
+                ins.boot_info['flavor_type'] = 'kb.server' if \
                     not self.tenants_list['server'] else self.kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)
 
@@ -392,37 +416,33 @@ class KloudBuster(object):
         client_list = self.testing_kloud.get_all_instances()
         KBScheduler.setup_vm_placement('Client', client_list, self.topology,
                                        self.testing_kloud.placement_az, "Round-robin")
-        if test_mode == 'http':
+        if test_mode != 'storage':
+            role = 'HTTP_Client' if test_mode == 'http' else 'Multicast_Client'
+            algo = '1:1' if test_mode == 'http' else '1:n'
             server_list = self.kloud.get_all_instances()
-            KBScheduler.setup_vm_mappings(client_list, server_list, "1:1")
+            clocks = " ".join(self.client_cfg['multicast_tool_configs']['ntp_clocks'])
+            KBScheduler.setup_vm_mappings(client_list, server_list, algo)
             for idx, ins in enumerate(client_list):
-                ins.user_data['role'] = 'HTTP_Client'
+                ins.user_data['role'] = role
                 ins.user_data['vm_name'] = ins.vm_name
                 ins.user_data['redis_server'] = self.kb_proxy.fixed_ip
                 ins.user_data['redis_server_port'] = 6379
                 ins.user_data['target_subnet_ip'] = server_list[idx].subnet_ip
                 ins.user_data['target_shared_interface_ip'] = server_list[idx].shared_interface_ip
-                ins.boot_info['flavor_type'] = 'KB.client' if \
+                if role == 'Multicast_Client':
+                    ins.user_data['ntp_clocks'] = clocks
+                ins.boot_info['flavor_type'] = 'kb.client' if \
                     not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)
-        elif test_mode == 'storage':
+        else:
             for idx, ins in enumerate(client_list):
                 ins.user_data['role'] = 'Storage_Client'
                 ins.user_data['vm_name'] = ins.vm_name
                 ins.user_data['redis_server'] = self.kb_proxy.fixed_ip
                 ins.user_data['redis_server_port'] = 6379
-                ins.boot_info['flavor_type'] = 'KB.client' if \
+                ins.boot_info['flavor_type'] = 'kb.client' if \
                     not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)
-
-    def gen_metadata(self):
-        self.final_result = {}
-        self.final_result['time'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.final_result['test_mode'] = 'storage' if self.storage_mode else 'http'
-        if self.storage_mode:
-            self.final_result['storage_target'] = self.client_cfg.storage_target
-        self.final_result['version'] = __version__
-        self.final_result['kb_result'] = []
 
     def run(self):
         try:
@@ -432,8 +452,6 @@ class KloudBuster(object):
             LOG.error(e.message)
         except Exception:
             traceback.print_exc()
-        except KeyboardInterrupt:
-            LOG.info('Terminating KloudBuster...')
         finally:
             if self.server_cfg['cleanup_resources'] and self.client_cfg['cleanup_resources']:
                 self.cleanup()
@@ -446,13 +464,15 @@ class KloudBuster(object):
         tenant_quota = self.calc_tenant_quota()
         if not self.storage_mode:
             self.kloud = Kloud(self.server_cfg, self.server_cred, self.tenants_list['server'],
-                               storage_mode=self.storage_mode)
+                               storage_mode=self.storage_mode, multicast_mode=self.multicast_mode)
+            mapping = "1:n" if self.multicast_mode else "1:1"
             self.server_vm_create_thread = threading.Thread(target=self.kloud.create_vms,
-                                                            args=[vm_creation_concurrency])
+                                                            args=[vm_creation_concurrency, mapping])
             self.server_vm_create_thread.daemon = True
         self.testing_kloud = Kloud(self.client_cfg, self.client_cred,
                                    self.tenants_list['client'], testing_side=True,
-                                   storage_mode=self.storage_mode)
+                                   storage_mode=self.storage_mode,
+                                   multicast_mode=self.multicast_mode)
         self.client_vm_create_thread = threading.Thread(target=self.testing_kloud.create_vms,
                                                         args=[vm_creation_concurrency])
         self.client_vm_create_thread.daemon = True
@@ -468,7 +488,7 @@ class KloudBuster(object):
 
         self.kb_proxy.vm_name = 'KB-PROXY'
         self.kb_proxy.user_data['role'] = 'KB-PROXY'
-        self.kb_proxy.boot_info['flavor_type'] = 'KB.proxy' if \
+        self.kb_proxy.boot_info['flavor_type'] = 'kb.proxy' if \
             not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
         if self.topology:
             proxy_hyper = self.topology.clients_rack[0]
@@ -478,71 +498,72 @@ class KloudBuster(object):
 
         self.kb_proxy.boot_info['user_data'] = str(self.kb_proxy.user_data)
         self.testing_kloud.create_vm(self.kb_proxy)
-
         if self.storage_mode:
             self.kb_runner = KBRunner_Storage(client_list, self.client_cfg,
                                               kb_vm_agent.get_image_version())
+        elif self.multicast_mode:
+            self.kb_runner = KBRunner_Multicast(client_list, self.client_cfg,
+                                                kb_vm_agent.get_image_version(),
+                                                self.single_cloud)
+
         else:
             self.kb_runner = KBRunner_HTTP(client_list, self.client_cfg,
                                            kb_vm_agent.get_image_version(),
                                            self.single_cloud)
-        self.kb_runner.setup_redis(self.kb_proxy.fip_ip)
-        if self.client_cfg.progression['enabled']:
+
+        self.kb_runner.setup_redis(self.kb_proxy.fip_ip or self.kb_proxy.fixed_ip)
+        if self.client_cfg.progression['enabled'] and not self.multicast_mode:
             log_info = "Progression run is enabled, KloudBuster will schedule " \
                        "multiple runs as listed:"
             stage = 1
             start = self.client_cfg.progression.vm_start
-            multiple = self.client_cfg.progression.vm_multiple
-            cur_vm_count = 1 if start else multiple
+            step = self.client_cfg.progression.vm_step
+            cur_vm_count = start
             total_vm = self.get_tenant_vm_count(self.server_cfg) * \
                 self.server_cfg['number_tenants']
             while (cur_vm_count <= total_vm):
                 log_info += "\n" + self.kb_runner.header_formatter(stage, cur_vm_count)
-                cur_vm_count = (stage + 1 - start) * multiple
+                cur_vm_count = start + stage * step
                 stage += 1
             LOG.info(log_info)
 
-        if self.single_cloud and not self.storage_mode:
+        if self.single_cloud and not self.storage_mode and not self.multicast_mode:
             # Find the shared network if the cloud used to testing is same
             # Attach the router in tested kloud to the shared network
             shared_net = self.testing_kloud.get_first_network()
             self.kloud.attach_to_shared_net(shared_net)
 
         # Create VMs in both tested and testing kloud concurrently
+        user_data_mode = "multicast" if self.multicast_mode else "http"
         if self.storage_mode:
             self.gen_client_user_data("storage")
             self.client_vm_create_thread.start()
             self.client_vm_create_thread.join()
         elif self.single_cloud:
-            self.gen_server_user_data("http")
+            self.gen_server_user_data(user_data_mode)
             self.server_vm_create_thread.start()
             self.server_vm_create_thread.join()
-            self.gen_client_user_data("http")
+            self.gen_client_user_data(user_data_mode)
             self.client_vm_create_thread.start()
             self.client_vm_create_thread.join()
         else:
-            self.gen_server_user_data("http")
-            self.gen_client_user_data("http")
+            self.gen_server_user_data(user_data_mode)
+            self.gen_client_user_data(user_data_mode)
             self.server_vm_create_thread.start()
             self.client_vm_create_thread.start()
             self.server_vm_create_thread.join()
             self.client_vm_create_thread.join()
-
-        if self.testing_kloud and self.testing_kloud.exc_info:
-            raise self.testing_kloud.exc_info[1], None, self.testing_kloud.exc_info[2]
-
-        if self.kloud and self.kloud.exc_info:
-            raise self.kloud.exc_info[1], None, self.kloud.exc_info[2]
 
         # Function that print all the provisioning info
         self.print_provision_info()
 
-    def run_test(self, test_only=False):
-        self.gen_metadata()
+    def run_test(self, http_test_only=False):
+        self.final_result = []
         self.kb_runner.config = self.client_cfg
         # Run the runner to perform benchmarkings
-        for run_result in self.kb_runner.run(test_only):
-            self.final_result['kb_result'].append(self.kb_runner.tool_result)
+        for run_result in self.kb_runner.run(http_test_only):
+            if not self.multicast_mode or len(self.final_result) == 0:
+                self.final_result.append(self.kb_runner.tool_result)
         LOG.info('SUMMARY: %s' % self.final_result)
 
     def stop_test(self):
@@ -671,17 +692,13 @@ class KloudBuster(object):
 
     def calc_cinder_quota(self):
         total_vm = self.get_tenant_vm_count(self.server_cfg)
-        svr_disk = self.server_cfg['flavor']['disk']\
-            if self.server_cfg['flavor']['disk'] != 0 else 20
         server_quota = {}
-        server_quota['gigabytes'] = total_vm * svr_disk
+        server_quota['gigabytes'] = total_vm * self.server_cfg['flavor']['disk']
         server_quota['volumes'] = total_vm
 
-        total_vm = total_vm * self.server_cfg['number_tenants']
-        clt_disk = self.client_cfg['flavor']['disk']\
-            if self.client_cfg['flavor']['disk'] != 0 else 20
         client_quota = {}
-        client_quota['gigabytes'] = total_vm * clt_disk + 20
+        total_vm = total_vm * self.server_cfg['number_tenants']
+        client_quota['gigabytes'] = total_vm * self.client_cfg['flavor']['disk'] + 20
         client_quota['volumes'] = total_vm
 
         return [server_quota, client_quota]
@@ -698,36 +715,22 @@ class KloudBuster(object):
 
         return quota_dict
 
-def create_html(hfp, template, task_re):
-    for line in template:
-        if CONF.label:
-            line = line.replace('[[label]]', CONF.label)
-        else:
-            line = line.replace('[[label]]', 'Report')
-        line = line.replace('[[result]]', task_re)
-        hfp.write(line)
-    if not CONF.headless:
-        # bring up the file in the default browser
-        url = 'file://' + os.path.abspath(CONF.html)
-        webbrowser.open(url, new=2)
-
-def generate_charts(json_results, html_file_name):
-    '''Save results in HTML format file.'''
-    LOG.info('Saving results to HTML file: ' + html_file_name + '...')
-    try:
-        if json_results['test_mode'] == "storage":
-            template_path = resource_filename(__name__, 'template_storage.html')
-        elif json_results['test_mode'] == "http":
-            template_path = resource_filename(__name__, 'template_http.html')
-        else:
-            raise
-    except Exception:
-        LOG.error('Invalid json file.')
-        sys.exit(1)
-    with open(html_file_name, 'w') as hfp, open(template_path, 'r') as template:
-        create_html(hfp,
-                    template,
-                    json.dumps(json_results, sort_keys=True))
+    def create_html(self, hfp, template, task_re):
+        cur_time = time.strftime('%Y-%m-%d %A %X %Z', time.localtime(time.time()))
+        for line in template:
+            line = line.replace('[[time]]', cur_time)
+            if CONF.label and CONF.storage:
+                line = line.replace('[[label]]', ' - ' + CONF.label)
+            elif CONF.label:
+                line = line.replace('[[label]]', CONF.label)
+            else:
+                line = line.replace('[[label]]', '')
+            line = line.replace('[[result]]', task_re)
+            hfp.write(line)
+        if not CONF.headless:
+            # bring up the file in the default browser
+            url = 'file://' + os.path.abspath(CONF.html)
+            webbrowser.open(url, new=2)
 
 def main():
     cli_opts = [
@@ -738,6 +741,9 @@ def main():
         cfg.BoolOpt("storage",
                     default=False,
                     help="Running KloudBuster to test storage performance"),
+        cfg.BoolOpt("multicast",
+                    default=False,
+                    help="Running KloudBuster to test multicast performance"),
         cfg.StrOpt("topology",
                    short="t",
                    default=None,
@@ -772,35 +778,26 @@ def main():
         cfg.StrOpt("json",
                    default=None,
                    help='store results in JSON format file'),
+        cfg.StrOpt("csv",
+                   default=None,
+                   help='store results in CSV format, multicast only.'),
         cfg.BoolOpt("no-env",
                     default=False,
                     help="Do not read env variables"),
         cfg.BoolOpt("show-config",
                     default=False,
-                    help="Show the default configuration"),
-        cfg.StrOpt("charts-from-json",
-                   default=None,
-                   help='create charts from json results and exit (requires --html)'),
+                    help="Show the default configuration")
     ]
     CONF.register_cli_opts(cli_opts)
     CONF.set_default("verbose", True)
     full_version = __version__ + ', VM image: ' + kb_vm_agent.get_image_name()
     CONF(sys.argv[1:], project="kloudbuster", version=full_version)
-    logging.setup("kloudbuster")
-
-    if CONF.charts_from_json:
-        if not CONF.html:
-            LOG.error('Destination html filename must be specified using --html.')
-            sys.exit(1)
-        with open(CONF.charts_from_json, 'r') as jfp:
-            json_results = json.load(jfp)
-        generate_charts(json_results, CONF.html)
-        sys.exit(0)
 
     if CONF.show_config:
         print resource_string(__name__, "cfg.scale.yaml")
         sys.exit(0)
 
+    logging.setup("kloudbuster")
     try:
         kb_config = KBConfig()
         kb_config.init_with_cli()
@@ -814,7 +811,7 @@ def main():
         kb_config.cred_tested, kb_config.cred_testing,
         kb_config.server_cfg, kb_config.client_cfg,
         kb_config.topo_cfg, kb_config.tenants_list,
-        storage_mode=CONF.storage)
+        storage_mode=CONF.storage, multicast_mode=CONF.multicast)
     if kloudbuster.check_and_upload_images():
         kloudbuster.run()
 
@@ -822,11 +819,30 @@ def main():
         '''Save results in JSON format file.'''
         LOG.info('Saving results in json file: ' + CONF.json + "...")
         with open(CONF.json, 'w') as jfp:
-            json.dump(kloudbuster.final_result, jfp, indent=4, sort_keys=True)
+            jfp.write(json.dump(kloudbuster.final_result, jfp, indent=4, sort_keys=True))
+
+    if CONF.multicast and CONF.csv and len(kloudbuster.final_result) > 0:
+        '''Save results in JSON format file.'''
+        LOG.info('Saving results in csv file: ' + CONF.csv + "...")
+        if kloudbuster.final_result[0] != {}:
+            with open(CONF.csv, 'w') as jfp:
+                jfp.write(KBRunner_Multicast.json_to_csv(kloudbuster.final_result[0]))
+
 
     if CONF.html:
-        generate_charts(kloudbuster.final_result, CONF.html)
-
+        '''Save results in HTML format file.'''
+        if CONF.multicast:
+            LOG.info("Multicast HTML saving is not yet supported")
+        else:
+            LOG.info('Saving results in HTML file: ' + CONF.html + "...")
+            if CONF.storage:
+                template_path = resource_filename(__name__, 'template_storage.html')
+            else:
+                template_path = resource_filename(__name__, 'template_http.html')
+                with open(CONF.html, 'w') as hfp, open(template_path, 'r') as template:
+                    kloudbuster.create_html(hfp,
+                                            template,
+                                            json.dumps(kloudbuster.final_result, sort_keys=True))
 
 if __name__ == '__main__':
     main()
