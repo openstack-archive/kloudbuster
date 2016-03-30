@@ -19,10 +19,6 @@ import log as logging
 
 LOG = logging.getLogger(__name__)
 
-class KBVolAttachException(Exception):
-    pass
-
-
 class BaseCompute(object):
     """
     The Base class for nova compute resources
@@ -44,7 +40,6 @@ class BaseCompute(object):
         # Shared interface ip for tested and testing cloud
         self.shared_interface_ip = None
         self.vol = None
-
 
     # Create a server instance with associated
     # security group, keypair with a provided public key
@@ -95,8 +90,6 @@ class BaseCompute(object):
             time.sleep(2)
 
     def attach_vol(self):
-        if self.vol.status != 'available':
-            raise KBVolAttachException('Volume must be in available status before attaching.')
         for _ in range(10):
             try:
                 self.novaclient.volumes.create_server_volume(self.instance.id, self.vol.id)
@@ -111,14 +104,12 @@ class BaseCompute(object):
     def delete_server(self):
         # First delete the instance
         if self.instance:
-            self.novaclient.servers.delete(self.instance)
+            self.novaclient.servers.force_delete(self.instance)
             self.instance = None
 
     def detach_vol(self):
         if self.instance and self.vol:
-            attached_vols = self.novaclient.volumes.get_server_volumes(self.instance.id)
-            if len(attached_vols):
-                self.novaclient.volumes.delete_server_volume(self.instance.id, self.vol.id)
+            self.novaclient.volumes.delete_server_volume(self.instance.id, self.vol.id)
 
     def find_image(self, image_name):
         """
@@ -137,15 +128,12 @@ class BaseCompute(object):
         flavor = self.novaclient.flavors.find(name=flavor_type)
         return flavor
 
-
 class SecGroup(object):
-
 
     def __init__(self, novaclient):
         self.secgroup = None
         self.secgroup_name = None
         self.novaclient = novaclient
-
 
     def create_secgroup_with_rules(self, group_name):
         group = self.novaclient.security_groups.create(name=group_name,
@@ -173,15 +161,32 @@ class SecGroup(object):
         # Allow Nuttcp traffic
         self.novaclient.security_group_rules.create(group.id,
                                                     ip_protocol="tcp",
-                                                    from_port=5001,
-                                                    to_port=5002)
+                                                    from_port=5000,
+                                                    to_port=6000)
+        self.novaclient.security_group_rules.create(group.id,
+                                                    ip_protocol="tcp",
+                                                    from_port=12000,
+                                                    to_port=13000)
+
+
         self.novaclient.security_group_rules.create(group.id,
                                                     ip_protocol="udp",
-                                                    from_port=5001,
-                                                    to_port=5001)
+                                                    from_port=123,
+                                                    to_port=123)
+        self.novaclient.security_group_rules.create(group.id,
+                                                    ip_protocol="udp",
+                                                    from_port=5000,
+                                                    to_port=6000)
+        self.novaclient.security_group_rules.create(group.id,
+                                                    ip_protocol="udp",
+                                                    from_port=12000,
+                                                    to_port=14000)
+        self.novaclient.security_group_rules.create(group.id,
+                                                    ip_protocol="udp",
+                                                    from_port=319,
+                                                    to_port=320)
         self.secgroup = group
         self.secgroup_name = group_name
-
 
     def delete_secgroup(self):
         """
@@ -204,12 +209,10 @@ class SecGroup(object):
 
 class KeyPair(object):
 
-
     def __init__(self, novaclient):
         self.keypair = None
         self.keypair_name = None
         self.novaclient = novaclient
-
 
     def add_public_key(self, name, public_key_file=None):
         """
@@ -227,14 +230,12 @@ class KeyPair(object):
         self.keypair = keypair
         self.keypair_name = name
 
-
     def remove_public_key(self):
         """
         Remove the keypair created by KloudBuster
         """
         if self.keypair:
             self.novaclient.keypairs.delete(self.keypair)
-
 
 class Flavor(object):
 
@@ -253,12 +254,11 @@ class Flavor(object):
     def list(self):
         return self.novaclient.flavors.list()
 
-    def create_flavor(self, name, ram, vcpus, disk, ephemeral, override=False):
+    def create_flavor(self, name, ram, vcpus, disk, override=False):
         # Creating flavors
         if override:
             self.delete_flavor(name)
-        return self.novaclient.flavors.create(name=name, ram=ram, vcpus=vcpus,
-                                              disk=disk, ephemeral=ephemeral)
+        return self.novaclient.flavors.create(name=name, ram=ram, vcpus=vcpus, disk=disk)
 
     def delete_flavor(self, name):
         try:

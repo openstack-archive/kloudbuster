@@ -18,9 +18,6 @@ import log as logging
 
 LOG = logging.getLogger(__name__)
 
-class KBVolCreationException(Exception):
-    pass
-
 class BaseStorage(object):
     """
     The Base class for cinder storage resources
@@ -30,17 +27,7 @@ class BaseStorage(object):
         self.cinderclient = cinderclient
 
     def create_vol(self, size, name=None):
-        vol = self.cinderclient.volumes.create(size, name=name)
-        for _ in range(10):
-            if vol.status == 'creating':
-                time.sleep(1)
-            elif vol.status == 'available':
-                break
-            elif vol.status == 'error':
-                raise KBVolCreationException('Not enough disk space in the host?')
-            vol = self.cinderclient.volumes.get(vol.id)
-
-        return vol
+        return self.cinderclient.volumes.create(size, name=name)
 
     def delete_vol(self, volume):
         """
@@ -63,7 +50,6 @@ class BaseStorage(object):
     #     self.cinderclient.volumes.attach(volume, instance_uuid, mountpoint)
     # def detach_vol(self, volume):
     #     self.cinderclient.volumes.detach(volume)
-
 
 class CinderQuota(object):
 

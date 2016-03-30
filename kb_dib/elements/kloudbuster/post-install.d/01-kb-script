@@ -10,6 +10,9 @@ net.core.wmem_max=8388608
 net.core.wmem_default=8388608
 net.core.rmem_max=33554432
 net.core.rmem_default=33554432
+
+
+
 net.core.netdev_max_backlog=100000
 net.ipv4.icmp_ratelimit=0
 net.ipv4.tcp_tw_recycle=1
@@ -35,8 +38,12 @@ sysctl -p
 update-rc.d -f redis-server remove
 update-rc.d -f nginx remove
 
+
 # Change permission to 777 for kb_test
 chmod -R 777 /kb_test
+
+#Install NTP
+apt-get -y install ntpdate
 
 # Create nginx server root
 mkdir -p /data/www
@@ -48,28 +55,32 @@ sed -i "s/127.0.0.1/0.0.0.0/g" /etc/redis/redis.conf
 # if started nginx should be allowed to open more file descriptors
 sed -i 's/start-stop-daemon\ --start/ulimit\ \-n\ 102400\n\t\0/g' /etc/init.d/nginx
 
+
 # Auto start the KloudBuster Agent, with user-data
 sed -i "s/^exit\s0/cd \/kb_test\n\0/g" /etc/rc.local
+sed -i "s/^exit\s0/sudo route add \-net 224.0.0.0\/4 dev eth0\n\0/g" /etc/rc.local
 sed -i "s/^exit\s0/if wget http\:\/\/169.254.169.254\/latest\/user-data; then \:; fi\n\0/g" /etc/rc.local
-sed -i "s/^exit\s0/python kb_vm_agent.py \&\n\0/g" /etc/rc.local
+sed -i "s/^exit\s0/python kb_vm_agent.py \> \/tmp\/kb_out.txt 2\>\&1 \&\n\0/g" /etc/rc.local
 
 
 # ======
 # Client
 # ======
+
 # python redis client, HdrHistorgram_py
+
 pip install redis hdrhistogram
 
 # Install HdrHistorgram_c
 cd /tmp
-git clone git://github.com/HdrHistogram/HdrHistogram_c.git
+git clone https://github.com/HdrHistogram/HdrHistogram_c.git
 cd HdrHistogram_c
 cmake .
 make install
 
 # Install the http traffic generator
 cd /tmp
-git clone git://github.com/yicwang/wrk2.git
+git clone https://github.com/yicwang/wrk2.git
 cd wrk2
 make
 mv wrk /usr/local/bin/wrk2
@@ -79,19 +90,29 @@ mv /usr/local/lib/libhdr_histogram.so /usr/lib/
 
 # Install fio
 cd /tmp
-FIO='fio-2.8'
+FIO='fio-2.5'
 wget http://brick.kernel.dk/snaps/$FIO.tar.gz
 tar xzf $FIO.tar.gz
 cd $FIO
 make
 mv fio /usr/local/bin/fio
 
+
+# Install nuttcp
+cd /tmp
+wget http://nuttcp.net/nuttcp/beta/nuttcp-7.3.3.c
+gcc nuttcp-7.3.3.c -o nuttcp
+mv nuttcp /usr/local/bin/nuttcp
+
+
+
+
 # =================
 # KloudBuster Proxy
 # =================
 cd /kb_test
-git clone git://github.com/openstack/kloudbuster.git
-cd kloudbuster
+git clone https://github.com/openstack/kloudbuster.git
+cd kloudbusterv6
 pip install -r requirements.txt
 cd kb_web
 npm install -g grunt-cli bower
@@ -105,7 +126,6 @@ mv dist/* ../kb_server/public/ui
 # =======
 # Cleanup
 # =======
-
 # Remove HdrHistogram_c, wrk2, and fio builds
 rm -rf /tmp/HdrHistogram_c
 rm -rf /tmp/wrk2
@@ -128,3 +148,4 @@ apt-get -y --purge remove cmake
 apt-get -y --purge remove npm
 apt-get -y --purge autoremove
 apt-get -y autoclean
+
