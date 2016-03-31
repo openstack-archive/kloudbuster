@@ -126,11 +126,14 @@ class BaseNetwork(object):
         vm_total = config_scale['vms_per_network']
         if config_scale['use_floatingip']:
             external_network = find_external_network(self.neutron_client)
-        if config_scale.get('storage_target') == 'volume' and config_scale.get('disk_size'):
+
+        storage_mode = self.router.user.tenant.kloud.storage_mode
+        if storage_mode and config_scale['storage_stage_configs']['target'] == 'volume':
             bs_obj = base_storage.BaseStorage(self.cinder_client)
-            vol_size = config_scale['disk_size']
+            vol_size = config_scale['storage_stage_configs']['disk_size']
         else:
             vol_size = 0
+
         # Schedule to create the required number of VMs
         for instance_count in xrange(vm_total):
             vm_name = network_prefix + "-I" + str(instance_count)

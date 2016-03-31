@@ -56,6 +56,19 @@ server:
         # Size of local disk in GB
         disk: 0
 
+    # Assign floating IP for every server side test VM
+    # Default: no floating IP (only assign internal fixed IP)
+    use_floatingip: False
+
+    # Traffic shaping - VM Placement hint
+    # Availability zone to use for servers in the server cloud
+    # Leave empty if you prefer to have the Nova scheduler place the server VMs
+    # If you want to pick a particular AZ, put that AZ name (e.g. nova)
+    # If you want a paticular compute host, put the AZ and compute host names
+    # separated by ':' (e.g. nova:tme100)
+    # Note that this is ignored/overriden if you specify a topology file (-t)
+    availability_zone:
+
     # Number of tenants to be created on the cloud
     # KloudBuster will also create 1 user automatically for each tenant
     number_tenants: 1
@@ -74,19 +87,6 @@ server:
     # Number of security groups per network
     secgroups_per_network: 1
 
-    # Assign floating IP for every server side test VM
-    # Default: no floating IP (only assign internal fixed IP)
-    use_floatingip: False
-
-    # Traffic shaping - VM Placement hint
-    # Availability zone to use for servers in the server cloud
-    # Leave empty if you prefer to have the Nova scheduler place the server VMs
-    # If you want to pick a particular AZ, put that AZ name (e.g. nova)
-    # If you want a paticular compute host, put the AZ and compute host names
-    # separated by ':' (e.g. nova:tme100)
-    # Note that this is ignored/overriden if you specify a topology file (-t)
-    availability_zone:
-
     # HTTP Server specific configs (per VM)
     http_server_configs:
         # The size of HTML page in Bytes
@@ -97,6 +97,28 @@ server:
 # CLIENT SIDE CONFIG OPTIONS
 # ==========================
 client:
+    # Flavor to use for the test images
+    flavor:
+        # Number of vCPUs for the flavor
+        vcpus: 1
+        # Memory for the flavor in MB
+        ram: 2048
+        # Size of local disk in GB
+        disk: 0
+
+    # Assign floating IP for every client side test VM
+    # Default: no floating IP (only assign internal fixed IP)
+    use_floatingip: False
+
+    # Traffic shaping - VM Placement hint
+    # Availability zone to use for clients in the client cloud
+    # Leave empty if you prefer to have the Nova scheduler place the server VMs
+    # If you want to pick a particular AZ, put that AZ name (e.g. nova)
+    # If you want a paticular compute host, put the AZ and compute host names
+    # separated by ':' (e.g. nova:tme100)
+    # Note that this is ignored/overriden if you specify a topology file (-t)
+    availability_zone:
+
     # Progression testing configuration
     # If enabled, KloudBuster will give multiple runs (progression) on the cloud,
     # unless it reaches the scale defined in the upper sections, or the stop limit.
@@ -154,28 +176,6 @@ client:
         # is within (less or equal) the range defined below.
         storage_stop_limit: 20
 
-    # Assign floating IP for every client side test VM
-    # Default: no floating IP (only assign internal fixed IP)
-    use_floatingip: False
-
-    # Flavor to use for the test images
-    flavor:
-        # Number of vCPUs for the flavor
-        vcpus: 1
-        # Memory for the flavor in MB
-        ram: 2048
-        # Size of local disk in GB
-        disk: 0
-
-    # Traffic shaping - VM Placement hint
-    # Availability zone to use for clients in the client cloud
-    # Leave empty if you prefer to have the Nova scheduler place the server VMs
-    # If you want to pick a particular AZ, put that AZ name (e.g. nova)
-    # If you want a paticular compute host, put the AZ and compute host names
-    # separated by ':' (e.g. nova:tme100)
-    # Note that this is ignored/overriden if you specify a topology file (-t)
-    availability_zone:
-
     # Interval for polling status from all VMs in seconds
     polling_interval: 5
 
@@ -209,6 +209,20 @@ client:
         report_interval: 0
         # Duration of testing tools (seconds)
         duration: 30
+
+    # Storage specific configs during staging phase
+    # Will effect only in storage testing mode.
+    storage_stage_configs:
+        # The number of VMs for running storage tests
+        vm_count: 1
+        # KloudBuster supports to run storage tests on Cinder Volumes or Ephemeral
+        # Disks. Available options to be configured: ['volume', 'ephemeral'].
+        target: 'volume'
+        # Volumes size in GB for each VM
+        disk_size: 10
+        # The size of the test file for running IO tests in GB. Must be less or
+        # equal than disk_size.
+        io_file_size: 1
 
     # Storage tool specific configs (per VM)
     # Multiple factors can impact the storage performance numbers, and KloudBuster is defining
@@ -279,19 +293,6 @@ client:
           iodepth: 64
           rate: '60M'
           rwmixread: 70
-
-    # KloudBuster supports to run storage tests on Cinder Volumes or Ephemeral
-    # Disks. Available options to be configured: ['volume', 'ephemeral'].
-    storage_target: 'volume'
-
-    # Volumes size in GB for each VM
-    #
-    # Note: Will effect only in storage testing.
-    disk_size: 20
-
-    # The size of the test file for running IO tests in GB. Must be less or
-    # equal than disk_size.
-    io_file_size: 1
 
     # Prompt before running benchmarking tools
     prompt_before_run: False

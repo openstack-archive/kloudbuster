@@ -98,16 +98,15 @@ class KBConfig(object):
                             'You will not be able to access the VMs spawned by KloudBuster.')
 
         if self.storage_mode:
-            if not self.config_scale.client.disk_size:
+            disk_size = self.config_scale.client.storage_stage_configs.disk_size
+            io_file_size = self.config_scale.client.storage_stage_configs.io_file_size
+            if not disk_size:
                 LOG.error('You have to specify a disk size in order to run storage tests.')
                 raise KBConfigParseException()
 
-            if self.config_scale.client.io_file_size > self.config_scale.client.disk_size:
+            if io_file_size > disk_size:
                 LOG.error('io_file_size must be less or eqaul than disk_size.')
                 raise KBConfigParseException()
-        else:
-            # Ignore volume_size if not performing storage testing
-            self.config_scale['client']['disk_size'] = 0
 
         if self.alt_cfg:
             self.config_scale = self.config_scale + AttrDict(self.alt_cfg)
@@ -130,8 +129,12 @@ class KBConfig(object):
         # Adjust the VMs per network on the client side to match the total
         # VMs on the server side (1:1)
         # There is an additional VM in client kloud as a proxy node
-        self.client_cfg['vms_per_network'] =\
-            self.get_total_vm_count(self.server_cfg) + 1
+        if self.storage_mode:
+            self.client_cfg['vms_per_network'] = \
+                self.client_cfg.storage_stage_configs.vm_count + 1
+        else:
+            self.client_cfg['vms_per_network'] = \
+                self.get_total_vm_count(self.server_cfg) + 1
 
         self.config_scale['server'] = self.server_cfg
         self.config_scale['client'] = self.client_cfg
