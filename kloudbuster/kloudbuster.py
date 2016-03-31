@@ -111,8 +111,11 @@ class Kloud(object):
             nova_client = self.tenant_list[0].user_list[0].nova_client
             flavor_manager = base_compute.Flavor(nova_client)
             flavor_dict = self.scale_cfg.flavor
-            flavor_dict['ephemeral'] = self.scale_cfg.get('disk_size') \
-                if self.scale_cfg.get('storage_target') == 'ephemeral' else 0
+            if self.storage_mode:
+                flavor_dict['ephemeral'] = self.scale_cfg['storage_stage_configs']['disk_size'] \
+                    if self.scale_cfg['storage_stage_configs']['target'] == 'ephemeral' else 0
+            else:
+                flavor_dict['ephemeral'] = 0
             if self.testing_side:
                 flv = flavor_manager.create_flavor('KB.client', override=True, **flavor_dict)
                 self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
@@ -420,7 +423,7 @@ class KloudBuster(object):
         self.final_result['time'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.final_result['test_mode'] = 'storage' if self.storage_mode else 'http'
         if self.storage_mode:
-            self.final_result['storage_target'] = self.client_cfg.storage_target
+            self.final_result['storage_target'] = self.client_cfg.storage_stage_configs.target
         self.final_result['version'] = __version__
         self.final_result['kb_result'] = []
 
@@ -494,8 +497,7 @@ class KloudBuster(object):
             start = self.client_cfg.progression.vm_start
             multiple = self.client_cfg.progression.vm_multiple
             cur_vm_count = 1 if start else multiple
-            total_vm = self.get_tenant_vm_count(self.server_cfg) * \
-                self.server_cfg['number_tenants']
+            total_vm = self.get_tenant_vm_count(self.client_cfg)
             while (cur_vm_count <= total_vm):
                 log_info += "\n" + self.kb_runner.header_formatter(stage, cur_vm_count)
                 cur_vm_count = (stage + 1 - start) * multiple
@@ -626,7 +628,7 @@ class KloudBuster(object):
         server_quota['security_group_rule'] = server_quota['security_group'] * 10
 
         client_quota = {}
-        total_vm = total_vm * self.server_cfg['number_tenants']
+        total_vm = self.get_tenant_vm_count(self.client_cfg)
         client_quota['network'] = 1
         client_quota['subnet'] = 1
         client_quota['router'] = 1
@@ -662,7 +664,7 @@ class KloudBuster(object):
         server_quota['ram'] = total_vm * self.server_cfg['flavor']['ram']
 
         client_quota = {}
-        total_vm = total_vm * self.server_cfg['number_tenants']
+        total_vm = self.get_tenant_vm_count(self.client_cfg)
         client_quota['instances'] = total_vm + 1
         client_quota['cores'] = total_vm * self.client_cfg['flavor']['vcpus'] + 1
         client_quota['ram'] = total_vm * self.client_cfg['flavor']['ram'] + 2048
@@ -677,7 +679,7 @@ class KloudBuster(object):
         server_quota['gigabytes'] = total_vm * svr_disk
         server_quota['volumes'] = total_vm
 
-        total_vm = total_vm * self.server_cfg['number_tenants']
+        total_vm = self.get_tenant_vm_count(self.client_cfg)
         clt_disk = self.client_cfg['flavor']['disk']\
             if self.client_cfg['flavor']['disk'] != 0 else 20
         client_quota = {}
