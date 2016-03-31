@@ -18,7 +18,6 @@ import users
 
 LOG = logging.getLogger(__name__)
 
-
 class Tenant(object):
     """
     Holds the tenant resources
