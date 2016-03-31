@@ -305,7 +305,7 @@ angular.module('kbWebApp')
               $scope.setStatus = false;
               $scope.stageButton = "Unstage";
               $scope.setUnstage = false;
-              $scope.client_vm_count = $scope.config.server.routers_per_tenant * $scope.config.server.networks_per_router * $scope.config.server.vms_per_network * $scope.config.server.number_tenants;
+              $scope.client_vm_count = $scope.config.client.storage_stage_configs.vm_count;
               //$scope.server_vm_count = $scope.client_vm_count;
               $scope.getReport();
               $(".loading").addClass("pause");
@@ -319,7 +319,7 @@ angular.module('kbWebApp')
               $scope.setStatus = true;
               $scope.stageButton = "Unstage";
               $scope.setUnstage = true;
-              $scope.client_vm_count = $scope.config.server.routers_per_tenant * $scope.config.server.networks_per_router * $scope.config.server.vms_per_network * $scope.config.server.number_tenants;
+              $scope.client_vm_count = $scope.config.client.storage_stage_configs.vm_count;
               //$scope.server_vm_count = $scope.client_vm_count;
               if($scope.config.client.progression.enabled === true) $scope.getReport();
               $(".loading").removeClass("pause");
@@ -333,7 +333,7 @@ angular.module('kbWebApp')
               $scope.setStatus = true;
               $scope.stageButton = "Unstage";
               $scope.setUnstage = false;
-              $scope.client_vm_count = $scope.config.server.routers_per_tenant * $scope.config.server.networks_per_router * $scope.config.server.vms_per_network * $scope.config.server.number_tenants;
+              $scope.client_vm_count = $scope.config.client.storage_stage_configs.vm_count;
               //$scope.server_vm_count = $scope.client_vm_count;
               $(".loading").addClass("pause");
               $scope.statusButton = "btn-danger";
@@ -347,7 +347,7 @@ angular.module('kbWebApp')
               $scope.setStatus = true;
               $scope.stageButton = "Unstage";
               $scope.setUnstage = true;
-              $scope.client_vm_count = $scope.config.server.routers_per_tenant * $scope.config.server.networks_per_router * $scope.config.server.vms_per_network * $scope.config.server.number_tenants;
+              $scope.client_vm_count = $scope.config.client.storage_stage_configs.vm_count;
               //$scope.server_vm_count = $scope.client_vm_count;
               $(".loading").removeClass("pause");
               $scope.statusButton = "btn-info";
