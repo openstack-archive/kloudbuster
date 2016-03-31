@@ -182,6 +182,9 @@ angular.module('kbWebApp')
         function (response) {  //  .resolve
           kbCookie.setConfig(response.data);
           $scope.config = response.data;
+
+          $scope.config.client.flavor.disk==0?$scope.choose_disk_size=0:$scope.choose_disk_size=1;
+
           console.log("get & save default config");
         },
         function (response) {  //  .reject
@@ -201,6 +204,7 @@ angular.module('kbWebApp')
           kbCookie.setConfig(response.data);
           $scope.config = response.data;
 
+          $scope.config.client.flavor.disk==0?$scope.choose_disk_size=0:$scope.choose_disk_size=1;
           $scope.checkStatus();
 
           console.log("get & save running config");

@@ -39,19 +39,22 @@
         </a>
 
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav">
-                <li class="active">
+            <ul class="nav navbar-nav" ng-init="tab=0">
+                <li ng-class="{active:tab==0}" ng-click="tab=0">
                     <a><span class="glyphicon" aria-hidden="true" ></span>[[label]]</a>
+                </li>
+                <li ng-class="{active:tab==1}" ng-click="tab=1" ng-show="config == true">
+                    <a><span class="glyphicon" aria-hidden="true" ></span>Configuration</a>
                 </li>
             </ul>
             <!--<ul class="nav navbar-nav navbar-right">-->
-                <!--<li><a href="#"></a></li>-->
+            <!--<li><a href="#"></a></li>-->
             <!--</ul>-->
         </div>
     </div>
 </nav>
 
-<div class="container">
+<div class="container" ng-show="tab == 0">
     <h3>KloudBuster Storage Testing Report</h3>
     <ul class="nav nav-tabs">
         <li ng-repeat="title in titleList" ng-class="{active: current_index==$index}" ng-click="handleEvent($event, $index,'')">
@@ -103,6 +106,16 @@
         </tr>
     </table>
 </div>
+
+<div class="container" ng-show="tab == 1">
+    <h3>KloudBuster HTTP Testing Configuration</h3>
+    <div class="panel panel-default">
+        <div class="panel-body"  style="word-wrap:break-word">
+            <textarea style="width: 100%;height: 900px" disabled> {{from_outside_config}}</textarea>
+        </div>
+    </div>
+</div>
+
 
 <footer style="text-align: center;">
     <hr style="margin:2px"/>
@@ -172,6 +185,7 @@
         $scope.modes = modes;
         $scope.storage_target = storage_target;
 
+        if($scope.config = [[is_config]]) $scope.from_outside_config = JSON.stringify([[config]], null, "\t");
 
         $scope.from_outside = [[result]];
 

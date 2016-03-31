@@ -339,6 +339,10 @@ angular.module('kbWebApp')
         function(response) {  //  .resolve
           kbCookie.setConfig(response.data);
           $scope.config =response.data;
+
+          $scope.config.server.flavor.disk==0?$scope.choose_disk_size1=0:$scope.choose_disk_size1=1;
+          $scope.config.client.flavor.disk==0?$scope.choose_disk_size2=0:$scope.choose_disk_size2=1;
+          
           console.log("get & save default config");
         },
         function(response) {  //  .reject
@@ -364,6 +368,9 @@ angular.module('kbWebApp')
         function (response) {  //  .resolve
           kbCookie.setConfig(response.data);
           $scope.config = response.data;
+
+          $scope.config.server.flavor.disk==0?$scope.choose_disk_size1=0:$scope.choose_disk_size1=1;
+          $scope.config.client.flavor.disk==0?$scope.choose_disk_size2=0:$scope.choose_disk_size2=1;
 
           if(($scope.config.server.availability_zone!=null && $scope.config.server.availability_zone!="") || ($scope.config.client.availability_zone!=null && $scope.client.server.availability_zone!=""))
           {

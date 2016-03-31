@@ -698,20 +698,25 @@ class KloudBuster(object):
 
         return quota_dict
 
-def create_html(hfp, template, task_re):
+def create_html(hfp, template, task_re, is_config):
     for line in template:
+        line = line.replace('[[result]]', task_re)
+        if is_config:
+            line = line.replace('[[is_config]]', 'true')
+            line = line.replace('[[config]]', json.dumps(is_config, sort_keys=True))
+        else:
+            line = line.replace('[[is_config]]', 'false')
         if CONF.label:
             line = line.replace('[[label]]', CONF.label)
         else:
             line = line.replace('[[label]]', 'Report')
-        line = line.replace('[[result]]', task_re)
         hfp.write(line)
     if not CONF.headless:
         # bring up the file in the default browser
         url = 'file://' + os.path.abspath(CONF.html)
         webbrowser.open(url, new=2)
 
-def generate_charts(json_results, html_file_name):
+def generate_charts(json_results, html_file_name, is_config):
     '''Save results in HTML format file.'''
     LOG.info('Saving results to HTML file: ' + html_file_name + '...')
     try:
@@ -727,7 +732,8 @@ def generate_charts(json_results, html_file_name):
     with open(html_file_name, 'w') as hfp, open(template_path, 'r') as template:
         create_html(hfp,
                     template,
-                    json.dumps(json_results, sort_keys=True))
+                    json.dumps(json_results, sort_keys=True),
+                    is_config)
 
 def main():
     cli_opts = [
@@ -794,7 +800,7 @@ def main():
             sys.exit(1)
         with open(CONF.charts_from_json, 'r') as jfp:
             json_results = json.load(jfp)
-        generate_charts(json_results, CONF.html)
+        generate_charts(json_results, CONF.html, None)
         sys.exit(0)
 
     if CONF.show_config:
@@ -825,7 +831,7 @@ def main():
             json.dump(kloudbuster.final_result, jfp, indent=4, sort_keys=True)
 
     if CONF.html:
-        generate_charts(kloudbuster.final_result, CONF.html)
+        generate_charts(kloudbuster.final_result, CONF.html, kb_config.config_scale)
 
 
 if __name__ == '__main__':

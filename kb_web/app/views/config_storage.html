@@ -131,7 +131,7 @@
               </md-content>
               <div class="panel panel-default" style="margin: 0">
                 <div class="panel-body">
-                  <md-radio-group ng-model="choose_disk_size" ng-init="config.client.flavor.disk==0?choose_disk_size=0:choose_disk_size=1">
+                  <md-radio-group ng-model="choose_disk_size">
                     <md-radio-button value="0" ng-click="config.client.flavor.disk=0" class="md-primary" style="margin:5px">Use default root disk size</md-radio-button>
                     <md-radio-button value="1" class="md-primary" style="margin:5px">Use specific root disk size</md-radio-button>
                   </md-radio-group>
