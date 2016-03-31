@@ -125,7 +125,7 @@ angular.module('kbWebApp')
   })
   .service('kbHttp', function ($http, $q) {
     var backendUrl = $(location).attr('protocol') +"//" + $(location).attr('host') + "/api";
-    //var backendUrl = "http://127.0.0.1:8080/api";
+    // var backendUrl = "http://127.0.0.1:8080/api";
 
     this.getMethod = function (url) {
       var deferred = $q.defer(); // declaration

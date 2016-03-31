@@ -95,15 +95,15 @@ angular.module('kbWebApp')
     var disabledStagingConfig = false;
 
     $scope.disableConfig = function (disableId) {
-      $("#" + disableId).find("input,button,a").each(function () {//show Config
+      $("#" + disableId).find("input,button,a,md-radio-button").each(function () {//show Config
         $(this).attr("disabled", "disabled");
-        console.log(this);
+        // console.log(this);
         //$(this).removeAttr("disabled");
       });
     };
 
     $scope.enableConfig = function (enableId) {
-      $("#" + enableId).find("input,button,a").each(function () {//disable Config
+      $("#" + enableId).find("input,button,a,md-radio-button").each(function () {//disable Config
         //$(this).attr("disabled", "disabled");
         $(this).removeAttr("disabled");
       });

@@ -55,7 +55,7 @@
 </nav>
 
 <div class="container" ng-show="tab == 0">
-    <h3>KloudBuster Storage Testing Report</h3>
+    <h3>KloudBuster Storage Test Report</h3>
     <ul class="nav nav-tabs">
         <li ng-repeat="title in titleList" ng-class="{active: current_index==$index}" ng-click="handleEvent($event, $index,'')">
             <a data-toggle="tab" aria-expanded="true">
@@ -108,10 +108,10 @@
 </div>
 
 <div class="container" ng-show="tab == 1">
-    <h3>KloudBuster HTTP Testing Configuration</h3>
+    <h3>KloudBuster HTTP Test Configuration</h3>
     <div class="panel panel-default">
         <div class="panel-body"  style="word-wrap:break-word">
-            <textarea style="width: 100%;height: 900px" disabled> {{from_outside_config}}</textarea>
+            <textarea style="font-family:Courier New, Monospace;width: 100%;height: 900px" disabled> {{from_outside_config}}</textarea>
         </div>
     </div>
 </div>
