@@ -5,6 +5,7 @@ iperf:
 libssl-dev:
 libyaml-dev:
 nginx:
+ntpdate:
 nodejs:
 nodejs-legacy:
 npm:
