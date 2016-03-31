@@ -62,6 +62,14 @@ class KBScheduler(object):
                 ins.target_url = "http://%s/index.html" %\
                     (server_list[idx].fip_ip or server_list[idx].fixed_ip)
                 ins.user_data['target_url'] = ins.target_url
+
+        elif algorithm == "1:n":
+            # Right now only for multicast
+            for idx, ins in enumerate(client_list):
+                ins.target_url = server_list[0].fip_ip or server_list[0].fixed_ip
+                ins.user_data['target_url'] = ins.target_url
+
+
         else:
             LOG.error("Unsupported algorithm!")
             raise KBVMMappingAlgoNotSup()
