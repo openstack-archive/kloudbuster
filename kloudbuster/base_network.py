@@ -48,6 +48,13 @@ def create_floating_ip(neutron_client, ext_net):
     fip = neutron_client.create_floatingip(body)
     return fip
 
+def disable_port_security(neutron_client, ip):
+    ports = neutron_client.list_ports()
+    for p in ports['ports']:
+        if p['fixed_ips'][0]['ip_address'] == ip:
+            body = {"port": {"security_groups": [], "port_security_enabled": False}}
+            neutron_client.update_port(p['id'], body)
+
 def delete_floating_ip(neutron_client, fip):
     """
     Deletes the floating ip
@@ -81,6 +88,27 @@ def find_external_network(neutron_client):
     LOG.error("No external network is found.")
     raise KBGetExtNetException()
 
+def find_provider_network(neutron_client):
+    """
+    Find the external network
+    and return it
+    If no external network is found return None
+    """
+    networks = neutron_client.list_networks()['networks']
+    for network in networks:
+        if network['provider:physical_network']:
+            return network
+
+def find_first_network(neutron_client):
+    """
+    Find the external network
+    and return it
+    If no external network is found return None
+    """
+    networks = neutron_client.list_networks()['networks']
+    if (len(networks) > 0):
+        return networks[0]
+    return None
 
 class BaseNetwork(object):
     """
@@ -123,6 +151,7 @@ class BaseNetwork(object):
                                 secgroup_instance.secgroup.id)
 
         LOG.info("Scheduled to create VMs for network %s..." % network_prefix)
+
         vm_total = config_scale['vms_per_network']
         if config_scale['use_floatingip']:
             external_network = find_external_network(self.neutron_client)
@@ -218,6 +247,16 @@ class BaseNetwork(object):
         self.network['subnets'] = [subnet['id']]
         self.network['subnet_ip'] = cidr
 
+    def add_provider_network(self):
+        self.network = find_provider_network(self.neutron_client)
+        if len(self.network['subnets']) > 0:
+            self.network['subnet_ip'] = self.get_cidr_from_subnet_id(self.network['subnets'][0])
+
+    def get_cidr_from_subnet_id(self, subnetID):
+        sub = self.neutron_client.show_subnet(subnetID)
+        return sub['subnet']['cidr']
+
+
     def generate_cidr(self):
         """Generate next CIDR for network or subnet, without IP overlapping.
         """
@@ -252,7 +291,7 @@ class Router(object):
     of network interfaces to router
     """
 
-    def __init__(self, user):
+    def __init__(self, user, is_dumb=False):
         self.neutron_client = user.neutron_client
         self.nova_client = user.nova_client
         self.router = None
@@ -265,6 +304,7 @@ class Router(object):
         self.shared_port_id = None
         # Store the interface ip of shared network attached to router
         self.shared_interface_ip = None
+        self.is_dumb = is_dumb
 
     def create_network_resources(self, config_scale):
         """
@@ -272,6 +312,15 @@ class Router(object):
         Also triggers the creation of compute resources inside each
         network
         """
+
+        if self.is_dumb:
+            network_instance = BaseNetwork(self)
+            self.network_list.append(network_instance)
+            network_instance.add_provider_network()
+            network_instance.create_compute_resources(network_instance.network['name'],
+                                                      config_scale)
+            return
+
         for network_count in range(config_scale['networks_per_router']):
             network_instance = BaseNetwork(self)
             self.network_list.append(network_instance)
@@ -307,10 +356,12 @@ class Router(object):
             # Now delete the compute resources and the network resources
             flag = flag & network.delete_compute_resources()
             if network.network:
+                if self.is_dumb:
+                    continue
                 flag = flag & self.remove_router_interface(network)
                 flag = flag & network.delete_network()
         # Also delete the shared port and remove it from router interface
-        if self.shared_network:
+        if self.shared_network and not self.is_dumb:
             flag = flag & self.remove_router_interface(self.shared_network, use_port=True)
             self.shared_network = None
 
@@ -348,9 +399,11 @@ class Router(object):
         Also delete the networks attached to this router
         """
         # Delete the network resources first and than delete the router itself
-        if not self.router:
+        if not self.router and not self.is_dumb:
             return True
         network_flag = self.delete_network_resources()
+        if self.is_dumb:
+            return network_flag
         router_flag = False
         for _ in range(10):
             try:
@@ -419,6 +472,8 @@ class Router(object):
                 time.sleep(1)
 
         return False
+
+
 
 class NeutronQuota(object):
 

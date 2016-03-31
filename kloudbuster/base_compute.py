@@ -173,15 +173,32 @@ class SecGroup(object):
         # Allow Nuttcp traffic
         self.novaclient.security_group_rules.create(group.id,
                                                     ip_protocol="tcp",
-                                                    from_port=5001,
-                                                    to_port=5002)
+                                                    from_port=5000,
+                                                    to_port=6000)
+        self.novaclient.security_group_rules.create(group.id,
+                                                    ip_protocol="tcp",
+                                                    from_port=12000,
+                                                    to_port=13000)
+
+
         self.novaclient.security_group_rules.create(group.id,
                                                     ip_protocol="udp",
-                                                    from_port=5001,
-                                                    to_port=5001)
+                                                    from_port=123,
+                                                    to_port=123)
+        self.novaclient.security_group_rules.create(group.id,
+                                                    ip_protocol="udp",
+                                                    from_port=5000,
+                                                    to_port=6000)
+        self.novaclient.security_group_rules.create(group.id,
+                                                    ip_protocol="udp",
+                                                    from_port=12000,
+                                                    to_port=14000)
+        self.novaclient.security_group_rules.create(group.id,
+                                                    ip_protocol="udp",
+                                                    from_port=319,
+                                                    to_port=320)
         self.secgroup = group
         self.secgroup_name = group_name
-
 
     def delete_secgroup(self):
         """
@@ -204,12 +221,10 @@ class SecGroup(object):
 
 class KeyPair(object):
 
-
     def __init__(self, novaclient):
         self.keypair = None
         self.keypair_name = None
         self.novaclient = novaclient
-
 
     def add_public_key(self, name, public_key_file=None):
         """
@@ -227,14 +242,12 @@ class KeyPair(object):
         self.keypair = keypair
         self.keypair_name = name
 
-
     def remove_public_key(self):
         """
         Remove the keypair created by KloudBuster
         """
         if self.keypair:
             self.novaclient.keypairs.delete(self.keypair)
-
 
 class Flavor(object):
 

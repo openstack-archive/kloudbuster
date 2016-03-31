@@ -213,6 +213,25 @@ client:
         report_interval: 0
         # Duration of testing tools (seconds)
         duration: 30
+       
+    multicast_tool_configs:
+        multicast_address_start: '231.0.0.1'
+        external_sender_test_mode: False
+        external_sender: '0.0.0.0'  # Disabled. Set to use a custom nuttcp server
+        external_sender_port: 5200  # Disabled. Set to use a custom nuttcp server
+        receivers: [1]
+        addresses: [1]
+        ports: [1]
+        pktsizes: [64, 1316, 4096, 9000]
+        bitrates: [ 0.1, 1, 10, 100, 270, 500, 1000, 1500, 3000, 10000] #in Mbps
+        address_test_pattern: [1]
+        port_test_pattern: [1]
+        ntp_clocks: ["0.north-america.pool.ntp.org", "1.north-america.pool.ntp.org"]  # The closer the better.
+       
+        duration: 4
+       
+       
+       
 
     # Storage specific configs during staging phase
     # Will effect only in storage testing mode.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright 2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright 2016 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -31,6 +31,7 @@ from kb_config import KBConfig
 from kb_res_logger import KBResLogger
 from kb_runner_base import KBException
 from kb_runner_http import KBRunner_HTTP
+from kb_runner_multicast import KBRunner_Multicast
 from kb_runner_storage import KBRunner_Storage
 from kb_scheduler import KBScheduler
 import kb_vm_agent
@@ -52,7 +53,6 @@ __version__ = pbr.version.VersionInfo('kloudbuster').version_string_with_vcs()
 class KBVMCreationException(Exception):
     pass
 
-
 def create_keystone_client(creds):
     """
     Return the keystone client and auth URL given a credential
@@ -60,14 +60,15 @@ def create_keystone_client(creds):
     creds = creds.get_credentials()
     return (keystoneclient.Client(endpoint_type='publicURL', **creds), creds['auth_url'])
 
-
 class Kloud(object):
-    def __init__(self, scale_cfg, cred, reusing_tenants, testing_side=False, storage_mode=False):
+    def __init__(self, scale_cfg, cred, reusing_tenants,
+                 testing_side=False, storage_mode=False, multicast_mode=False):
         self.tenant_list = []
         self.testing_side = testing_side
         self.scale_cfg = scale_cfg
         self.reusing_tenants = reusing_tenants
         self.storage_mode = storage_mode
+        self.multicast_mode = multicast_mode
         self.keystone, self.auth_url = create_keystone_client(cred)
         self.flavor_to_use = None
         self.vm_up_count = 0
@@ -193,7 +194,8 @@ class Kloud(object):
             instance.attach_vol()
 
         instance.fixed_ip = instance.instance.networks.values()[0][0]
-        if (instance.vm_name == "KB-PROXY") and (not instance.config['use_floatingip']):
+        u_fip = instance.config['use_floatingip']
+        if instance.vm_name == "KB-PROXY" and not u_fip and not self.multicast_mode:
             neutron_client = instance.network.router.user.neutron_client
             external_network = base_network.find_external_network(neutron_client)
             instance.fip = base_network.create_floating_ip(neutron_client, external_network)
@@ -210,6 +212,12 @@ class Kloud(object):
             # Store the fixed ip as ssh ip since there is no floating ip
             instance.ssh_ip = instance.fixed_ip
 
+        if not instance.vm_name == "KB-PROXY" and self.multicast_mode:
+            nc = instance.network.router.user.neutron_client
+            base_network.disable_port_security(nc, instance.fixed_ip)
+
+
+
     def create_vms(self, vm_creation_concurrency):
         try:
             with ThreadPoolExecutor(max_workers=vm_creation_concurrency) as executor:
@@ -217,7 +225,6 @@ class Kloud(object):
                     self.vm_up_count += 1
         except Exception:
             self.exc_info = sys.exc_info()
-
 
 class KloudBuster(object):
     """
@@ -230,13 +237,16 @@ class KloudBuster(object):
     """
 
     def __init__(self, server_cred, client_cred, server_cfg, client_cfg,
-                 topology, tenants_list, storage_mode=False):
+                 topology, tenants_list, storage_mode=False, multicast_mode=False):
         # List of tenant objects to keep track of all tenants
         self.server_cred = server_cred
         self.client_cred = client_cred
         self.server_cfg = server_cfg
         self.client_cfg = client_cfg
         self.storage_mode = storage_mode
+        self.multicast_mode = multicast_mode
+
+
         if topology and tenants_list:
             self.topology = None
             LOG.warning("REUSING MODE: Topology configs will be ignored.")
@@ -380,12 +390,38 @@ class KloudBuster(object):
     def gen_server_user_data(self, test_mode):
         LOG.info("Preparing metadata for VMs... (Server)")
         server_list = self.kloud.get_all_instances()
+        idx = 0
         KBScheduler.setup_vm_placement('Server', server_list, self.topology,
                                        self.kloud.placement_az, "Round-robin")
         if test_mode == 'http':
             for ins in server_list:
-                ins.user_data['role'] = 'Server'
+                ins.user_data['role'] = 'HTTP_Server'
                 ins.user_data['http_server_configs'] = ins.config['http_server_configs']
+                ins.boot_info['flavor_type'] = 'KB.server' if \
+                    not self.tenants_list['server'] else self.kloud.flavor_to_use
+                ins.boot_info['user_data'] = str(ins.user_data)
+        elif test_mode == 'multicast':
+            # Nuttcp tests over first /25
+            # Multicast Listeners over second /25
+            mc_ad_st = self.client_cfg['multicast_tool_configs']['multicast_address_start']
+            listener_addr_start = mc_ad_st.split(".")
+            listener_addr_start[-1] = "128"
+            naddrs = self.client_cfg['multicast_tool_configs']['addresses'][-1]
+            clocks = " ".join(self.client_cfg['multicast_tool_configs']['ntp_clocks'])
+            nports = self.client_cfg['multicast_tool_configs']['ports'][-1]
+            cfgs = self.client_cfg['multicast_tool_configs']
+            listener_addr_start = ".".join(listener_addr_start)
+            for ins in server_list:
+                ins.user_data['role'] = 'Multicast_Server'
+                ins.user_data['n_id'] = idx
+                idx += 1
+                ins.user_data['multicast_server_configs'] = cfgs
+                ins.user_data['multicast_addresses'] = naddrs
+                ins.user_data['multicast_ports'] = nports
+                ins.user_data['multicast_start_address'] = mc_ad_st
+                ins.user_data['multicast_listener_address_start'] = listener_addr_start
+                ins.user_data['ntp_clocks'] = clocks
+                ins.user_data['pktsizes'] = self.client_cfg.multicast_tool_configs.pktsizes
                 ins.boot_info['flavor_type'] = 'KB.server' if \
                     not self.tenants_list['server'] else self.kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)
@@ -395,20 +431,25 @@ class KloudBuster(object):
         client_list = self.testing_kloud.get_all_instances()
         KBScheduler.setup_vm_placement('Client', client_list, self.topology,
                                        self.testing_kloud.placement_az, "Round-robin")
-        if test_mode == 'http':
+        if test_mode != 'storage':
+            role = 'HTTP_Client' if test_mode == 'http' else 'Multicast_Client'
+            algo = '1:1' if test_mode == 'http' else '1:n'
             server_list = self.kloud.get_all_instances()
-            KBScheduler.setup_vm_mappings(client_list, server_list, "1:1")
+            clocks = " ".join(self.client_cfg['multicast_tool_configs']['ntp_clocks'])
+            KBScheduler.setup_vm_mappings(client_list, server_list, algo)
             for idx, ins in enumerate(client_list):
-                ins.user_data['role'] = 'HTTP_Client'
+                ins.user_data['role'] = role
                 ins.user_data['vm_name'] = ins.vm_name
                 ins.user_data['redis_server'] = self.kb_proxy.fixed_ip
                 ins.user_data['redis_server_port'] = 6379
                 ins.user_data['target_subnet_ip'] = server_list[idx].subnet_ip
                 ins.user_data['target_shared_interface_ip'] = server_list[idx].shared_interface_ip
+                if role == 'Multicast_Client':
+                    ins.user_data['ntp_clocks'] = clocks
                 ins.boot_info['flavor_type'] = 'KB.client' if \
                     not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
                 ins.boot_info['user_data'] = str(ins.user_data)
-        elif test_mode == 'storage':
+        else:
             for idx, ins in enumerate(client_list):
                 ins.user_data['role'] = 'Storage_Client'
                 ins.user_data['vm_name'] = ins.vm_name
@@ -424,6 +465,8 @@ class KloudBuster(object):
         self.final_result['test_mode'] = 'storage' if self.storage_mode else 'http'
         if self.storage_mode:
             self.final_result['storage_target'] = self.client_cfg.storage_stage_configs.target
+        if self.multicast_mode:
+            self.final_result['test_mode'] = 'multicast'
         self.final_result['version'] = __version__
         self.final_result['kb_result'] = []
 
@@ -449,13 +492,14 @@ class KloudBuster(object):
         tenant_quota = self.calc_tenant_quota()
         if not self.storage_mode:
             self.kloud = Kloud(self.server_cfg, self.server_cred, self.tenants_list['server'],
-                               storage_mode=self.storage_mode)
+                               storage_mode=self.storage_mode, multicast_mode=self.multicast_mode)
             self.server_vm_create_thread = threading.Thread(target=self.kloud.create_vms,
                                                             args=[vm_creation_concurrency])
             self.server_vm_create_thread.daemon = True
         self.testing_kloud = Kloud(self.client_cfg, self.client_cred,
                                    self.tenants_list['client'], testing_side=True,
-                                   storage_mode=self.storage_mode)
+                                   storage_mode=self.storage_mode,
+                                   multicast_mode=self.multicast_mode)
         self.client_vm_create_thread = threading.Thread(target=self.testing_kloud.create_vms,
                                                         args=[vm_creation_concurrency])
         self.client_vm_create_thread.daemon = True
@@ -481,16 +525,21 @@ class KloudBuster(object):
 
         self.kb_proxy.boot_info['user_data'] = str(self.kb_proxy.user_data)
         self.testing_kloud.create_vm(self.kb_proxy)
-
         if self.storage_mode:
             self.kb_runner = KBRunner_Storage(client_list, self.client_cfg,
                                               kb_vm_agent.get_image_version())
+        elif self.multicast_mode:
+            self.kb_runner = KBRunner_Multicast(client_list, self.client_cfg,
+                                                kb_vm_agent.get_image_version(),
+                                                self.single_cloud)
+
         else:
             self.kb_runner = KBRunner_HTTP(client_list, self.client_cfg,
                                            kb_vm_agent.get_image_version(),
                                            self.single_cloud)
-        self.kb_runner.setup_redis(self.kb_proxy.fip_ip)
-        if self.client_cfg.progression['enabled']:
+
+        self.kb_runner.setup_redis(self.kb_proxy.fip_ip or self.kb_proxy.fixed_ip)
+        if self.client_cfg.progression['enabled'] and not self.multicast_mode:
             log_info = "Progression run is enabled, KloudBuster will schedule " \
                        "multiple runs as listed:"
             stage = 1
@@ -504,27 +553,28 @@ class KloudBuster(object):
                 stage += 1
             LOG.info(log_info)
 
-        if self.single_cloud and not self.storage_mode:
+        if self.single_cloud and not self.storage_mode and not self.multicast_mode:
             # Find the shared network if the cloud used to testing is same
             # Attach the router in tested kloud to the shared network
             shared_net = self.testing_kloud.get_first_network()
             self.kloud.attach_to_shared_net(shared_net)
 
         # Create VMs in both tested and testing kloud concurrently
+        user_data_mode = "multicast" if self.multicast_mode else "http"
         if self.storage_mode:
             self.gen_client_user_data("storage")
             self.client_vm_create_thread.start()
             self.client_vm_create_thread.join()
         elif self.single_cloud:
-            self.gen_server_user_data("http")
+            self.gen_server_user_data(user_data_mode)
             self.server_vm_create_thread.start()
             self.server_vm_create_thread.join()
-            self.gen_client_user_data("http")
+            self.gen_client_user_data(user_data_mode)
             self.client_vm_create_thread.start()
             self.client_vm_create_thread.join()
         else:
-            self.gen_server_user_data("http")
-            self.gen_client_user_data("http")
+            self.gen_server_user_data(user_data_mode)
+            self.gen_client_user_data(user_data_mode)
             self.server_vm_create_thread.start()
             self.client_vm_create_thread.start()
             self.server_vm_create_thread.join()
@@ -544,7 +594,8 @@ class KloudBuster(object):
         self.kb_runner.config = self.client_cfg
         # Run the runner to perform benchmarkings
         for run_result in self.kb_runner.run(test_only):
-            self.final_result['kb_result'].append(self.kb_runner.tool_result)
+            if not self.multicast_mode or len(self.final_result['kb_result']) == 0:
+                self.final_result['kb_result'].append(self.kb_runner.tool_result)
         LOG.info('SUMMARY: %s' % self.final_result)
 
     def stop_test(self):
@@ -582,6 +633,7 @@ class KloudBuster(object):
         # Set the kloud to None
         self.kloud = None
         self.testing_kloud = None
+
 
     def dump_logs(self, offset=0):
         if not self.fp_logfile:
@@ -746,6 +798,9 @@ def main():
         cfg.BoolOpt("storage",
                     default=False,
                     help="Running KloudBuster to test storage performance"),
+        cfg.BoolOpt("multicast",
+                    default=False,
+                    help="Running KloudBuster to test multicast performance"),
         cfg.StrOpt("topology",
                    short="t",
                    default=None,
@@ -780,6 +835,9 @@ def main():
         cfg.StrOpt("json",
                    default=None,
                    help='store results in JSON format file'),
+        cfg.StrOpt("csv",
+                   default=None,
+                   help='store results in CSV format, multicast only.'),
         cfg.BoolOpt("no-env",
                     default=False,
                     help="Do not read env variables"),
@@ -809,6 +867,10 @@ def main():
         print resource_string(__name__, "cfg.scale.yaml")
         sys.exit(0)
 
+    if CONF.multicast and CONF.storage:
+        LOG.error('--multicast and --storage can not both be chosen.')
+        sys.exit(1)
+
     try:
         kb_config = KBConfig()
         kb_config.init_with_cli()
@@ -822,7 +884,7 @@ def main():
         kb_config.cred_tested, kb_config.cred_testing,
         kb_config.server_cfg, kb_config.client_cfg,
         kb_config.topo_cfg, kb_config.tenants_list,
-        storage_mode=CONF.storage)
+        storage_mode=CONF.storage, multicast_mode=CONF.multicast)
     if kloudbuster.check_and_upload_images():
         kloudbuster.run()
 
@@ -832,9 +894,15 @@ def main():
         with open(CONF.json, 'w') as jfp:
             json.dump(kloudbuster.final_result, jfp, indent=4, sort_keys=True)
 
+    if CONF.multicast and CONF.csv and 'kb_result' in kloudbuster.final_result:
+        '''Save results in JSON format file.'''
+        if len(kloudbuster.final_result['kb_result']) > 0:
+            LOG.info('Saving results in csv file: ' + CONF.csv + "...")
+            with open(CONF.csv, 'w') as jfp:
+                jfp.write(KBRunner_Multicast.json_to_csv(kloudbuster.final_result['kb_result'][0]))
+
     if CONF.html:
         generate_charts(kloudbuster.final_result, CONF.html, kb_config.config_scale)
-
 
 if __name__ == '__main__':
     main()
