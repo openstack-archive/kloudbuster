@@ -16,6 +16,7 @@
 from base_compute import BaseCompute
 from fio_tool import FioTool
 import log as logging
+from nuttcp_tool import NuttcpTool
 from wrk_tool import WrkTool
 
 LOG = logging.getLogger(__name__)
@@ -37,8 +38,11 @@ class PerfInstance(BaseCompute):
         self.az = None
 
         self.storage_mode = network.router.user.tenant.kloud.storage_mode
-        self.perf_tool = FioTool(self) if self.storage_mode else WrkTool(self)
-        # self.tp_tool = nuttcp_tool.NuttcpTool(self)
+        self.multicast_mode = network.router.user.tenant.kloud.multicast_mode
+        if self.multicast_mode:
+            self.perf_tool = NuttcpTool(self)
+        else:
+            self.perf_tool = FioTool(self) if self.storage_mode else WrkTool(self)
 
     def perf_client_parser(self, status, stdout, stderr):
         res = {'vm_name': self.vm_name}
