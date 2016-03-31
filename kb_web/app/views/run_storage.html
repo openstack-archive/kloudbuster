@@ -66,12 +66,12 @@
                 <md-content layout-padding style="padding:0">
                   <md-input-container class="col-md-12">
                     <label>Max VM</label>
-                    <input type="number" min="1" max="999" step="1" id="server_vms_per_network"
-                           ng-model="config.server.vms_per_network" name="server_vms_per_network"
+                    <input type="number" min="1" max="999" step="1" id="storage_stage_configs_vm_count"
+                           ng-model="config.client.storage_stage_configs.vm_count" name="storage_stage_configs_vm_count"
                            ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left;"/>
 
-                    <div ng-messages="interactive_staging_settings.server_vms_per_network.$error"
-                         ng-if="interactive_staging_settings.server_vms_per_network.$dirty">
+                    <div ng-messages="interactive_staging_settings.storage_stage_configs_vm_count.$error"
+                         ng-if="interactive_staging_settings.storage_stage_configs_vm_count.$dirty">
                       <div ng-message="required" style="text-align:left;">This field is required</div>
                       <div ng-message="pattern" style="text-align:left;">Must be a number between 1 and 999</div>
                     </div>

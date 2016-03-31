@@ -62,7 +62,7 @@
           <div class="panel panel-default" style="margin: 0">
             <div class="panel-body">
               <h6>Volume Types Used for Storage Test:</h6>
-              <md-radio-group ng-model="config.client.storage_target">
+              <md-radio-group ng-model="config.client.storage_stage_configs.target">
                 <md-radio-button value="volume" class="md-primary" style="display: inline">Cinder Volume (Block Storage)</md-radio-button>
                 <md-radio-button value="ephemeral" class="md-primary" style="display: inline" >Ephemeral Volume</md-radio-button>
               </md-radio-group>
@@ -71,7 +71,7 @@
                 <md-input-container class="col-md-12">
                   <label>Volume Size (GB)</label>
                   <input type="number" min="1" max="999" step="1" name="disk_size"
-                         id="disk_size" ng-model="config.client.disk_size"
+                         id="disk_size" ng-model="config.client.storage_stage_configs.disk_size"
                          ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left;"/>
 
                   <div ng-messages="general.disk_size.$error" ng-if="general.disk_size.$dirty">
@@ -90,7 +90,7 @@
             <md-input-container class="col-md-12">
               <label>Storage Test IO File Size (GB)</label>
               <input type="number" min="1" max="999" step="1" name="io_file_size"
-                     id="io_file_size" ng-model="config.client.io_file_size"
+                     id="io_file_size" ng-model="config.client.storage_stage_configs.io_file_size"
                      ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left;"/>
 
               <div ng-messages="general.io_file_size.$error" ng-if="general.io_file_size.$dirty">

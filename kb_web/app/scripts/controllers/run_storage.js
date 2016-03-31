@@ -106,11 +106,6 @@ angular.module('kbWebApp')
       var deferred = $q.defer();
 
       if($scope.status==="READY") {
-        $scope.config.server.number_tenants = 1;
-        $scope.config.server.routers_per_tenant = 1;
-        $scope.config.server.networks_per_router = 1;
-        $scope.config.server.secgroups_per_network = 1;
-
         kbCookie.setConfig($scope.config);
         $scope.chaCon = {"kb_cfg": {}};
         $scope.chaCon.kb_cfg = kbCookie.getConfig();
