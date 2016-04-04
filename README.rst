@@ -2,22 +2,22 @@
 KloudBuster version 6
 =====================
 
-How good is your OpenStack *data plane* or *storage service* under real heavy load?
+How good is your OpenStack **data plane** or **storage service** under real
+heavy load?
 
-KloudBuster is a tool that can load the data plane or storage infrastructure of any OpenStack
-cloud at massive scale and measure how well the cloud behaves under load
-where it matters: from the VMs standpoint, where cloud applications run.
+KloudBuster is a tool that can load the data plane or storage infrastructure of
+any OpenStack cloud at massive scale and measure how well the cloud behaves
+under load where it matters: from the VMs standpoint, where cloud applications
+run.
 
-Accessible to anybody with basic knowledge of OpenStack, installs in minutes and runs
-off the box with sensible default workloads in a fully automated way.
+Accessible to anybody with basic knowledge of OpenStack, installs in minutes
+and runs off the box with sensible default workloads in a fully automated way.
 CLI/REST or Web User Interface.. you pick what works best for you.
 
-Read the full documentation with feature list, snapshots and diagrams,
-scale test design, how-to and installation instructions:
-
+Read the full documentation with feature list, snapshots and diagrams, scale
+test design, how-to and installation instructions:
 
 `KloudBuster Documentation <http://kloudbuster.readthedocs.org>`_
-
 
 
 Licensing

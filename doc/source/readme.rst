@@ -2,14 +2,16 @@
 KloudBuster version 6
 =====================
 
-How good is your OpenStack *data plane* or *storage service* under real heavy load?
+How good is your OpenStack **data plane** or **storage service** under real
+heavy load?
 
-KloudBuster is a tool that can load the data plane or storage infrastructure of any OpenStack
-cloud at massive scale and measure how well the cloud behaves under load
-where it matters: from the VMs standpoint, where cloud applications run.
+KloudBuster is a tool that can load the data plane or storage infrastructure of
+any OpenStack cloud at massive scale and measure how well the cloud behaves
+under load where it matters: from the VMs standpoint, where cloud applications
+run.
 
-Accessible to anybody with basic knowledge of OpenStack, installs in minutes and runs
-off the box with sensible default workloads in a fully automated way.
+Accessible to anybody with basic knowledge of OpenStack, installs in minutes
+and runs off the box with sensible default workloads in a fully automated way.
 CLI/REST or Web User Interface.. you pick what works best for you.
 
 
@@ -52,15 +54,15 @@ Feature List
 
 * Storage load:
 
-   * VM-level Cinder volume (block storage) or Ephemeral disk file I/O performance measurement
-     using FIO running inside VMs (not bare metal)
+   * VM-level Cinder volume (block storage) or Ephemeral disk file I/O
+     performance measurement using FIO running inside VMs (not bare metal)
 
    * Supports random and sequential file access mode
 
    * Supports any mix of read/write
 
-   * IOPs, bandwitdh and loss-less millisecond-precision latency aggregation for every
-     IO operation (typically millions per run)
+   * IOPs, bandwitdh and loss-less millisecond-precision latency aggregation
+     for every IO operation (typically millions per run)
 
    * User configurable workload sequence
 
@@ -71,7 +73,7 @@ Feature List
 
 * Automatic cleanup upon termination
 
-* Regular expression based cleanup script (`cleanup`_)
+* Regular expression based cleanup script (:ref:`cleanup`)
 
 * KloudBuster server mode to drive scale test:
 
@@ -85,12 +87,13 @@ Feature List
 * KloudBuster VM image pre-built and available from the OpenStack Community App
   Catalog (https://apps.openstack.org/)
 
-*Diagrams* describing how the scale test resources are staged and how the traffic flows are available 
-in :ref:`arch`.
+**Diagrams** describing how the scale test resources are staged and how the
+traffic flows are available in :ref:`arch`.
 
-Scale results are available in json form or in html form with javascript graphical charts generated straight off the tool.
+Scale results are available in json form or in html form with javascript
+graphical charts generated straight off the tool.
 
-*Examples of results* are available in :ref:`gallery`.
+**Examples of results** are available in :ref:`gallery`.
 
 
 Limitations and Non-Goals
@@ -100,18 +103,20 @@ Limitations and Non-Goals
 
 * Only supports HTTP and storage traffic in this version
 
-Unlike some other scaling test frameworks, KloudBuster does *not* attempt to:
+Unlike some other scaling test frameworks, KloudBuster does **not** attempt to:
 
-* provide a scale test framework that works across different cloud technologies
-  (OpenStack + AWS + Google Cloud + ...) - we are only focusing on OpenStack
+    * Provide a scale test framework that works across different cloud
+      technologies (OpenStack + AWS + Google Cloud + ...) - we are only
+      focusing on OpenStack
 
-* provide a scale test framework that is flexible and programmable to do everything -
-  we just focus on opinionated and well targeted performance and scale areas
-  with sensible use cases and available in a fully integrated and easy to consume
-  packaged format
+    * Provide a scale test framework that is flexible and programmable to do
+      everything - we just focus on opinionated and well targeted performance
+      and scale areas with sensible use cases and available in a fully
+      integrated and easy to consume packaged format
 
-* replace bare metal and domain specific native performance and scale frameworks
-  (line level traffic generators, ceph specific performance and scale tools...)
+    * Replace bare metal and domain specific native performance and scale
+      frameworks (line level traffic generators, ceph specific performance and
+      scale tools...)
 
 
 Contributions and Feedbacks

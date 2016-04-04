@@ -1,7 +1,7 @@
 .. _arch:
 
-KloudBuster Architecture
-========================
+Architecture
+============
 
 Data Plane Scale Test
 +++++++++++++++++++++
@@ -109,12 +109,10 @@ widely adopted open source storage test client).
 .. image:: images/kb-storage.png
 
 VM staging, storage plumbing (using Cinder or Nova for ephemeral disks) is done
-by the KloudBuster app using OpenStack APIs.
-Because the Cinder API abstracts the storage back-end, it is agnostic of
-the technology used (Ceph, EMC...).
+by the KloudBuster app using OpenStack APIs. Because the Cinder API abstracts
+the storage back-end, it is agnostic of the technology used (Ceph, EMC...).
 After the test, all resources (volumes, VMs, network, router) are cleaned up in
 the proper order.
-
 
 
 Progression Runs

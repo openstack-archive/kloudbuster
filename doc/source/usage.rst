@@ -293,8 +293,8 @@ In the case of Storage testing:
     data.
 
 
-HTTP Tool Specific Options
-""""""""""""""""""""""""""
+HTTP Testing Specific Options
+"""""""""""""""""""""""""""""
 
 * **client:http_tool_configs**
 
@@ -333,28 +333,29 @@ testing is more than the cloud capacity.
 Some other values which are self-explained, and you can change them as needed.
 
 
-Storage Tool Specific Options
-"""""""""""""""""""""""""""""
+Storage Testing Specific Options
+""""""""""""""""""""""""""""""""
+
+* **client:storage_stage_configs**
+
+This section defines the storage specific configs in the staging phase::
+
+    # The number of VMs for running storage tests
+    vm_count: 1
+    # KloudBuster supports to run storage tests on Cinder Volumes or Ephemeral
+    # Disks. Available options to be configured: ['volume', 'ephemeral'].
+    target: 'volume'
+    # Volumes size in GB for each VM
+    disk_size: 10
+    # The size of the test file for running IO tests in GB. Must be less or
+    # equal than disk_size.
+    io_file_size: 1
 
 * **client:storage_tool_configs**
 
 This section controls how the Storage tests will be performed. All the fields
 are self-explained, and you can create your own test case with customized
 parameters.
-
-* **client:storage_target**
-
-KloudBuster supports to test the storage performance on Cinder volumes or
-ephemeral disks. Specify the testing target here.
-
-* **client:disk_size**
-
-This controls the size of the Cinder volume or ephemeral disk to be attached to
-each VM instance. (in GB)
-
-* **client:io_file_size**
-
-This controls the size of the test file to be used for storage testing. (in GB)
 
 
 Advanced Features
