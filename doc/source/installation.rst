@@ -3,31 +3,41 @@ Installation
 ============
 
 KloudBuster is already pre-installed as a web service in the KloudBuster VM image 
-available from the `OpenStack Community App Catalog <https://apps.openstack.org>`_
+available from the `OpenStack Community App Catalog <https://apps.openstack.org>`_.
+So if you just need to use the KloudBuster Web user interface you can instantiate
+that VM image and point your browser to its public address as described in :ref:`run_server`.
 
 There are two alternative ways to install and run KloudBuster tool.
-Users of KloudBuster who prefers to use the CLI should use regular PyPI based installation.
-Developers of KloudBuster should use the GitHub/OpenStack Repository based installation.
+
+Users of KloudBuster who prefers to use the CLI or who prefer to run KloudBuster
+locally on their workstation or laptop should use the PyPI based installation
+(pip install).
+
+Developers of KloudBuster should use the GitHub/OpenStack Repository based installation
+(git clone).
 
 Web Service and PyPI based installation will satisfy most use cases
-and are the 2 recommended ways for running KloudBuster under production environments, or through an
-automated or scheduled job.
-The git repository based installation is targeted at developers of KloudBuster.
+and are the 2 recommended ways for running KloudBuster under production environments, 
+or through an automated or scheduled job.
 
 .. note:: Installation from PyPI will only have the latest stable version.
 
 PyPI based Installation
 -----------------------
 
-This is the recommended way to install KloudBuster for non-development use if CLI is required.
-KloudBuster is available in the Python Package Index (PyPI):
-`KloudBuster PyPI <https://pypi.python.org/pypi/KloudBuster>`_
+This is the recommended way to install KloudBuster for non-development use if CLI is preferred
+or if you prefer to run KloudBuster locally.
 
-Step 1
-^^^^^^
+KloudBuster is available in the Python Package Index (PyPI)
+`KloudBuster PyPI <https://pypi.python.org/pypi/KloudBuster>`_
+and can be installed on any system that has python 2.7.
+
+Step 1: Install pip and the python virtualenv (if not installed already)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You will need to have python 2.7, pip, and some dependencies installed
-before installing KloudBuster, run the command based on your distro.
+before installing KloudBuster depending on the operating system at the installation site.
+These pre-requisites can be skipped if the corresponding dependencies are already installed.
 
 Ubuntu/Debian based:
 
@@ -50,8 +60,8 @@ MacOSX:
     $ sudo easy_install pip
     $ sudo pip install virtualenv
 
-Step 2
-^^^^^^
+Step 2: Install KloudBuster in a virtual environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create a virtual environment for Python, and install KloudBuster:
 
@@ -92,8 +102,8 @@ It is recommended to run KloudBuster inside a virtual environment. However,
 it can be skipped if installed in a dedicated VM.
 
 
-Super quick installation on Ubuntu/Debian
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Quick installation on Ubuntu/Debian
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
@@ -105,8 +115,8 @@ Super quick installation on Ubuntu/Debian
     $ cd kloudbuster
     $ pip install -r requirements-dev.txt
 
-Super quick installation on RHEL/Fedora/CentOS
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Quick installation on RHEL/Fedora/CentOS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
@@ -118,11 +128,10 @@ Super quick installation on RHEL/Fedora/CentOS
     $ cd kloudbuster
     $ pip install -r requirements-dev.txt
 
-Super quick installation on MacOSX
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Quick installation on MacOSX
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-KloudBuster can run natively on MacOSX. These instructions have been verified
-to work on MacOSX 10.10 (Yosemite).
+KloudBuster can run natively on MacOSX.
 
 First, download XCode from App Store, then execute below commands:
 
@@ -157,9 +166,10 @@ Upload KloudBuster Image
 
 .. note::
 
-    If your OpenStack Glance is able to access the Internet, and you don't
-    need to access the KloudBuster Web UI from the pre-built image, you can skip
-    this section and you are done with the installation.
+    If your OpenStack Glance is able to access the Internet and you only use
+    the CLI to launch KloudBuster, you can skip this section (KloudBuster CLI
+    will request Glance to download the image from the OpenStack App Catalog when
+    it is not present in Glance).
 
 In the cloud under test, KloudBuster needs one "universal" test VM image
 (referred to as "KloudBuster image") that contains the necessary test software.
@@ -169,10 +179,7 @@ application using the appropriate role (HTTP server, HTTP traffic generator,
 etc.).
 
 Pre-built images are available for download from the
-`OpenStack App Catalog <http://apps.openstack.org>`_ (preferred method). For
-whatever reason the pre-built version doesn't work for you, the image can be
-re-built from MacOSX using Vagrant or from any Linux server. See
-:ref:`here <build_vm_image>` for more details.
+`OpenStack App Catalog <http://apps.openstack.org>`_ (preferred method). 
 
 .. note::
 
@@ -186,7 +193,8 @@ Manual upload of the KloudBuster VM image
 In order to upload the KloudBuster Image to the cloud under test, the image
 must be downloaded from the OpenStack App Catalog either directly from
 the OpenStack App Catalog (if you have direct access to the Internet)
-or through an intermediate location such as a jump host (a jump host has access 
+or through an intermediate location such as a laptop that has Internet access
+or a jump host (a jump host has access 
 to both Internet and the cloud under
 test and can be used to download the image from the App Catalog
 and upload to Glance using either a Glance CLI command or via Horizon
@@ -199,7 +207,7 @@ with the "kloudbuster_v" prefix and download the latest version from the list.
 
 The name of the image in Glance must match exactly the image name in the App
 Catalog (without the .qcow2 extension), for example to upload the image from
-a local copy of that image:
+a local copy of that image using the Glance CLI:
 
 .. code-block:: bash
 

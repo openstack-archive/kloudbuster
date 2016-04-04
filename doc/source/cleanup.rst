@@ -1,4 +1,5 @@
-===========================
+.. _cleanup:
+
 OpenStack Resources Cleanup
 ===========================
 
@@ -85,8 +86,8 @@ Example of cleanup log file::
 If such file is provided to the cleanup script using the *--file* option, only
 the resources described in the file will be deleted.
 
-Discoverty with Resource name filter (--filter <regex>)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Discovery with Resource name filter (--filter <regex>)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If no cleanup log file is provided, resources are discovered from OpenStack and
 selected using a regular expression on the resource name (--filter <regex>). You

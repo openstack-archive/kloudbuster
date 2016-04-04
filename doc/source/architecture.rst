@@ -1,4 +1,5 @@
-========================
+.. _arch:
+
 KloudBuster Architecture
 ========================
 
@@ -20,7 +21,7 @@ that run inside the same cloud. Such traffic can involve:
   (that is the packets do not have to go through a router) - often called L2
   East-West
 
-- Packet routing if the 2 end points belong to differet Neutron networks
+- Packet routing if the 2 end points belong to different Neutron networks
   (packets have to go through router) - often called L3 East-West
 
 The KloudBuster data plane scale test exercises L3 East-West traffic by running
@@ -32,7 +33,7 @@ corresponding server router as illustrated in the following diagram:
 .. image:: images/kb-http-east-west.png
 
 The KloudBuster App typically runs outside the cloud under test on any server
-that has a python interpreter (Macbook, Linux workstation...) with the
+that has a python interpreter (MacBook, Linux workstation...) with the
 requirement to have access to the OpenStack API of the cloud under test.
 
 The KloudBuster app basically reads the requested scale config (which contains
@@ -60,7 +61,7 @@ Rack to Rack Data Plane Scale
 -----------------------------
 
 By default KloudBuster will rely on the Nova scheduler to place the various
-cient and server VMs.  As a result these VMs will be load balanced across all
+client and server VMs.  As a result these VMs will be load balanced across all
 servers and causing the data path of the HTTP traffic to be quite random. This
 can be good to measure the scale on a random traffic pattern but sometimes it is
 more interesting to shape the HTTP traffic can be shaped to follow certain
@@ -83,12 +84,12 @@ North South Data Plane Scale Test
 ---------------------------------
 
 The North South traffic refers to traffic flowing between external sources and
-VMs runnin in the cloud.  Such traffic follows a very different path than
+VMs running in the cloud.  Such traffic follows a very different path than
 East-West traffic as it is generally always routed and requires the used of IP
 address translation (SNAT and DNAT). One exception to this is the use of a
 provider network which may avoid routing and NAT completely.
 
-KloudBuster provides a option to test the North-South data plabe traffic by
+KloudBuster provides a option to test the North-South data plane traffic by
 separating the client VMs and server VMs into 2 different OpenStack clouds.
 
 .. image:: images/kb-http-north-south.png
@@ -101,11 +102,19 @@ Storage Scale Test
 ++++++++++++++++++
 
 The storage scale test is a relatively simpler version of the data plane scale
-test as it only involves 1 tenant 1 network and 1 router. Each test VM runs an
-instance of the FIO test client (`FIO <https://github.com/axboe/fio>`_ is a
-popular open source storage test client).
+test as it only involves 1 tenant, 1 network and 1 router. Each test VM runs one
+instance of the FIO test client (`FIO <https://github.com/axboe/fio>`_ which is a
+widely adopted open source storage test client).
 
 .. image:: images/kb-storage.png
+
+VM staging, storage plumbing (using Cinder or Nova for ephemeral disks) is done
+by the KloudBuster app using OpenStack APIs.
+Because the Cinder API abstracts the storage back-end, it is agnostic of
+the technology used (Ceph, EMC...).
+After the test, all resources (volumes, VMs, network, router) are cleaned up in
+the proper order.
+
 
 
 Progression Runs
@@ -118,7 +127,7 @@ Progression runs are a very convenient feature as it allows to produce result
 for series in a much shorter time by reusing the same set of staged VMs and
 iterating the scale test to produce measurements at different scale level.
 
-For example, to get storage performace measurement for 100 to 1000 VMs in
+For example, to get storage performance measurement for 100 to 1000 VMs in
 increments of 100, would require staging and unstaging 100+200+300+....+1,000 =
 5,500 VM Instances without progression runs while it would only require staging
 1,000 instances with VM reuse.

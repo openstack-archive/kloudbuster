@@ -43,9 +43,9 @@ vm_creation_concurrency: 5
 # example to debug)
 public_key_file:
 
-# ==========================
-# SERVER SIDE CONFIG OPTIONS
-# ==========================
+# ==================================================
+# SERVER SIDE CONFIG OPTIONS (HTTP SERVER SIDE ONLY)
+# ==================================================
 server:
     # Flavor to use for the test images
     flavor:
@@ -93,9 +93,9 @@ server:
         html_size: 32768
 
 
-# ==========================
-# CLIENT SIDE CONFIG OPTIONS
-# ==========================
+# ====================================================
+# CLIENT SIDE CONFIG OPTIONS (HTTP CLIENT AND STORAGE)
+# ====================================================
 client:
     # Flavor to use for the test images
     flavor:
@@ -136,6 +136,8 @@ client:
         #      {'vm_start': 0, 'vm_multiple': 1}: 1, 2, 3, 4, 5...
         #      {'vm_start': 0, 'vm_multiple': 5}: 5, 10, 15, 20...
         vm_multiple: 2
+
+        # HTTP ONLY
         # The stop condition for HTTP benchmarking, it is used for KloudBuster to
         # determine when to stop the progression, and do the cleanup if needed.
         # It defines as:
@@ -154,6 +156,8 @@ client:
         #       [50, 75, 90, 99, 99.9, 99.99, 99.999]
         #   (3) Sets percentile to 0 to disable HTTP request timeout checks;
         http_stop_limit: [50, 0]
+
+        # STORAGE ONLY
         # The stop condition for storage benchmarking, it is used for KloudBuster
         # to determine when to stop the progression, and do the cleanup if needed.
         # In the mode of random read and random write, this value indicates the

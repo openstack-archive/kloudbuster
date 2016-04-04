@@ -13,6 +13,7 @@ Contents:
 
    readme
    architecture
+   gallery
    installation
    usage
    cleanup
