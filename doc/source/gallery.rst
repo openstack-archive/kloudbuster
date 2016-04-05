@@ -26,8 +26,8 @@ The table shows the results for each iteration step, with the requested and
 measured RPS (HTTP requests per second) and the corresponding aggregated
 download throughput (the sum of all downloads for all clients).
 
-The latency distribution is shows in the chart, where each line corresponds to
-one load level (or iteration in the progression). Lines can be individually
+Each line in the chart represents the latency distribution for one load level
+(or iteration in the progression). Lines can be individually
 shown/hidden by clicking on the corresponding legend item.
 
 For example, the largest scale involves 20,000 simultaneous users sending an
@@ -42,6 +42,34 @@ during the scale test.
 
 .. image:: images/kb-http-thumbnail.png
    :target: https://htmlpreview.github.io/?https://github.com/openstack/kloudbuster/blob/master/doc/source/gallery/http.html
+
+
+Sample HTTP Monitoring Report
+-----------------------------
+
+The report below shows an HTTP monitoring run with 15 HTTP servers where each
+HTTP server is receiving HTTP requests from 1 HTTP traffic generator that runs
+in a separate VM and emulates 1,000 users sending 1 request per second each
+(for a total of 1000 requests per second per HTTP server).  The topology used
+for the test is 1 tenant, 1 router, 3 networks and 5 HTTP servers per network.
+The total duration is set to 300 seconds. This scale settings can beviewed in
+the Configuration tab.
+
+This stacked chart updates in real time by scrolling to the left and shows
+how the latency of HTTP requests evolves over time for each percentile group
+(50%, 75%, 90%, 99%，99.9%， 99.99%, 99.999%). Lines can be individually
+shown/hidden by clicking on the corresponding legend item.
+
+The compute node where the HTTP servers run is protected against individual
+link failures by using a link aggregation with 2 physical links connected to
+2 different switches.
+
+At 12:19:53, one of the 2 physical links is purposely shut down. As can be seen,
+the latency spikes as high as 1664 msec and returns to normal after about 10
+seconds.
+
+.. image:: images/kb-http-monitoring.png
+
 
 
 Sample Storage Scale Report
