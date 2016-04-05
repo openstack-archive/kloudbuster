@@ -26,7 +26,7 @@ The table shows the results for each iteration step, with the requested and
 measured RPS (HTTP requests per second) and the corresponding aggregated
 download throughput (the sum of all downloads for all clients).
 
-The latency distribution is shows in the chart, where each line corresponds to
+The latency distribution shows in the chart, where each line corresponds to
 one load level (or iteration in the progression). Lines can be individually
 shown/hidden by clicking on the corresponding legend item.
 
@@ -42,6 +42,29 @@ during the scale test.
 
 .. image:: images/kb-http-thumbnail.png
    :target: https://htmlpreview.github.io/?https://github.com/openstack/kloudbuster/blob/master/doc/source/gallery/http.html
+
+
+Sample HTTP Monitoring Report
+------------------------
+
+The report below shows an HTTP monitoring run with 15 HTTP servers where each
+HTTP server is receiving HTTP requests from 1 HTTP traffic generator that runs
+in a separate VM and emulates 1,000 users sending 1 request per second each
+(for a total of 1000 requests per second per HTTP server).  The topology used
+for the test is 1 tenant, 1 router, 3 networks and 5 HTTP servers per network.
+The total duration is set to 300 seconds. This scale settings can beviewed in
+the Configuration tab.
+
+This stacked chart updates in real time and shows how HTTP request lantency
+evolves over time for each percentile group (50%, 75%, 90%, 99%，99.9%， 99.99%,
+99.999%). Lines can be individually shown/hidden by clicking on the
+corresponding legend item.
+
+We shut down one physical link at 12:19:53. As you can see, there is a sudden
+peak lasting for about 5 seconds and then the lines gradually become stable.
+
+.. image:: images/kb-http-monitoring.png
+
 
 
 Sample Storage Scale Report
