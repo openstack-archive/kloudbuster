@@ -190,22 +190,17 @@ class User(object):
         2. Creates the neutron and nova client objects
         """
         # Create a new neutron client for this User with correct credentials
-        creden = {}
+        creden = self.tenant.kloud.cred.get_credentials()
         creden['username'] = self.user_name
         creden['password'] = self.password
-        creden['auth_url'] = self.tenant.kloud.auth_url
         creden['tenant_name'] = self.tenant.tenant_name
-
-        # Create the neutron client to be used for all operations
         self.neutron_client = neutronclient.Client(endpoint_type='publicURL', **creden)
 
         # Create a new nova and cinder client for this User with correct credentials
-        creden_nova = {}
+        creden_nova = self.tenant.kloud.cred.get_nova_credentials_v2()
         creden_nova['username'] = self.user_name
         creden_nova['api_key'] = self.password
-        creden_nova['auth_url'] = self.tenant.kloud.auth_url
         creden_nova['project_id'] = self.tenant.tenant_name
-        creden_nova['version'] = 2
 
         self.nova_client = novaclient.Client(endpoint_type='publicURL',
                                              http_log_debug=True, **creden_nova)

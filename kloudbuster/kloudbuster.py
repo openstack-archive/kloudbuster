@@ -58,7 +58,7 @@ def create_keystone_client(creds):
     Return the keystone client and auth URL given a credential
     """
     creds = creds.get_credentials()
-    return (keystoneclient.Client(endpoint_type='publicURL', **creds), creds['auth_url'])
+    return keystoneclient.Client(endpoint_type='publicURL', **creds)
 
 
 class Kloud(object):
@@ -68,7 +68,8 @@ class Kloud(object):
         self.scale_cfg = scale_cfg
         self.reusing_tenants = reusing_tenants
         self.storage_mode = storage_mode
-        self.keystone, self.auth_url = create_keystone_client(cred)
+        self.cred = cred
+        self.keystone = create_keystone_client(cred)
         self.flavor_to_use = None
         self.vm_up_count = 0
         self.res_logger = KBResLogger()
@@ -270,14 +271,8 @@ class KloudBuster(object):
         self.testing_kloud = None
 
     def get_hypervisor_list(self, cred):
-        creden_nova = {}
         ret_list = []
-        cred_dict = cred.get_credentials()
-        creden_nova['username'] = cred_dict['username']
-        creden_nova['api_key'] = cred_dict['password']
-        creden_nova['auth_url'] = cred_dict['auth_url']
-        creden_nova['project_id'] = cred_dict['tenant_name']
-        creden_nova['version'] = 2
+        creden_nova = cred.get_nova_credentials_v2()
         nova_client = novaclient(endpoint_type='publicURL',
                                  http_log_debug=True, **creden_nova)
         for hypervisor in nova_client.hypervisors.list():
@@ -287,14 +282,8 @@ class KloudBuster(object):
         return ret_list
 
     def get_az_list(self, cred):
-        creden_nova = {}
         ret_list = []
-        cred_dict = cred.get_credentials()
-        creden_nova['username'] = cred_dict['username']
-        creden_nova['api_key'] = cred_dict['password']
-        creden_nova['auth_url'] = cred_dict['auth_url']
-        creden_nova['project_id'] = cred_dict['tenant_name']
-        creden_nova['version'] = 2
+        creden_nova = cred.get_nova_credentials_v2()
         nova_client = novaclient(endpoint_type='publicURL',
                                  http_log_debug=True, **creden_nova)
         for az in nova_client.availability_zones.list():
@@ -307,17 +296,21 @@ class KloudBuster(object):
 
     def check_and_upload_images(self, retry_count=150):
         retry = 0
-        keystone_list = [create_keystone_client(self.server_cred)[0],
-                         create_keystone_client(self.client_cred)[0]]
-        keystone_dict = dict(zip(['Server kloud', 'Client kloud'], keystone_list))
-
+        creds_list = [
+            {'keystone': create_keystone_client(self.server_cred), 'cred': self.server_cred},
+            {'keystone': create_keystone_client(self.client_cred), 'cred': self.client_cred}
+        ]
+        creds_dict = dict(zip(['Server kloud', 'Client kloud'], creds_list))
         img_name_dict = dict(zip(['Server kloud', 'Client kloud'],
                                  [self.server_cfg.image_name, self.client_cfg.image_name]))
 
-        for kloud, keystone in keystone_dict.items():
+        for kloud, creds in creds_dict.items():
+            keystone = creds['keystone']
+            cacert = creds['cred'].get_credentials()['cacert']
             glance_endpoint = keystone.service_catalog.url_for(
                 service_type='image', endpoint_type='publicURL')
-            glance_client = glanceclient.Client(glance_endpoint, token=keystone.auth_token)
+            glance_client = glanceclient.Client(
+                glance_endpoint, token=keystone.auth_token, cacert=cacert)
             try:
                 # Search for the image
                 img = glance_client.images.list(filters={'name': img_name_dict[kloud]}).next()
