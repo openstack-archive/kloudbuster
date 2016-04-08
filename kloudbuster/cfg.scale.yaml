@@ -42,6 +42,10 @@ vm_creation_concurrency: 5
 # but can be handy if the user wants to ssh manually to any of them (for
 # example to debug)
 public_key_file:
+    
+# Name of Provider network used for multicast tests.    
+multicast_provider_network_name: '' # Leave blank to use first available (default) network.
+    
 
 # ==================================================
 # SERVER SIDE CONFIG OPTIONS (HTTP SERVER SIDE ONLY)
@@ -213,6 +217,35 @@ client:
         report_interval: 0
         # Duration of testing tools (seconds)
         duration: 30
+       
+
+    # Multicast Test Mode Configurations.
+    multicast_tool_configs:
+        multicast_address_start: '231.0.0.1' # No need to change this.
+        # Two main test modes: 1) Internal sender -> Internal receivers (default)
+        # 2) External Sender -> Internal Receivers (specified by setting external_sender_test_mode: True)
+        # Requires a reachable external host with nuttcp installed in server mode at external_sender
+        # listening at external_sender_port. It should sync with the same ntp_clocks if possible.
+        external_sender_test_mode: False
+        external_sender: '0.0.0.0' 
+        external_sender_port: 5200  
+        # Configs for both test modes
+        receivers: [1]  # Number of multicast listener VMs to create.
+        addresses: [1,2]  # Number of multicast groups to test.
+        ports: [1,5]    # Number of multicast ports to use per address.
+        pktsizes: [64, 1316, 4096, 9000]  # in kb
+        bitrates: [ 0.1, 1, 10, 100, 270, 500, 1000, 1500, 3000, 10000] #in Mbps
+        # The below patterns define the address : port relationship in the tests.
+        # Each entry is a test case. Test_i: (address_test_pattern[i],port_test_pattern[i])
+        # Make sure len(address_test_pattern) == len(port_test_pattern)
+        address_test_pattern: [1,1,2,2] 
+        port_test_pattern: [1,5,1,5]
+        # NTP clocks close to the cloud are required for precise latency results.
+        # Any machine running NTP in server mode can be used. 
+        ntp_clocks: ["0.north-america.pool.ntp.org", "1.north-america.pool.ntp.org"]  # The closer the better.
+        # Time in seconds for each test case. Best kept between 4-8 seconds. 
+        duration: 4
+
 
     # Storage specific configs during staging phase
     # Will effect only in storage testing mode.

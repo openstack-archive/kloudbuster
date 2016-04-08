@@ -190,17 +190,22 @@ class User(object):
         2. Creates the neutron and nova client objects
         """
         # Create a new neutron client for this User with correct credentials
-        creden = self.tenant.kloud.cred.get_credentials()
+        creden = {}
         creden['username'] = self.user_name
         creden['password'] = self.password
+        creden['auth_url'] = self.tenant.kloud.auth_url
         creden['tenant_name'] = self.tenant.tenant_name
+
+        # Create the neutron client to be used for all operations
         self.neutron_client = neutronclient.Client(endpoint_type='publicURL', **creden)
 
         # Create a new nova and cinder client for this User with correct credentials
-        creden_nova = self.tenant.kloud.cred.get_nova_credentials_v2()
+        creden_nova = {}
         creden_nova['username'] = self.user_name
         creden_nova['api_key'] = self.password
+        creden_nova['auth_url'] = self.tenant.kloud.auth_url
         creden_nova['project_id'] = self.tenant.tenant_name
+        creden_nova['version'] = 2
 
         self.nova_client = novaclient.Client(endpoint_type='publicURL',
                                              http_log_debug=True, **creden_nova)
@@ -221,20 +226,25 @@ class User(object):
             self.key_pair.add_public_key(self.key_name, config_scale.public_key_file)
 
         # Find the external network that routers need to attach to
-        external_network = base_network.find_external_network(self.neutron_client)
-
-        # Create the required number of routers and append them to router list
-        LOG.info("Creating routers and networks for tenant %s" % self.tenant.tenant_name)
-        for router_count in range(config_scale['routers_per_tenant']):
-            router_instance = base_network.Router(self)
+        if self.tenant.kloud.multicast_mode:
+            router_instance = base_network.Router(self, is_dumb=True)
             self.router_list.append(router_instance)
-            router_name = self.user_name + "-R" + str(router_count)
-            # Create the router and also attach it to external network
-            router_instance.create_router(router_name, external_network)
-            self.res_logger.log('routers', router_instance.router['router']['name'],
-                                router_instance.router['router']['id'])
-            # Now create the network resources inside the router
             router_instance.create_network_resources(config_scale)
+
+        else:
+            external_network = base_network.find_external_network(self.neutron_client)
+            # Create the required number of routers and append them to router list
+            LOG.info("Creating routers and networks for tenant %s" % self.tenant.tenant_name)
+            for router_count in range(config_scale['routers_per_tenant']):
+                router_instance = base_network.Router(self)
+                self.router_list.append(router_instance)
+                router_name = self.user_name + "-R" + str(router_count)
+                # Create the router and also attach it to external network
+                router_instance.create_router(router_name, external_network)
+                self.res_logger.log('routers', router_instance.router['router']['name'],
+                                    router_instance.router['router']['id'])
+                # Now create the network resources inside the router
+                router_instance.create_network_resources(config_scale)
 
     def get_first_network(self):
         if self.router_list:

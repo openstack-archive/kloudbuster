@@ -136,6 +136,11 @@ class KBConfig(object):
             self.client_cfg['vms_per_network'] = \
                 self.get_total_vm_count(self.server_cfg) + 1
 
+        # If multicast mode, the number of receivers is specified in the multicast config instead.
+        if CONF.multicast:
+            self.server_cfg['vms_per_network'] =\
+                self.client_cfg['multicast_tool_configs']['receivers'][-1]
+
         self.config_scale['server'] = self.server_cfg
         self.config_scale['client'] = self.client_cfg
 
