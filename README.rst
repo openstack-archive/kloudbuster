@@ -39,7 +39,7 @@ KloudBuster VM images contain multiple open source license components:
   (https://raw.githubusercontent.com/giltene/wrk2/master/LICENSE)
 * Redis: BSD License (http://redis.io/topics/license)
 * FIO: GPL v2 (https://raw.githubusercontent.com/axboe/fio/master/MORAL-LICENSE)
-
+* nuttcp: GPL v2 (http://nuttcp.net/nuttcp/beta/LICENSE)
 Although the VM image includes a binary copy of the FIO code, it does not
 include the source code used to build it.  In accordance to the GPL V2 license
 related to the inclusion of binary copies of FIO, the source code used to build

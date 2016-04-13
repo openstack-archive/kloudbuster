@@ -88,14 +88,6 @@ make
 mv fio /usr/local/bin/fio
 
 
-# Install nuttcp
-cd /tmp
-wget http://nuttcp.net/nuttcp/beta/nuttcp-7.3.3.c
-gcc nuttcp-7.3.3.c -o nuttcp
-mv nuttcp /usr/local/bin/nuttcp
-
-
-
 
 # =================
 # KloudBuster Proxy
@@ -112,6 +104,11 @@ grunt build
 rm -rf ../kb_server/public/ui/*
 mv dist/* ../kb_server/public/ui
 
+
+# Install nuttcp
+cd /kb_test/kloudbuster/kb_dib/elements/nuttcp
+gcc nuttcp-7.3.3.c -o nuttcp
+mv nuttcp /usr/local/bin/nuttcp
 
 # =======
 # Cleanup
