@@ -79,6 +79,7 @@ class KBConfig(object):
         self.topo_cfg = None
         self.tenants_list = None
         self.storage_mode = False
+        self.multicast_mode = False
 
     def update_configs(self):
         # Initialize the key pair name
@@ -137,7 +138,7 @@ class KBConfig(object):
                 self.get_total_vm_count(self.server_cfg) + 1
 
         # If multicast mode, the number of receivers is specified in the multicast config instead.
-        if CONF.multicast:
+        if self.multicast_mode:
             self.server_cfg['vms_per_network'] =\
                 self.client_cfg['multicast_tool_configs']['receivers'][-1]
 
@@ -146,6 +147,7 @@ class KBConfig(object):
 
     def init_with_cli(self):
         self.storage_mode = CONF.storage
+        self.multicast_mode = CONF.multicast
         self.get_credentials()
         self.get_configs()
         self.get_topo_cfg()
