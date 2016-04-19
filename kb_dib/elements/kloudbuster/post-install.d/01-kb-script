@@ -96,13 +96,6 @@ cd /kb_test
 git clone git://github.com/openstack/kloudbuster.git
 cd kloudbuster
 pip install -r requirements.txt
-cd kb_web
-npm install -g grunt-cli bower
-npm install
-bower install --allow-root --config.interactive=false --force
-grunt build
-rm -rf ../kb_server/public/ui/*
-mv dist/* ../kb_server/public/ui
 
 
 # Install nuttcp
@@ -118,11 +111,6 @@ mv nuttcp /usr/local/bin/nuttcp
 rm -rf /tmp/HdrHistogram_c
 rm -rf /tmp/wrk2
 rm -rf /tmp/fio
-
-# Remove KloudBuster Web UI builds
-rm -rf /kb_test/kloudbuster/kb_web/node_modules
-rm -rf /kb_test/kloudbuster/kb_web/bower_components
-rm -rf /kb_test/kloudbuster/kb_web/.tmp
 
 # Uninstall unneeded packages
 apt-get -y --purge remove libyaml-dev

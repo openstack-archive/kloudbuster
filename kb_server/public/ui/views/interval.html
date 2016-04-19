@@ -1,0 +1,187 @@
+<!--
+Copyright 2016 Cisco Systems, Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, 
+software distributed under the License is distributed on an "AS IS"
+ BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express 
+or implied. See the License for the specific language governing 
+permissions and limitations under the License.
+-->
+
+<div style="text-align:right">
+<div class="btn-group">
+<a href="" class="btn btn-default" ng-click="stage()" ng-disabled="setUnstage" style="width:100px">{{stageButton}}</a>
+
+<a href="" class="btn btn-default" ng-click="scaleTest()" ng-disabled="runStatus" style="width:100px">{{runButton}}</a>
+</div>
+</div>
+<div class="supercontainer">
+<div class="container">
+<div id="sidebar">
+<div>
+<accordion close-others="oneAtATime">
+<accordion-group heading="" is-open="status1.open">
+<accordion-heading>
+Staging Settings (VM Count: {{config.server.number_tenants*config.server.routers_per_tenant*config.server.networks_per_router*config.server.vms_per_network*config.server.secgroups_per_network}})
+<i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': !status1.open, 'glyphicon-chevron-up': status1.open}"></i>
+</accordion-heading>
+<div class="col-lg-14" id="stagingConfig">
+<form class="bs-component" name="monitoring_staging_settings">
+<md-content layout-padding style="padding:0">
+<md-input-container class="col-md-12" style="padding-top:0">
+<label>Tenants</label>
+<input type="number" min="1" max="9999" step="1" id="number_tenants" ng-model="config.server.number_tenants" name="number_tenants" ng-pattern="/^[1-9][0-9]{0,3}$/i" required style="text-align:left">
+<div ng-messages="interactive_staging_settings.number_tenants.$error" ng-if="interactive_staging_settings.number_tenants.$dirty">
+<div ng-message="required" style="text-align:left">This field is required</div>
+<div ng-message="pattern" style="text-align:left">Must be a number between 1 and 9999</div>
+</div>
+</md-input-container>
+<md-input-container class="col-md-12">
+<label>Routers/Tenant</label>
+<input type="number" min="1" max="999" step="1" id="server_routers_per_tenant" ng-model="config.server.routers_per_tenant" name="server_routers_per_tenant" ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left">
+<div ng-messages="interactive_staging_settings.server_routers_per_tenant.$error" ng-if="interactive_staging_settings.server_routers_per_tenant.$dirty">
+<div ng-message="required" style="text-align:left">This field is required</div>
+<div ng-message="pattern" style="text-align:left">Must be a number between 1 and 999</div>
+</div>
+</md-input-container>
+<md-input-container class="col-md-12">
+<label>Networks/Router</label>
+<input type="number" min="1" max="999" step="1" id="server_networks_per_router" ng-model="config.server.networks_per_router" name="server_networks_per_router" ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left">
+<div ng-messages="interactive_staging_settings.server_networks_per_router.$error" ng-if="interactive_staging_settings.server_networks_per_router.$dirty">
+<div ng-message="required" style="text-align:left">This field is required</div>
+<div ng-message="pattern" style="text-align:left">Must be a number between 1 and 999</div>
+</div>
+</md-input-container>
+<md-input-container class="col-md-12">
+<label>VMs/Network</label>
+<input type="number" min="1" max="999" step="1" id="server_vms_per_network" ng-model="config.server.vms_per_network" name="server_vms_per_network" ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left">
+<div ng-messages="interactive_staging_settings.server_vms_per_network.$error" ng-if="interactive_staging_settings.server_vms_per_network.$dirty">
+<div ng-message="required" style="text-align:left">This field is required</div>
+<div ng-message="pattern" style="text-align:left">Must be a number between 1 and 999</div>
+</div>
+</md-input-container>
+<md-input-container class="col-md-12">
+<label>Secgroups/Network</label>
+<input type="number" min="1" max="999" step="1" id="server_secgroups_per_network" ng-model="config.server.secgroups_per_network" name="server_secgroups_per_network" ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left">
+<div ng-messages="interactive_staging_settings.server_secgroups_per_network.$error" ng-if="interactive_staging_settings.server_secgroups_per_network.$dirty">
+<div ng-message="required" style="text-align:left">This field is required</div>
+<div ng-message="pattern" style="text-align:left">Must be a number between 1 and 999</div>
+</div>
+</md-input-container>
+</md-content>
+</form>
+</div>
+
+</accordion-group>
+<accordion-group is-open="status2.open">
+<accordion-heading>
+Run Settings <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': !status2.open, 'glyphicon-chevron-up': status2.open}"></i>
+</accordion-heading>
+<div class="col-lg-14" id="runningConfig">
+<form class="bs-component" name="monitoring_running_settings">
+<md-content layout-padding style="padding:0">
+<md-input-container class="col-md-12" style="padding-top:0">
+<label>Duration/Run (sec)</label>
+<input type="number" min="1" max="" step="1" id="client_duration" ng-model="config.client.http_tool_configs.duration" name="client_duration" ng-pattern="/^[1-9][0-9]*$/i" required style="text-align:left">
+<div ng-messages="interactive_running_settings.client_duration.$error" ng-if="interactive_running_settings.client_duration.$dirty">
+<div ng-message="required">This field is required</div>
+<div ng-message="pattern">Must be a number no less than 1</div>
+</div>
+</md-input-container>
+<md-input-container class="col-md-12" style="padding-top:0">
+<label>Reporting Interval (sec)</label>
+<input type="number" min="1" max="" step="1" id="report_interval" ng-model="config.client.http_tool_configs.report_interval" name="report_interval" ng-pattern="/^[1-9][0-9]*$/i" required style="text-align:left">
+<div ng-messages="monitoring_running_settings.report_interval.$error">
+<div ng-message="required">This field is required</div>
+<div ng-message="pattern">Must be a number no less than 1</div>
+</div>
+</md-input-container>
+<md-input-container class="col-md-12">
+<label>Rate Limit/VM</label>
+<input type="number" min="0" max="" step="1000" id="client_rate_limit" ng-model="config.client.http_tool_configs.rate_limit" name="client_rate_limit" ng-pattern="/^[0-9]*$/i" required style="text-align:left">
+<div ng-messages="interactive_running_settings.client_rate_limit.$error" ng-if="interactive_running_settings.client_rate_limit.$dirty">
+<div ng-message="required">This field is required</div>
+<div ng-message="pattern">Must be a number no less than 0</div>
+</div>
+</md-input-container>
+<md-input-container class="col-md-12">
+<label>Connections/VM</label>
+<input type="number" min="0" max="" step="1000" id="client_connections" ng-model="config.client.http_tool_configs.connections" name="client_connections" ng-pattern="/^[1-9][0-9]*$/i" required style="text-align:left">
+<div ng-messages="interactive_running_settings.client_connections.$error" ng-if="interactive_running_settings.client_connections.$dirty">
+<div ng-message="required">This field is required</div>
+<div ng-message="pattern">Must be a number no less than 1</div>
+</div>
+</md-input-container>
+</md-content>
+</form>
+</div>
+</accordion-group>
+</accordion>
+</div>
+</div>
+<div class="main-content">
+<div class="swipe-area"></div>
+<a href="" data-toggle=".container" id="sidebar-toggle" style="text-decoration:none">
+<span id="littleglyph1" class="bar glyphicon glyphicon-triangle-right" style="color:white"></span>
+</a>
+<div class="content" id="content">
+<div class="row">
+<div>
+<h6>Latency(ms)</h6>
+<linechart data="data" options="options" mode="" width="" height="500"></linechart>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="row" style="text-align:right;margin: 0 5%">
+<button type="submit" class="btn btn-default btn-xs" ng-click="saveResult()">Save Result</button>
+<button type="submit" class="btn btn-default btn-xs" ng-click="initChart()">Clear Chart</button>
+</div>
+<br>
+<div class="navbar navbar-default navbar-fixed-bottom" role="navigation" style="min-height: 48px;background: transparent">
+<div style="height: 12px;background-color: transparent;width: 100%;margin:0;border:0;padding:0"></div>
+<div style="background: white; width: 52px; height: 52px;border-radius: 50%;position:absolute;z-index: 10;top:0;left:60px">
+<div class="loading spin-1">
+<div class="loading spin-2">
+<div class="loading spin-3">
+<div class="loading spin-4">
+<div class="loading spin-5">
+<div class="loading spin-6"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div style="background: rgb(44,62,80);width: 100%;height: 36px;margin:0;border:0;padding:0">
+<div style="margin: 0 80px 0 120px;vertical-align: middle">
+<h5>
+<div class="row">
+<div class="col-md-2 col-xs-2" style="line-height:33px; height:20px; color:white">
+<button class="btn {{statusButton}} btn-xs" ng-click="checkStatus()" style="height:24px">{{status}}
+</button>
+</div>
+<div class="col-md-6 col-xs-6" style="line-height:35px; height:20px; color:white">Created&nbsp;
+<button class="btn btn-primary btn-xs" ng-click="checkStatus()" style="height:24px">{{server_vm_count}}
+</button>
+&nbsp;Server VM(s),&nbsp;
+<button class="btn btn-primary btn-xs" ng-click="checkStatus()" style="height:24px">{{client_vm_count}}
+</button>
+&nbsp;Client VM(s).
+</div>
+<div class="col-md-4 col-xs-4" style="line-height:33px; height:20px; color:white" ng-show="info">
+<button class="btn btn-xs btn-info" style="width:220px;text-align: left">{{info}}</button>
+</div>
+</div>
+</h5>
+</div>
+</div>
+</div>

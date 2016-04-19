@@ -96,4 +96,4 @@ You need to comment out the secure_path option in your /etc/sudoers file (use
 
 .. _build_web_ui:
 
-.. include:: ../../kb_web/README.rst
+.. include:: ../../kb_server/public/README.rst

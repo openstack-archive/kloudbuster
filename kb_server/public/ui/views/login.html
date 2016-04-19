@@ -1,0 +1,83 @@
+<!--
+Copyright 2016 Cisco Systems, Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, 
+software distributed under the License is distributed on an "AS IS"
+ BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express 
+or implied. See the License for the specific language governing 
+permissions and limitations under the License.
+-->
+
+<div class="md-padding dialogdemoBasicUsage" id="popupContainer" ng-cloak=""></div>
+<div id="page-login" class="row">
+<div class="col-xs-12 col-md-6 col-md-offset-3 col-sm-6 col-sm-offset-3" style="background:rgb(236,240,241);padding:1px 20px 20px 20px;border-radius: 20px;border: 10px solid rgb(44,62,80)">
+<div class="box">
+<div class="box-content">
+<div class="text-center">
+<h3 class="page-header">LOGIN</h3>
+</div>
+<hr style="margin: 10px;border-top-color:rgb(44,62,80)">
+<md-radio-group ng-model="mode" ng-init="mode='storage'">
+<md-radio-button value="http" class="md-primary" style="display: inline;margin-left: 10">Data Plane Scale Test
+</md-radio-button>
+<md-radio-button value="storage" class="md-primary" style="display: inline;margin-left: 10">Storage Scale Test
+</md-radio-button>
+</md-radio-group>
+<hr style="margin: 10px;border-top-color:rgb(44,62,80)">
+<h4 ng-show="mode=='http'">Server Cloud</h4>
+<h4 ng-show="mode=='storage'">Client Cloud</h4>
+<div class="form-group">
+<div class="input-group" style="margin:0 auto">
+<span class="input-group-addon">openrc.sh</span>
+<button class="form-control no-js" style="position: relative;z-index: 2"></button>
+<div class="box js" style="position: absolute;z-index: 3;width: 100%;height:100%;left:50%;top:25%">
+<input type="file" name="file1" id="file1" class="inputfile inputfile-3" enctype="multipart/form-data">
+<label for="file1"><span>Choose openrc.sh file&hellip;</span></label>
+</div>
+</div>
+<br>
+<div class="input-group" style="margin:0 auto">
+<span class="input-group-addon">Password</span>
+<input type="password" class="form-control" id="inputPassword1" ng-model="inputPassword1" placeholder="Input Your Server Cloud's Password">
+</div>
+</div>
+<div ng-show="mode=='http'">
+<hr>
+<h4>Client Cloud</h4>
+<div class="checkbox">
+<h5>
+<label>
+<input type="checkbox" ng-model="samecloud" ng-click="clouds()"> Same as Server Cloud
+</label>
+</h5>
+</div>
+<div class="form-group">
+<div class="input-group" style="margin:0 auto">
+<span class="input-group-addon">openrc.sh</span>
+<button class="form-control no-js" id="rcfile2" disabled="disabled"></button>
+<div class="box js" style="position: absolute;z-index: 3;width: 100%;height:100%;left:50%;top:25%">
+<input type="file" name="file2" id="file2" class="inputfile inputfile-3" enctype="multipart/form-data" disabled="disabled">
+<label for="file2"><span>Choose openrc.sh file&hellip;</span></label>
+</div>
+</div>
+<br>
+<div class="input-group" style="margin:0 auto">
+<span class="input-group-addon">Password</span>
+<input type="password" class="form-control" id="inputPassword2" ng-model="inputPassword2" placeholder="Input Your Client Cloud's Password" disabled="disabled">
+</div>
+</div>
+</div>
+<div class="text-center">
+<a href="" class="btn btn-primary" ng-click="setConfig()" style="width: 150px"> Sign In </a>
+</div>
+</div>
+</div>
+</div>
+</div>
+<br>

@@ -1,0 +1,200 @@
+<!--
+Copyright 2016 Cisco Systems, Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); 
+you may not use this file except in compliance with the License. 
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, 
+software distributed under the License is distributed on an "AS IS"
+ BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express 
+or implied. See the License for the specific language governing 
+permissions and limitations under the License.
+-->
+
+<div class="row">
+<div class="col-md-9">
+<ul class="nav nav-tabs">
+<li ng-repeat="tag in config.client.storage_tool_configs" ng-class="{active: current_index==$index}" ng-click="handleEvent($event, $index,'')">
+<a data-toggle="tab" aria-expanded="true">
+{{tag.description}} <span class="{{modes[tag.mode]['span']}}"></span>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-md-3">
+<div style="text-align:right">
+<div class="btn-group">
+<a href="" class="btn btn-default" ng-click="stage()" ng-disabled="setUnstage" style="width:100px">{{stageButton}}</a>
+<a href="" class="btn btn-default" ng-click="scaleTest()" ng-disabled="runStatus" style="width:100px">{{runButton}}</a>
+</div>
+</div>
+</div>
+</div>
+<div class="supercontainer">
+<div class="container">
+<div id="sidebar">
+<div>
+
+<accordion close-others="oneAtATime">
+<accordion-group heading="" is-open="status1.open">
+<accordion-heading>
+Settings
+<i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': !status1.open, 'glyphicon-chevron-up': status1.open}"></i>
+</accordion-heading>
+<div class="col-lg-14" id="stagingConfig">
+<form class="bs-component" name="interactive_staging_settings">
+<md-content layout-padding style="padding:0">
+<md-input-container class="col-md-12">
+<label>Max VM</label>
+<input type="number" min="1" max="999" step="1" id="storage_stage_configs_vm_count" ng-model="config.client.storage_stage_configs.vm_count" name="storage_stage_configs_vm_count" ng-pattern="/^[1-9][0-9]{0,2}$/i" required style="text-align:left">
+<div ng-messages="interactive_staging_settings.storage_stage_configs_vm_count.$error" ng-if="interactive_staging_settings.storage_stage_configs_vm_count.$dirty">
+<div ng-message="required" style="text-align:left">This field is required</div>
+<div ng-message="pattern" style="text-align:left">Must be a number between 1 and 999</div>
+</div>
+</md-input-container>
+</md-content>
+</form>
+</div>
+</accordion-group>
+
+<accordion-group heading="" is-open="status2.open">
+<accordion-heading>
+Progression Test <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': !status2.open, 'glyphicon-chevron-up': status2.open}"></i>
+</accordion-heading>
+<div class="col-lg-14" id="stagingConfig1">
+<form class="bs-component" name="interactive_progression_settings">
+<div class="input-group col-sm-12" style="margin:0 auto" popover="If enabled, KloudBuster will give multiple runs (progression) on the cloud, unless it reaches the scale defined in the upper sections, or the stop limit." popover-trigger="mouseenter" popover-placement="right">
+<md-checkbox id="client_progression_enabled" ng-model="config.client.progression.enabled" class="md-primary">
+Progression Test
+</md-checkbox>
+</div>
+<md-content layout-padding style="padding:0">
+<md-input-container class="col-md-12">
+<label>Series VM multiple</label>
+<input type="number" min="1" step="1" id="client_progression_vm_multiple" ng-model="config.client.progression.vm_multiple" ng-disabled="!config.client.progression.enabled" name="client_progression_vm_multiple" ng-pattern="/^[1-9][0-9]*$/i" required style="text-align:left">
+<div ng-messages="interactive_progression_settings.client_progression_vm_multiple.$error" ng-if="interactive_progression_settings.client_progression_vm_multiple.$dirty">
+<div ng-message="required">This field is required</div>
+<div ng-message="pattern">Must be a number no less than 1</div>
+</div>
+</md-input-container>
+<div class="input-group col-sm-12" style="margin:0 auto;padding-left: 7px">
+<md-checkbox id="client_progression_vm_start" ng-checked="config.client.progression.vm_start==1" ng-click="config.client.progression.vm_start==1? config.client.progression.vm_start=0:config.client.progression.vm_start=1" class="md-primary" ng-disabled="!config.client.progression.enabled">
+Start series with 1 VM
+</md-checkbox>
+</div>
+<md-input-container class="col-md-12">
+<label>Stop Limit (%)</label>
+<input type="number" min="1" step="1" id="client_progression_storage_stop_limit" ng-model="config.client.progression.storage_stop_limit" ng-disabled="!config.client.progression.enabled" name="client_progression_http_stop_limit" ng-pattern="/^[1-9][0-9]*$/i" required style="text-align:left">
+<div ng-messages="interactive_progression_settings.client_progression_http_stop_limit0.$error" ng-if="interactive_progression_settings.client_progression_http_stop_limit0.$dirty">
+<div ng-message="required">This field is required</div>
+<div ng-message="pattern">Must be a number no less than 1</div>
+</div>
+</md-input-container>
+<span class="label col-md-12" style="color:grey;text-align: left">VM count series: {{config.client.progression.vm_start==1?1:''}} {{config.client.progression.vm_multiple}} {{config.client.progression.vm_multiple*2}} {{config.client.progression.vm_multiple*3}} {{config.client.progression.vm_multiple*4}} {{config.client.progression.vm_multiple*5}}...
+</span>
+</md-content>
+</form>
+</div>
+
+</accordion-group>
+</accordion>
+</div>
+</div>
+<div class="main-content">
+<div class="swipe-area"></div>
+<a href="" data-toggle=".container" id="sidebar-toggle" style="text-decoration:none">
+<span id="littleglyph" class="bar glyphicon glyphicon-triangle-right" style="color:white"></span>
+</a>
+<div class="content" id="content">
+<div class="row">
+<div class="my-chart">
+<ul class="nav nav-tabs" ng-style="{height:current_mode_name =='rw' || current_mode_name =='randrw'?'':0, width:current_mode_name =='rw' || current_mode_name =='randrw'?'':0}">
+<li ng-show="current_mode_name =='rw' || current_mode_name =='randrw'" ng-class="{active:current_mode['name']=='read' || current_mode['name']=='randread'}">
+<a ng-click="handleEvent($event, current_index,'read')">Read</a>
+</li>
+<li ng-show="current_mode_name =='rw' || current_mode_name =='randrw'" ng-class="{active:current_mode['name']=='write' || current_mode['name']=='randwrite'}">
+<a ng-click="handleEvent($event, current_index,'write')">Write</a>
+</li>
+</ul>
+<h4 style="text-align: center">{{modes[current_mode_name]['title']}} {{current_title}} ({{current_mode_description}})</h4>
+<h6 style="margin-bottom:0"><span>{{current_mode["y_axis"]}}</span><span style="float:right">Latency(ms)</span></h6>
+<linechart data="data" options="options" height="500"></linechart>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="row" style="text-align:right;margin: 0 1%">
+<button type="submit" class="btn btn-default btn-xs" ng-click="saveResult()">Save Result</button>
+</div>
+<br>
+<table ng-table="tableParams" class="table table-responsive table-condensed table-bordered table-striped">
+<tr ng-repeat="row in tableParams.data" style="text-align:center">
+<td title="cols[2].title" data-sortable="cols[2].field">{{row.total_client_vms}}</td>
+<td title="cols[3].title" data-sortable="cols[3].field">{{row.block_size}}b</td>
+<td title="cols[4].title" data-sortable="cols[4].field">{{row.iodepth}}</td>
+<td title="cols[5].title" data-sortable="cols[5].field" ng-if="current_mode.group[0] == 'rand'">
+{{row.rate_iops}}
+</td>
+<td title="cols[6].title" data-sortable="cols[6].field" ng-if="current_mode.group[1] == 'read'">
+{{row.read_iops}}
+</td>
+<td title="cols[7].title" data-sortable="cols[7].field" ng-if="current_mode.group[1] == 'write'">
+{{row.write_iops}}
+</td>
+<td title="cols[8].title" data-sortable="cols[8].field" ng-if="current_mode.group[0] == 'seq'">
+{{row.rate}} KB/s
+</td>
+<td title="cols[9].title" data-sortable="cols[9].field" ng-if="current_mode.group[1] == 'read'">
+{{row.read_bw}} KB/s
+</td>
+<td title="cols[10].title" data-sortable="cols[10].field" ng-if="current_mode.group[1] == 'write'">
+{{row.write_bw}} KB/s
+</td>
+</tr>
+</table>
+<h6 style="margin-bottom: 3%">&nbsp;</h6>
+<div class="navbar navbar-default navbar-fixed-bottom" role="navigation" style="min-height: 48px;background: transparent">
+<div style="height: 12px;background-color: transparent;width: 100%;margin:0;border:0;padding:0"></div>
+<div style="background: white; width: 52px; height: 52px;border-radius: 50%;position:absolute;z-index: 10;top:0;left:60px">
+<div class="loading spin-1">
+<div class="loading spin-2">
+<div class="loading spin-3">
+<div class="loading spin-4">
+<div class="loading spin-5">
+<div class="loading spin-6"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div style="background: rgb(44,62,80);width: 100%;height: 36px;margin:0;border:0;padding:0">
+<div style="margin: 0 80px 0 120px;vertical-align: middle">
+<h5>
+<div class="row">
+<div class="col-md-2 col-xs-2" style="line-height:33px; height:20px; color:white">
+
+<button class="btn {{statusButton}} btn-xs" ng-click="checkStatus()" style="height:24px">{{status}}
+</button>
+</div>
+<div class="col-md-6 col-xs-6" style="line-height:35px; height:20px; color:white">Created&nbsp;
+
+
+
+<button class="btn btn-primary btn-xs" ng-click="checkStatus()" style="height:24px">{{client_vm_count}}
+</button>
+&nbsp;Client VM(s).
+</div>
+<div class="col-md-4 col-xs-4" style="line-height:33px; height:20px; color:white" ng-show="info">
+<button class="btn btn-xs btn-info" style="width:220px;text-align: left">{{info}}</button>
+</div>
+</div>
+</h5>
+</div>
+</div>
+</div>
