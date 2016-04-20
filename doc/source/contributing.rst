@@ -69,6 +69,32 @@ Bugs should be filed on Launchpad, not GitHub:
    https://bugs.launchpad.net/kloudbuster
 
 
+Build KloudBuster Docker Image
+-----------------------
+
+Two files are used to build the Docker image: *Dockerfile* and *.dockerignore*. The former provides all the build instructions while the latter provides the list of files/directories that should not be copied to the Docker image.
+
+In order to make the Docker image clean, remove all auto generated files from the root of your workspace first. It is strongly recommeneded to simply pull a new one from GitHub/StackForge. Specify the image name and the tag, and feed them to docker build. Examples to build the image with name "$USER/koudbuster", tag "latest"::
+
+$ cd <koudbuster-ws-root>
+$ sudo docker build --tag=$USER/koudbuster:latest .
+
+The images should be available for use::
+
+$ sudo docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+xiyu3/kloudbuster   latest              0f17ae788c69        8 minutes ago       443.1 MB
+
+For exchanging purposes, the image could be saved to a tar archive. You can distribute the KloudBuster Docker image among your servers easily with this feature::
+
+$ sudo docker save -o <IMAGE_FILE> <IMAGE_ID>
+
+To publish the image to Docker Hub::
+
+$ sudo docker login
+$ sudo docker push $USER/koudbuster:latest
+
+
 .. _developer_guide_of_openstack:
 
 Developer's Guide of OpenStack
