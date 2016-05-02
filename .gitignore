@@ -62,3 +62,7 @@ kb*.log
 *.qcow2
 scale/dib/kloudbuster.d/
 .vagrant/
+
+# kb_web
+!kb_server/public/ui/components/*/*.css
+!kb_server/public/ui/components/*/*.js
