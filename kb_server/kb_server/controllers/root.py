@@ -16,6 +16,8 @@ from api_cfg import ConfigController
 from api_kb import KBController
 from pecan import abort
 from pecan import expose
+from pecan import response
+
 
 class APIController(object):
     @expose()
@@ -27,7 +29,13 @@ class APIController(object):
         else:
             abort(404)
 
+
 class RootController(object):
+    @expose()
+    def index(self):
+        response.status = 301
+        response.location = "ui/index.html"
+
     @expose()
     def _lookup(self, primary_key, *remainder):
         if primary_key == "api":

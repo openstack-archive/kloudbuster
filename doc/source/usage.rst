@@ -65,6 +65,10 @@ The Web UI URL to use from any browser is::
 
     http://<floating_ip>:8080/ui/index.html
 
+For your convenience, the server will redirect the root of the address to the
+Web UI by default. i.e. http://<floating_ip>:8080/ will get you into the UI
+directly.
+
 
 Starting the KloudBuster Server from PyPI installation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

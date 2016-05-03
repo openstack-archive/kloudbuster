@@ -59,6 +59,12 @@ MacOSX:
     $ xcode-select --install
     $ sudo easy_install pip
     $ sudo pip install virtualenv
+    $
+    $ # If you need to run KloudBuster Web UI from PyPI installation,
+    $ # coreutils needs to be installed using Homebrew.
+    $ # Refer here for the steps to install Homebrew on Mac:
+    $ # http://brew.sh/
+    $ brew install coreutils
 
 Step 2: Install KloudBuster in a virtual environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
