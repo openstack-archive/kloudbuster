@@ -69,25 +69,33 @@ Bugs should be filed on Launchpad, not GitHub:
    https://bugs.launchpad.net/kloudbuster
 
 
-Build KloudBuster Docker Image
------------------------
+Build the KloudBuster Docker Image
+----------------------------------
 
 Two files are used to build the Docker image: *Dockerfile* and *.dockerignore*. The former provides all the build instructions while the latter provides the list of files/directories that should not be copied to the Docker image.
 
-In order to make the Docker image clean, remove all auto generated files from the root of your workspace first. Specify the image name and the tag, and feed them to docker build. Examples to build the image with name "$USER/koudbuster", tag "latest"::
+In order to make the Docker image clean, remove all auto generated files from the root of your workspace first. Specify the image name and the tag, and feed them to docker build. Examples to build the image with name "berrypatch/kloudbuster", tag "6.0.4"::
 
-$ cd <koudbuster-ws-root>
-$ sudo docker build --tag=$USER/koudbuster:latest .
+    $ cd <kloudbuster-ws-root>
+    $ sudo docker build --tag=berrypatch/kloudbuster:6.0.4 .
 
 The images should be available for use::
 
-$ sudo docker images
-REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
-xiyu3/kloudbuster   latest              0f17ae788c69        8 minutes ago       443.1 MB
+    $ sudo docker images
+    REPOSITORY               TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+    berrypatch/kloudbuster   6.0.4               0f17ae788c69        8 minutes ago       443.1 MB
 
-For exchanging purposes, the image could be saved to a tar archive. You can distribute the KloudBuster Docker image among your servers easily with this feature::
+To push the new image to the KloudBuster Docker Hub repository (berrypatch), you need to login to
+Docker Hub (sudo docker login) and you need to have write access to the berrypatch/kloudbuster repository
+before you can push the new container::
 
-$ sudo docker save -o <IMAGE_FILE> <IMAGE_ID>
+    sudo docker login
+    sudo docker push berrypatch/kloudbuster:6.0.4
+
+It is also good practice to build and override the latest tag::
+
+    sudo docker build --tag=berrypatch/kloudbuster:latest .
+    sudo docker push berrypatch/kloudbuster:latest
 
 
 .. _developer_guide_of_openstack:

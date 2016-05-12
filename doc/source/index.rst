@@ -14,8 +14,10 @@ Contents:
    readme
    architecture
    gallery
-   installation
    usage
+   configuration
+   std_scale_profile
+   adv_features
    cleanup
    development
    contributing

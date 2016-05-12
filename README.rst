@@ -17,7 +17,7 @@ CLI/REST or Web User Interface.. you pick what works best for you.
 Read the full documentation with feature list, snapshots and diagrams, scale
 test design, how-to and installation instructions:
 
-`KloudBuster Documentation <http://kloudbuster.readthedocs.org>`_
+`KloudBuster Documentation <http://kloudbuster.readthedocs.io>`_
 
 
 Licensing

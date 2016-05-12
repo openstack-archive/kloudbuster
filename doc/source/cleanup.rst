@@ -134,8 +134,9 @@ Installation and Dependencies
 The script is available in the OpenStack KloudBuster repository under
 kloudbuster/force_cleanup.py. If you need to run the script outside of the usual
 KloudBuster installation, the script requires the usual OpenStack python client
-libraries and credentials.py (from the kloudbuster module).  Otherwise, pick one
-of the kloudbuster installation method to install the script.
+libraries and credentials.py (from the kloudbuster module). 
+Otherwise, pick one of the kloudbuster installation method to install the script
+(the KloudBuster docker container looks to be the simplest).
 
 Known Issues and Limitations
 ----------------------------

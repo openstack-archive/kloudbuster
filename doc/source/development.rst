@@ -4,46 +4,19 @@ Development
 
 .. _build_vm_image:
 
-Build KloudBuster Image
-------------------------
+Build the KloudBuster VM Image
+------------------------------
 
-The official pre-built image from OpenStack App Catalog should satisfy most of
-use cases. This option is just for development purposes, and for whatever
-reason the pre-built version does not work for you.
+This section describes how to rebuild:
 
-
-Build on MacOSX
-^^^^^^^^^^^^^^^
-
-You need to install first:
-
-* `Virtualbox <https://www.virtualbox.org/wiki/Downloads>`_
-* `Vagrant <https://www.vagrantup.com/downloads.html>`_
-
-And build the image with below commands:
-
-.. code-block:: bash
-
-    $ # Clone the kloudbuster repository if you have not done so
-    $ git clone https://github.com/openstack/kloudbuster.git
-    $ # Go to the dib directory
-    $ cd kloudbuster/kb_dib
-    $ # Run vagrant and start building the image
-    $ vagrant up
-
-After a few minutes (depending on virtualbox overhead), the qcow2 image will
-be built and available in the same directory. You can then upload it to
-OpenStack using the glance CLI, destroy the vagrant VM ("vagrant destroy") and
-dispose of the kloudbuster directory (if no longer needed).
+- the KloudButer VM Image from the git repository source code
+- the KloudBuster Docker image
 
 
 Build on Linux
 ^^^^^^^^^^^^^^
 
-A generally faster build method than with MacOSX/Vagrant. Your Linux server
-must have python, git and qemu utilities installed. You can skip the package
-installation if you've installed KloudBuster using the GitHub/OpenStack
-repository based installation.
+Your Linux server must have python, git and qemu utilities installed. 
 
 Ubuntu/Debian based:
 
@@ -76,9 +49,6 @@ After a few minutes, the qcow2 image will be built and available in the same
 directory. You can then upload it to OpenStack using the glance CLI.
 
 
-Trouble-shooting
-^^^^^^^^^^^^^^^^
-
 If you get an error message saying that import yaml fails (seems to happen
 only on Ubuntu)::
 
@@ -94,6 +64,53 @@ You need to comment out the secure_path option in your /etc/sudoers file (use
 
     #Defaults   secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-.. _build_web_ui:
 
-.. include:: ../../kb_server/public/README.rst
+Build on MacOSX
+^^^^^^^^^^^^^^^
+
+You need to install first:
+
+* `Virtualbox <https://www.virtualbox.org/wiki/Downloads>`_
+* `Vagrant <https://www.vagrantup.com/downloads.html>`_
+
+And build the image with below commands:
+
+.. code-block:: bash
+
+    $ # Clone the kloudbuster repository if you have not done so
+    $ git clone https://github.com/openstack/kloudbuster.git
+    $ # Go to the dib directory
+    $ cd kloudbuster/kb_dib
+    $ # Run vagrant and start building the image
+    $ vagrant up
+
+After a few minutes (depending on virtualbox overhead), the qcow2 image will
+be built and available in the same directory. You can then upload it to
+OpenStack using the glance CLI, destroy the vagrant VM ("vagrant destroy") and
+dispose of the kloudbuster directory (if no longer needed).
+
+Build the KloudBuster Docker Container Image
+--------------------------------------------
+
+The KloudBuster Docker images are published in the DockerHub berrypatch repository:
+`<https://hub.docker.com/r/berrypatch/kloudbuster/>`_
+
+The Dockerfile at the root of the git repository can be used to build a new container based on Ubuntu 14.04.
+
+To build for tag 6.0.3 (replace as needed with the real tag), go to the root of the repository then execute the docker build command:
+
+.. code-block:: bash
+
+    sudo docker build --tag=berrypatch/kloudbuster:6.0.3 .
+
+To publish you need to be a member of the berrypatch kloudbuster team. After the login (requires your DockerHub username and password), push the appropriate version to berrypatch:
+
+.. code-block:: bash
+
+    sudo docker login
+    sudo docker push berrypatch/kloudbuster:6.0.3
+
+
+
+
+
