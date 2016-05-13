@@ -26,21 +26,25 @@ You can also reuse an existing tenant network and router.
 
 3. Create a Security Group
 --------------------------
-Create or reuse a security group which allows ingress TCP traffic on port 8080
+
+Create or reuse a security group which allows ingress TCP traffic on port 8080.
 
 4. Launch the KloudBuster VM Application
 ----------------------------------------
-Launch an instance using the KloudBuster image with the proper security
-group, and connect to the appropriate network. Leave the Key Pair as blank,
-as we don't need the SSH access to this VM
+
+Launch an instance using the KloudBuster image with the proper security group,
+and connect to the appropriate network. Leave the Key Pair as blank, as we
+don't need the SSH access to this VM.
 
 5. Associate a floating IP
 --------------------------
+
 Associate a floating IP to the newly created VM instance so that it can be
 accessible from an external browser
 
 6. Connect to the web UI with a browser
 ---------------------------------------
+
 The Web UI URL to use from any browser is::
 
     http://<floating_ip>:8080
@@ -51,17 +55,14 @@ The base URL to use for REST access is::
 
 7. Download the openrc file
 ---------------------------
-Using the Horizon dashboard, download the openrc file (Project|Compute|API Access then click on "Download OpenStack RC File").
-It is best to use the admin user to run KloudBuster as much as possible (otherwise there are restrictions on what you can do).
+
+Using the Horizon dashboard, download the openrc file (Project|Compute|API
+Access then click on "Download OpenStack RC File"). It is best to use the
+admin user to run KloudBuster as much as possible (otherwise there are
+restrictions on what you can do).
 
 8. Login to KloudBuster
 -----------------------
 
-Follow ref:`instructions <webui_usage>` on how to use the web UI.
-
-
-
-
-
-
+Follow :ref:`instructions <webui_usage>` on how to use the web UI.
 

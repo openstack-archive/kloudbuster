@@ -65,7 +65,6 @@ If you need to run the KloudBuster Web UI you need to install coreutils
 
 .. code-block:: bash
 
-    $
     $ # If you need to run KloudBuster Web UI,
     $ # coreutils needs to be installed using Homebrew.
     $ # Refer here for the steps to install Homebrew on Mac:
@@ -104,8 +103,6 @@ If you need to run the KloudBuster Web UI you need to install coreutils
     Full documentation at: <http://www.gnu.org/software/coreutils/stdbuf>
     or available locally via: info '(coreutils) stdbuf invocation'
 
-
-
 Verify installation
 ^^^^^^^^^^^^^^^^^^^
 
@@ -123,10 +120,13 @@ to the OpenStack cloud under test.
 
 3. Download the openrc file
 ---------------------------
-Using the Horizon dashboard, download the openrc file (Project|Compute|API Access then click on "Download OpenStack RC File").
-It is best to use the admin user to run KloudBuster as much as possible (otherwise there are restrictions on what you can do).
-The examples below assume the openrc file is saved at the root of the kloudbuster git repository with the name "admin-openrc.sh"
-and the password is "admin".
+
+Using the Horizon dashboard, download the openrc file (Project|Compute|API
+Access then click on "Download OpenStack RC File"). It is best to use the
+admin user to run KloudBuster as much as possible (otherwise there are
+restrictions on what you can do). The examples below assume the openrc file is
+saved at the root of the kloudbuster git repository with the name
+"admin-openrc.sh" and the password is "admin".
 
 4. Running the KloudBuster CLI
 ------------------------------
@@ -134,7 +134,7 @@ and the password is "admin".
 Run the default HTTP data plane scale test
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The default HTTP scale test is described :ref:`here <default_http_scale>`
+The default HTTP scale test is described :ref:`here <default_http_scale>`.
 
 .. code-block:: bash
 
@@ -143,7 +143,7 @@ The default HTTP scale test is described :ref:`here <default_http_scale>`
 Run the default storage scale test
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The default storage scale test is described :ref:`here <default_storage_scale>` 
+The default storage scale test is described :ref:`here <default_storage_scale>`.
 
 .. code-block:: bash
 
@@ -152,13 +152,15 @@ The default storage scale test is described :ref:`here <default_storage_scale>`
 Run KloudBuster with a custom configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The default KloudBuster configuration file is in cfg.scale.yaml. You can make a copy of it in "kb.cfg"::
+The default KloudBuster configuration file is in cfg.scale.yaml. You can make a
+copy of it in "kb.cfg":
 
 .. code-block:: bash
 
     cp kloudbuster/cfg.scale.yaml kb.cfg
 
-You can then edit kb.cfg and modify it appropriately. To run KloudBuster with the custom configuration::
+You can then edit kb.cfg and modify it appropriately. To run KloudBuster with
+the custom configuration:
 
 .. code-block:: bash
 
@@ -179,8 +181,9 @@ is up running::
 
 By default KloudbBuster will listen on port 8080.
 
-ref:`How to use the Web UI <webui_usage>`
-ref:`How to use the REST interface <rest_usage>`
+:ref:`How to use the Web UI <webui_usage>`
+
+:ref:`How to use the REST interface <rest_usage>`
 
 To terminate the server, simply use the kill command on the server pid.
 

@@ -30,8 +30,7 @@ The default storage scale test will use the following settings:
     * Create 1 private network
     * Create 1 VM and attach a 10 GB Cinder volume to it
     * Perform the default storage workload sequence:
-
-       * random access 4KB block size, IO depth 4, 100 IOPs for 30 seconds each
+       * random access 4KB block size, IO depth 4, 100 IOPs for 30 seconds
           * 100% read
           * 100% write
           * 70% read, 30% write
@@ -67,11 +66,11 @@ that are documented using yaml comments.
     in the configuration file that you do not intend to change
 
 Once modified, you can pass the configuration file to KloudBuster using the
---config option.
+*--config* option.
 
 
 General Configuration Options
------------------------------
+"""""""""""""""""""""""""""""
 
 Each item in the configuration file is well documented. Below is
 just a quick-start on some important config items that need to be paid more

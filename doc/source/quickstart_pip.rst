@@ -108,13 +108,15 @@ To verify kloudbuster is installed properly, just type::
 3. Upload the KloudBuster VM image
 ----------------------------------
 
-Follow the :ref:`steps <upload_kb_image>` to upload the KloudBuster VM image
-to the OpenStack cloud under test.
+Follow the :ref:`steps <upload_kb_image>` to upload the KloudBuster VM image to
+the OpenStack cloud under test.
 
 4. Download the openrc file
 ---------------------------
-Using the Horizon dashboard, download the openrc file (Project|Compute|API Access then click on "Download OpenStack RC File").
-It is best to use the admin user to run KloudBuster as much as possible (otherwise there are restrictions on what you can do).
+Using the Horizon dashboard, download the openrc file (Project|Compute|API
+Access then click on "Download OpenStack RC File"). It is best to use the
+admin user to run KloudBuster as much as possible (otherwise there are
+restrictions on what you can do).
 
 
 5. Running the KloudBuster CLI
@@ -123,7 +125,7 @@ It is best to use the admin user to run KloudBuster as much as possible (otherwi
 Run the default HTTP data plane scale test
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The default HTTP scale test is described :ref:`here <default_http_scale>`
+The default HTTP scale test is described :ref:`here <default_http_scale>`.
 
 
 .. code-block:: bash
@@ -133,7 +135,7 @@ The default HTTP scale test is described :ref:`here <default_http_scale>`
 Run the default storage scale test
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The default storage scale test is described :ref:`here <default_storage_scale>` 
+The default storage scale test is described :ref:`here <default_storage_scale>`.
 
 .. code-block:: bash
 
@@ -142,14 +144,16 @@ The default storage scale test is described :ref:`here <default_storage_scale>`
 Run KloudBuster with a custom configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To get a copy of the default KloudBuster configuration and store it to a file called "kb.cfg"::
+To get a copy of the default KloudBuster configuration and store it to a file
+called "kb.cfg":
 
 .. code-block:: bash
 
     kloudbuster --show-config >kb.cfg
     less kb.cfg
 
-You can then edit kb.cfg and modify it appropriately. To run KloudBuster with the custom configuration::
+You can then edit kb.cfg and modify it appropriately. To run KloudBuster with
+the custom configuration:
 
 .. code-block:: bash
 
@@ -177,6 +181,7 @@ The KloudBuster REST base URL is the above URL with "/api" appended::
 
     http://<host_ip>:8080/api
 
-ref:`How to use the Web UI <webui_usage>`
-ref:`How to use the REST interface <rest_usage>`
+:ref:`How to use the Web UI <webui_usage>`
+
+:ref:`How to use the REST interface <rest_usage>`
 
