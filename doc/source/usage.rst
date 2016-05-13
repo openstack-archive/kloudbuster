@@ -19,7 +19,7 @@ OpenStack cloud pre-requisites to run KloudBuster:
     * Neutron networking
     * Admin access to the cloud under test (non-admin might work with some
       tweaks and limitations)
-    * 3 available floating IPs if running the HTTP data plane scale test, 
+    * 3 available floating IPs if running the HTTP data plane scale test
     * 2 available floating IPs if running the Storage scale test
 
 KloudBuster Installation Options
@@ -37,7 +37,7 @@ locally on their workstation or laptop can use the PyPI based installation
 (pip install) or the Docker container.
 
 Docker container, Web Service and PyPI based installation will satisfy most use cases
-and are the recommended ways for running KloudBuster under production environments 
+and are the recommended ways for running KloudBuster under production environments
 or through an automated or scheduled job.
 
 
@@ -56,18 +56,19 @@ Quick Start Guides
 Using the KloudBuster Web UI
 ----------------------------
 
-Using any browser, point to the provided URL. You will get a Login page where you will need to enter:
+Using any browser, point to the provided URL. You will get a Login page where
+you will need to enter:
 
    * The type of scale test (HTTP data plane or storage)
    * The location of the openrc file for the cloud under test and the corresponding
      OpenStack password
 
-You could modify the scale test configuration options or simply start the scale test with the default scale configuration.
-Click on Stage button to instruct KloudBuster to stage all the OpenStack resources. This can take time 
-depending on how many VMs are requested and how fast is the cloud under test.
+You could modify the scale test configuration options or simply start the scale
+test with the default scale configuration.  Click on Stage button to instruct
+KloudBuster to stage all the OpenStack resources. This can take time depending
+on how many VMs are requested and how fast is the cloud under test.
 
 Once staging is done, click on the Run button to run the scale test.
-
 
 .. _rest_usage:
 
@@ -93,15 +94,14 @@ KloudBuster VM Image Upload
 ---------------------------
 
 Before you can use KloudBuster you must upload the KloudBuster VM image to your
-OpenStack cloud under test.
-KloudBuster needs one "universal" test VM image
+OpenStack cloud under test.  KloudBuster needs one "universal" test VM image
 (referred to as "KloudBuster image") that contains the necessary test software.
-The KloudBuster image is then instantiated by the KloudBuster application
-in potentially large number of VMs using the appropriate role (HTTP server,
-HTTP traffic generator...).
+The KloudBuster image is then instantiated by the KloudBuster application in
+potentially large number of VMs using the appropriate role (HTTP server, HTTP
+traffic generator...).
 
 Pre-built VM images are available for download from the
-`OpenStack App Catalog <http://apps.openstack.org/#tab=glance-images>`_. 
+`OpenStack App Catalog <http://apps.openstack.org/#tab=glance-images>`_.
 
 .. note::
 
@@ -118,13 +118,13 @@ Pre-built VM images are available for download from the
 Download the KloudBuster VM image to the local directory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You must download a local copy if your OpenStack cloud does not have dirct access
-to the Internet.
-Download the latest image directly from `OpenStack App Catalog <http://apps.openstack.org/#tab=glance-images>`_ 
-using your favorite browser (search for "kloudbuster") or using wget.
-KloudBuster VM images are qcow2 images named "kloudbuster_v<version>.qcow2"
-(e.g. "kloudbuster_v6.qcow2"). Look for an image named
-with the "kloudbuster_v" prefix and download the latest version from the list.
+You must download a local copy if your OpenStack cloud does not have dirct
+access to the Internet.  Download the latest image directly from
+`OpenStack App Catalog <http://apps.openstack.org/#tab=glance-images>`_ using
+your favorite browser (search for "kloudbuster") or using wget.  KloudBuster VM
+images are qcow2 images named "kloudbuster_v<version>.qcow2" (e.g.
+"kloudbuster_v6.qcow2"). Look for an image named with the "kloudbuster_v"
+prefix and download the latest version from the list.
 
 Example for downloading the v6 image using wget:
 
@@ -132,14 +132,13 @@ Example for downloading the v6 image using wget:
 
    wget http://storage.apps.openstack.org/images/kloudbuster_v6.qcow2
 
-
-
 Upload the KloudBuster VM image using the Horizon Dashboard
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-From the dashboard, create a new image and select either "Image File" if you want to
-uplaod from the local copy of the image or "Image Location" if you want to
-upload directly from the OpenStack App Catalog (you will need the complete URL of the image).
+From the dashboard, create a new image and select either "Image File" if you
+want to uplaod from the local copy of the image or "Image Location" if you want
+to upload directly from the OpenStack App Catalog (you will need the complete
+URL of the image).
 
 The name of the image in Glance *must* match exactly the image name in the App
 Catalog (without the .qcow2 extension, e.g. "kloudbuster_v6").
@@ -149,6 +148,7 @@ Upload the KloudBuster VM image using the Glance CLI
 
 This assumes that you have installed the OpenStack Glance API and have sourced
 the appropriate openrc file.
+
 To upload the image from a local copy of that image using the Glance CLI:
 
 .. code-block:: bash
