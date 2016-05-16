@@ -19,6 +19,7 @@ Contents:
    std_scale_profile
    adv_features
    cleanup
+   faq
    development
    contributing
 

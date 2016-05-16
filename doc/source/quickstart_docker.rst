@@ -37,7 +37,7 @@ file is saved under the local directory with the name "admin-openrc.sh"
 ----------------------------------------------------------
 
 If your OpenStack cloud has full access to the Internet, you can skip this step
-as KloudBuster will instruct Glance to download the KloudBuster VM inage
+as KloudBuster will instruct Glance to download the KloudBuster VM image
 directly from the OpenStack (skip to next step).
 
 Otherwise, :ref:`download the latest kloudbuster image <upload_kb_image>` from

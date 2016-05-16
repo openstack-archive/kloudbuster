@@ -61,9 +61,8 @@ First, download XCode from App Store, then execute below commands:
     $ pip install -r requirements-dev.txt
 
 If you need to run the KloudBuster Web UI you need to install coreutils
-(you can skip this step if you do not run the KloudBuster Web server):
+(you can skip this step if you do not run the KloudBuster Web server)::
 
-.. code-block:: bash
 
     $ # If you need to run KloudBuster Web UI,
     $ # coreutils needs to be installed using Homebrew.

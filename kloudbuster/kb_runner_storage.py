@@ -118,7 +118,7 @@ class KBRunner_Storage(KBRunner):
             vm_count = active_range[1] - active_range[0] + 1\
                 if active_range else len(self.full_client_dict)
             for idx, cur_config in enumerate(self.config.storage_tool_configs):
-                LOG.info("Runing test case %d of %d..." % (idx + 1, test_count))
+                LOG.info("Running test case %d of %d..." % (idx + 1, test_count))
                 self.report = {'seq': 0, 'report': None}
                 self.result = {}
                 self.run_storage_test(active_range, dict(cur_config))

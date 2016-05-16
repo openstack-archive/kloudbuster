@@ -25,9 +25,7 @@ RHEL/Fedora/CentOS based:
 
     $ sudo yum install gcc python-devel python-pip python-virtualenv libyaml-devel
 
-MacOSX:
-
-.. code-block:: bash
+MacOSX::
 
     $ # Download the XCode command line tools from Apple App Store
     $ xcode-select --install
