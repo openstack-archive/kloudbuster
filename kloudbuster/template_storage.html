@@ -41,7 +41,7 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav" ng-init="tab=0">
                 <li ng-class="{active:tab==0}" ng-click="tab=0">
-                    <a><span class="glyphicon" aria-hidden="true" ></span>[[label]]</a>
+                    <a><span class="glyphicon" aria-hidden="true" ></span>Storage Scale Test</a>
                 </li>
                 <li ng-class="{active:tab==1}" ng-click="tab=1" ng-show="config == true">
                     <a><span class="glyphicon" aria-hidden="true" ></span>Configuration</a>
@@ -55,7 +55,7 @@
 </nav>
 
 <div class="container" ng-show="tab == 0">
-    <h3>KloudBuster Storage Test Report</h3>
+    <h3><center>[[label]]</center></h3>
     <ul class="nav nav-tabs">
         <li ng-repeat="title in titleList" ng-class="{active: current_index==$index}" ng-click="handleEvent($event, $index,'')">
             <a data-toggle="tab" aria-expanded="true">

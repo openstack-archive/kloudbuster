@@ -758,7 +758,7 @@ def create_html(hfp, template, task_re, is_config):
         if CONF.label:
             line = line.replace('[[label]]', CONF.label)
         else:
-            line = line.replace('[[label]]', 'Report')
+            line = line.replace('[[label]]', 'Storage Scale Report')
         hfp.write(line)
     if not CONF.headless:
         # bring up the file in the default browser
@@ -789,7 +789,8 @@ def main():
         cfg.StrOpt("config",
                    short="c",
                    default=None,
-                   help="Override default values with a config file"),
+                   help="Override default values with a config file",
+                   metavar="<config file>"),
         cfg.BoolOpt("storage",
                     default=False,
                     help="Running KloudBuster to test storage performance"),
@@ -799,40 +800,59 @@ def main():
         cfg.StrOpt("topology",
                    short="t",
                    default=None,
-                   help="Topology files for compute hosts"),
+                   help="Topology file for compute hosts",
+                   metavar="<topology file>"),
         cfg.StrOpt("tenants-list",
                    short="l",
                    default=None,
-                   help="Existing tenant and user lists for reusing"),
+                   help="Existing tenant and user lists for reusing",
+                   metavar="<tenants file>"),
+        cfg.StrOpt("rc",
+                   default=None,
+                   help="Tested cloud openrc credentials file (same as --tested-rc)",
+                   metavar="<rc file>"),
         cfg.StrOpt("tested-rc",
                    default=None,
-                   help="Tested cloud openrc credentials file"),
+                   help="Tested cloud openrc credentials file",
+                   metavar="<rc file>"),
         cfg.StrOpt("testing-rc",
                    default=None,
-                   help="Testing cloud openrc credentials file"),
+                   help="Testing cloud openrc credentials file",
+                   metavar="<rc file>"),
+        cfg.StrOpt("passwd",
+                   default=None,
+                   secret=True,
+                   help="Tested cloud password (same as --tested-pwd)",
+                   metavar="<password>"),
         cfg.StrOpt("tested-passwd",
                    default=None,
                    secret=True,
-                   help="Tested cloud password"),
+                   help="Tested cloud password",
+                   metavar="<password>"),
         cfg.StrOpt("testing-passwd",
                    default=None,
                    secret=True,
-                   help="Testing cloud password"),
+                   help="Testing cloud password",
+                   metavar="<password>"),
         cfg.StrOpt("html",
                    default=None,
-                   help='store results in HTML file'),
+                   help='store results in HTML file',
+                   metavar="<dest html file>"),
         cfg.StrOpt("label",
                    default=None,
-                   help='label for the title in HTML file'),
+                   help='label for the title in HTML file',
+                   metavar="<title>"),
         cfg.BoolOpt("headless",
                     default=False,
                     help="do not show chart in the browser (default=False, only used if --html)"),
         cfg.StrOpt("json",
                    default=None,
-                   help='store results in JSON format file'),
+                   help='store results in JSON format file',
+                   metavar="<dest json file>"),
         cfg.StrOpt("csv",
                    default=None,
-                   help='store results in CSV format, multicast only.'),
+                   help='store results in CSV format, multicast only.',
+                   metavar="<csv file>"),
         cfg.BoolOpt("no-env",
                     default=False,
                     help="Do not read env variables"),
@@ -841,13 +861,20 @@ def main():
                     help="Show the default configuration"),
         cfg.StrOpt("charts-from-json",
                    default=None,
-                   help='create charts from json results and exit (requires --html)'),
+                   help='create charts from json results and exit (requires --html)',
+                   metavar="<source json file>"),
     ]
     CONF.register_cli_opts(cli_opts)
     CONF.set_default("verbose", True)
     full_version = __version__ + ', VM image: ' + kb_vm_agent.get_image_name()
     CONF(sys.argv[1:], project="kloudbuster", version=full_version)
     logging.setup("kloudbuster")
+
+    if CONF.rc and not CONF.tested_rc:
+        CONF.tested_rc = CONF.rc
+
+    if CONF.passwd and not CONF.tested_passwd:
+        CONF.tested_passwd = CONF.passwd
 
     if CONF.charts_from_json:
         if not CONF.html:
