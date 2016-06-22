@@ -88,7 +88,7 @@ class KBRunner(object):
                 continue
             break
         if not success:
-            LOG.error("Error: Cannot connect to the Redis server")
+            LOG.error("Cannot connect to the Redis server.")
             raise KBProxyConnectionException()
 
         # Subscribe to message channel
