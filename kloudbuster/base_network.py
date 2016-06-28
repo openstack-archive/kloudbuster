@@ -74,7 +74,7 @@ def delete_floating_ip(neutron_client, fip):
         except Exception:
             time.sleep(1)
 
-    LOG.error('Failed while deleting floating IP %s.' % fip['floatingip']['id'])
+    LOG.error('Failed while deleting floating IP %s.' % fip)
     return False
 
 def find_external_network(neutron_client):
