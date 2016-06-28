@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # script for kloudbuster
 
 # Tune the Linux kernel for scale test
@@ -48,12 +50,10 @@ sed -i "s/127.0.0.1/0.0.0.0/g" /etc/redis/redis.conf
 # if started nginx should be allowed to open more file descriptors
 sed -i 's/start-stop-daemon\ --start/ulimit\ \-n\ 102400\n\t\0/g' /etc/init.d/nginx
 
-
 # Auto start the KloudBuster Agent, with user-data
 sed -i "s/^exit\s0/cd \/kb_test\n\0/g" /etc/rc.local
 sed -i "s/^exit\s0/if wget http\:\/\/169.254.169.254\/latest\/user-data; then \:; fi\n\0/g" /etc/rc.local
 sed -i "s/^exit\s0/python kb_vm_agent.py \&\n\0/g" /etc/rc.local
-
 
 # ======
 # Client
@@ -80,14 +80,17 @@ mv /usr/local/lib/libhdr_histogram.so /usr/lib/
 
 # Install fio
 cd /tmp
-FIO='fio-2.8'
+FIO='fio-2.12'
 wget http://brick.kernel.dk/snaps/$FIO.tar.gz
 tar xzf $FIO.tar.gz
 cd $FIO
 make
 mv fio /usr/local/bin/fio
 
-
+# Install nuttcp
+cd /kb_test/kloudbuster/kb_dib/elements/nuttcp
+gcc nuttcp-7.3.3.c -o nuttcp
+mv nuttcp /usr/local/bin/nuttcp
 
 # =================
 # KloudBuster Proxy
@@ -97,16 +100,9 @@ git clone git://github.com/openstack/kloudbuster.git
 cd kloudbuster
 pip install -r requirements.txt
 
-
-# Install nuttcp
-cd /kb_test/kloudbuster/kb_dib/elements/nuttcp
-gcc nuttcp-7.3.3.c -o nuttcp
-mv nuttcp /usr/local/bin/nuttcp
-
 # =======
 # Cleanup
 # =======
-
 # Remove HdrHistogram_c, wrk2, and fio builds
 rm -rf /tmp/HdrHistogram_c
 rm -rf /tmp/wrk2
@@ -121,6 +117,5 @@ apt-get -y --purge remove python-pip
 apt-get -y --purge remove python-dev
 apt-get -y --purge remove build-essential
 apt-get -y --purge remove cmake
-apt-get -y --purge remove npm
 apt-get -y --purge autoremove
 apt-get -y autoclean
