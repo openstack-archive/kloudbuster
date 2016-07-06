@@ -199,10 +199,12 @@ class ConfigController(object):
             response.text = u"Invalid JSON: \n%s" % (e.message)
             return response.text
 
-        # http_tool_configs for client VMs is allowed to changed under "STAGED" status
+        # http_tool_configs and storage_tool_config for client VMs is allowed to be
+        # changed under "STAGED" status
         if ('kb_cfg' in user_config and len(user_config['kb_cfg']) == 1) and \
            ('client' in user_config['kb_cfg'] and len(user_config['kb_cfg']['client']) == 1) and \
-           ('http_tool_configs' in user_config['kb_cfg']['client']):
+           ('http_tool_configs' in user_config['kb_cfg']['client'] or
+           'storage_tool_configs' in user_config['kb_cfg']['client']):
             allowed_status.append('STAGED')
 
         if status in allowed_status:
