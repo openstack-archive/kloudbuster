@@ -31,7 +31,7 @@ angular.module("kbWebApp").controller("StorageConfigCtrl", function($scope, $htt
             console.log("status error");
         }) : ($scope.status = "NO SESSION ID", kbCookie.setStatus(""));
     };
-    var disabledStagingConfig = !1;
+    var disabledStagingConfig = !1, disabledStagedConfig = !0;
     $scope.disableConfig = function(disableId) {
         $("#" + disableId).find("input,button,a,md-radio-button").each(function() {
             $(this).attr("disabled", "disabled");
@@ -42,8 +42,12 @@ angular.module("kbWebApp").controller("StorageConfigCtrl", function($scope, $htt
         });
     }, $scope.configStatus = function() {
         "READY" === $scope.status ? disabledStagingConfig === !0 && (disabledStagingConfig = !1, 
-        $scope.enableConfig("stagingConfig3"), $scope.enableConfig("getButton")) : disabledStagingConfig === !1 && (disabledStagingConfig = !0, 
-        $scope.disableConfig("stagingConfig3"), $scope.disableConfig("getButton"));
+        disabledStagedConfig = !0, $scope.enableConfig("dashboard_general"), $scope.enableConfig("dashboard_server"), 
+        $scope.enableConfig("getButton")) : "STAGED" === $scope.status ? disabledStagedConfig === !0 && (disabledStagingConfig = !0, 
+        disabledStagedConfig = !1, $scope.disableConfig("dashboard_general"), $scope.enableConfig("dashboard_server"), 
+        $scope.enableConfig("getButton")) : disabledStagingConfig !== !1 && disabledStagedConfig !== !1 || (disabledStagingConfig = !0, 
+        disabledStagedConfig = !0, $scope.disableConfig("dashboard_general"), $scope.disableConfig("dashboard_server"), 
+        $scope.disableConfig("getButton"));
     }, $("#dropdownrandrw").append('<li class="divider"></li>'), $scope.storageMode = {
         randread: {
             name: "Random Read",
