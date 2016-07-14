@@ -128,8 +128,9 @@ class User(object):
         nova_quota = base_compute.NovaQuota(self.nova_client, self.tenant.tenant_id)
         nova_quota.update_quota(**tenant_quota['nova'])
 
-        cinder_quota = base_compute.CinderQuota(self.cinder_client, self.tenant.tenant_id)
-        cinder_quota.update_quota(**tenant_quota['cinder'])
+        if self.tenant.kloud.storage_mode:
+            cinder_quota = base_compute.CinderQuota(self.cinder_client, self.tenant.tenant_id)
+            cinder_quota.update_quota(**tenant_quota['cinder'])
 
         neutron_quota = base_network.NeutronQuota(self.neutron_client, self.tenant.tenant_id)
         neutron_quota.update_quota(tenant_quota['neutron'])

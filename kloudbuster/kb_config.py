@@ -173,13 +173,12 @@ class KBConfig(object):
         self.cred_tested = credentials.Credentials(openrc_file=CONF.tested_rc,
                                                    pwd=CONF.tested_passwd,
                                                    no_env=CONF.no_env)
-        if CONF.testing_rc and CONF.testing_rc != CONF.tested_rc:
+        if CONF.testing_rc:
             self.cred_testing = credentials.Credentials(openrc_file=CONF.testing_rc,
                                                         pwd=CONF.testing_passwd,
                                                         no_env=CONF.no_env)
         else:
-            # Use the same openrc file for both cases
-            self.cred_testing = self.cred_tested
+            self.cred_testing = None
 
     def get_configs(self):
         if CONF.config:
