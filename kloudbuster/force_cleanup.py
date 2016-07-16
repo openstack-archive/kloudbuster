@@ -75,10 +75,14 @@ def prompt_to_run():
         sys.exit(0)
 
 def fetch_resources(fetcher, options=None):
-    if options:
-        res_list = fetcher(search_opts=options)
-    else:
-        res_list = fetcher()
+    try:
+        if options:
+            res_list = fetcher(search_opts=options)
+        else:
+            res_list = fetcher()
+    except Exception as e:
+        res_list = []
+        print "Warning exception while listing resources:" + str(e)
     resources = {}
     for res in res_list:
         # some objects provide direct access some
