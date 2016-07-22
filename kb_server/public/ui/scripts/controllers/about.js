@@ -178,7 +178,7 @@ angular.module("kbWebApp").controller("AboutCtrl", function($scope, $http, $loca
     }, this.setLogNum = function(lognumber) {
         return logNum = lognumber;
     };
-}).service("showAlert", function($mdDialog) {
+}).service("showAlert", function($mdDialog, $q) {
     this.showAlert = function(words, ev) {
         var alert = $mdDialog.alert({
             title: "Attention",
@@ -188,5 +188,19 @@ angular.module("kbWebApp").controller("AboutCtrl", function($scope, $http, $loca
         $mdDialog.show(alert)["finally"](function() {
             alert = void 0;
         });
+    }, this.showPrompt = function($scope, $event) {
+        var deferred = $q.defer(), parentEl = angular.element(document.body);
+        return $mdDialog.show({
+            parent: parentEl,
+            targetEvent: $event,
+            template: '<md-dialog aria-label="List dialog">  <md-dialog-content class="md-dialog-content" role="document" tabIndex="-1">    <h2 class="md-title">Configuration Import</h2>    <div class="md-dialog-content-body">      <p>Paste Json Format Configuration Below:</p>    </div>    <md-input-container md-no-float class="md-prompt-input-container">      <textarea ng-model="dialog.result" md-maxlength="" rows="5" md-select-on-focus="" placeholder="..."></textarea>    </md-input-container>  </md-dialog-content>  <md-dialog-actions">    <md-button ng-click="cancel()" class="md-primary">      Cancel    </md-button>    <md-button ng-click="answer()" class="md-primary" style="float:right;">      Submit    </md-button>  </md-dialog-actions></md-dialog>',
+            controller: function($scope, $mdDialog, kbCookie) {
+                $scope.cancel = function() {
+                    $mdDialog.cancel(), deferred.reject();
+                }, $scope.answer = function() {
+                    kbCookie.setConfig(angular.fromJson($scope.dialog.result)), $mdDialog.hide(), deferred.resolve();
+                };
+            }
+        }), deferred.promise;
     };
 });

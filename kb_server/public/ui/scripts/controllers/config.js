@@ -32,6 +32,14 @@ angular.module("kbWebApp").controller("ConfigCtrl", function($scope, $http, $loc
     function reset() {
         $scope.selectedA = [], $scope.selectedB = [], $scope.selectedC = [], $scope.toggle = !1;
     }
+    function downloadFile(fileName, content) {
+        var aLink = document.createElement("a"), blob = new Blob([ content ]), evt = document.createEvent("HTMLEvents");
+        evt.initEvent("click", !1, !1), aLink.download = fileName, aLink.href = URL.createObjectURL(blob), 
+        aLink.dispatchEvent(evt);
+    }
+    function to2(num) {
+        return 10 > num ? "0" + num : 99 > num ? "" + num : -1;
+    }
     this.awesomeThings = [ "HTML5 Boilerplate", "AngularJS", "Karma" ], "" === kbCookie.getSessionID() ? $location.path("/Login") : kbCookie.checkMode("http"), 
     $(window).on("hashchange", locationChange.change()), $scope.sessionID = kbCookie.getSessionID(), 
     $scope.status = kbCookie.getStatus(), $scope.dashstatus1 = "active", $scope.dashstatus1vis = !0, 
@@ -209,5 +217,14 @@ angular.module("kbWebApp").controller("ConfigCtrl", function($scope, $http, $loc
             clients_rack: ""
         }), init(), $scope.getTopology()) : 3 == $scope.availability_zone && ($scope.config.server.availability_zone = "", 
         $scope.config.client.availability_zone = "");
+    }, $scope["import"] = function() {
+        showAlert.showPrompt($scope).then(function(response) {
+            $scope.config = kbCookie.getConfig(), "READY" !== $scope.status && "STAGED" !== $scope.status && "" !== $scope.status || $scope.changeConfig(), 
+            console.log("import config");
+        }, function(response) {});
+    }, $scope["export"] = function() {
+        "READY" !== $scope.status && "STAGED" !== $scope.status && "" !== $scope.status || $scope.changeConfig();
+        var date = new Date(), m = to2(date.getMonth() + 1), d = to2(date.getDate()), h = to2(date.getHours()), min = to2(date.getMinutes()), filename = "ConfigFile" + m + d + h + min + ".json", myresult = JSON.stringify(kbCookie.getConfig(), null, "	");
+        downloadFile(filename, myresult);
     };
 });

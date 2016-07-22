@@ -17,6 +17,15 @@ permissions and limitations under the License.
 <div class="md-padding dialogdemoBasicUsage" id="popupContainer" ng-cloak=""></div>
 <div class="row">
 <div style="float:right;padding:1px 30px" id="getButton">
+<div class="btn-group">
+<a href="" class="btn btn-default btn-sm" style="width:80px">Action</a>
+<a href="" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+<ul class="dropdown-menu">
+<li><a href="" ng-click="import()">Import</a></li>
+<li class="divider"></li>
+<li><a href="" ng-click="export()">Export</a></li>
+</ul>
+</div>
 <input type="button" value="Default/Reset" class="btn btn-default btn-sm" ng-click="getDefaultConfig()" style="width:110px">
 <input type="button" value="Save" class="btn btn-primary btn-sm" ng-click="changeConfig()" style="width:80px">
 </div>
