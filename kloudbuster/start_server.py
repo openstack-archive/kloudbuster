@@ -16,6 +16,7 @@
 from pkg_resources import resource_filename
 import subprocess
 import sys
+import os
 
 def exec_command(cmd, cwd=None, show_console=False):
     p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -26,18 +27,33 @@ def exec_command(cmd, cwd=None, show_console=False):
     p.communicate()
     return p.returncode
 
+# will raise OSError exception if the command is not found
+def launch_kb(cwd):
+    for stdbuf in ['stdbuf', 'gstdbuf']:
+        cmd = [stdbuf, '-oL', 'python', 'setup.py', 'develop']
+        try:
+            rc = exec_command(cmd, cwd=cwd)
+            if not rc:
+                cmd = [stdbuf, '-oL', 'pecan', 'serve', 'config.py']
+                rc = exec_command(cmd, cwd=cwd, show_console=True)
+            return rc
+        except OSError:
+            continue
+    if os.uname()[0] == "Darwin":
+        print
+        print "To run the KloudBuster web server you need to install the coreutils package:"
+        print "    brew install coreutils"
+        print
+    raise OSError('Cannot find stdbuf or gstdbuf command')
+
 def main():
     cwd = resource_filename(__name__, 'config.py')
     cwd = cwd[:cwd.rfind('/')] + '/../kb_server'
     try:
-        cmd = ['stdbuf', '-oL', 'python', 'setup.py', 'develop']
-        rc = exec_command(cmd, cwd=cwd)
-        if not rc:
-            cmd = ['stdbuf', '-oL', 'pecan', 'serve', 'config.py']
-            rc = exec_command(cmd, cwd=cwd, show_console=True)
-            sys.exit(rc)
+        return launch_kb(cwd)
     except KeyboardInterrupt:
         print 'Terminating server...'
+        return 1
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

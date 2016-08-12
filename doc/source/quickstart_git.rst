@@ -69,38 +69,6 @@ If you need to run the KloudBuster Web UI you need to install coreutils
     $ # Refer here for the steps to install Homebrew on Mac:
     $ # http://brew.sh/
     $ brew install coreutils
-    $ # Follow instructions to add the new directory in the path
-    $ export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
-    $ # Verify that you have stdbuf working
-    $ stdbuf --help
-    Usage: stdbuf OPTION... COMMAND
-    Run COMMAND, with modified buffering operations for its standard streams.
-
-    Mandatory arguments to long options are mandatory for short options too.
-      -i, --input=MODE   adjust standard input stream buffering
-      -o, --output=MODE  adjust standard output stream buffering
-      -e, --error=MODE   adjust standard error stream buffering
-          --help     display this help and exit
-          --version  output version information and exit
-
-    If MODE is 'L' the corresponding stream will be line buffered.
-    This option is invalid with standard input.
-
-    If MODE is '0' the corresponding stream will be unbuffered.
-
-    Otherwise MODE is a number which may be followed by one of the following:
-    KB 1000, K 1024, MB 1000*1000, M 1024*1024, and so on for G, T, P, E, Z, Y.
-    In this case the corresponding stream will be fully buffered with the buffer
-    size set to MODE bytes.
-
-    NOTE: If COMMAND adjusts the buffering of its standard streams ('tee' does
-    for example) then that will override corresponding changes by 'stdbuf'.
-    Also some filters (like 'dd' and 'cat' etc.) don't use streams for I/O,
-    and are thus unaffected by 'stdbuf' settings.
-
-    GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
-    Full documentation at: <http://www.gnu.org/software/coreutils/stdbuf>
-    or available locally via: info '(coreutils) stdbuf invocation'
 
 Verify installation
 ^^^^^^^^^^^^^^^^^^^
