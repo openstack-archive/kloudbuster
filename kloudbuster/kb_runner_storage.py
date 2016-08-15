@@ -89,15 +89,20 @@ class KBRunner_Storage(KBRunner):
                 'parameter': tool_config}
         self.send_cmd('EXEC', 'storage', func)
         # Give additional 30 seconds for everybody to report results
-        timeout = tool_config['runtime'] + 30
+        if tool_config['runtime']:
+            timeout = tool_config['runtime'] + 30
+        else:
+            # 0 = unlimited, for now set max to 24 hours
+            timeout = 60 * 60 * 24
         cnt_pending = self.polling_vms(timeout)[2]
-        if cnt_pending != 0:
-            LOG.warning("Testing VMs are not returning results within grace period, "
-                        "summary shown below may not be accurate!")
-
-        # Parse the results from storage benchmarking tool
-        for key, instance in self.client_dict.items():
-            self.result[key] = instance.perf_client_parser(**self.result[key])
+        if cnt_pending:
+            LOG.error("%d testing VM(s) not returning results within %d sec, "
+                      "summary shown will be partial!" % (cnt_pending, timeout))
+        else:
+            # Parse the results from storage benchmarking tool
+            for key, instance in self.client_dict.items():
+                self.result[key] = instance.perf_client_parser(**self.result[key])
+        return cnt_pending
 
     def single_run(self, active_range=None, test_only=False):
         try:
@@ -121,9 +126,12 @@ class KBRunner_Storage(KBRunner):
                 LOG.info("Running test case %d of %d..." % (idx + 1, test_count))
                 self.report = {'seq': 0, 'report': None}
                 self.result = {}
-                self.run_storage_test(active_range, dict(cur_config))
+                LOG.kbdebug(dict(cur_config))
+                timeout_vms = self.run_storage_test(active_range, dict(cur_config))
+
                 # Call the method in corresponding tools to consolidate results
                 LOG.kbdebug(self.result.values())
+
                 tc_result = perf_tool.consolidate_results(self.result.values())
                 tc_result['description'] = cur_config['description']
                 tc_result['mode'] = cur_config['mode']
@@ -135,12 +143,18 @@ class KBRunner_Storage(KBRunner):
                     tc_result['rate_iops'] = vm_count * cur_config['rate_iops']
                 if 'rate' in cur_config:
                     req_rate = cur_config['rate']
-                    ex_unit = 'KMG'.find(req_rate[-1].upper())
-                    req_rate = vm_count * int(req_rate[:-1]) * (1024 ** (ex_unit))\
-                        if ex_unit != -1 else vm_count * int(req_rate)
+                    if req_rate:
+                        ex_unit = 'KMG'.find(req_rate[-1].upper())
+                        req_rate = vm_count * int(req_rate[:-1]) * (1024 ** (ex_unit))\
+                            if ex_unit != -1 else vm_count * int(req_rate)
                     tc_result['rate'] = req_rate
                 tc_result['total_client_vms'] = vm_count
+                tc_result['timeout_vms'] = timeout_vms
                 self.tool_result.append(tc_result)
+                if timeout_vms:
+                    return timeout_vms
+            return 0
+
         except KBInitVolumeException:
             raise KBException("Could not initilize the volume.")
 
@@ -175,7 +189,8 @@ class KBRunner_Storage(KBRunner):
 
                 description = "-- %s --" % self.header_formatter(cur_stage, len(self.client_dict))
                 LOG.info(description)
-                self.single_run(active_range=[0, target_vm_count - 1], test_only=test_only)
+                timeout_vms = self.single_run(active_range=[0, target_vm_count - 1],
+                                              test_only=test_only)
                 LOG.info('-- Stage %s: %s --' % (cur_stage, str(self.tool_result)))
                 cur_stage += 1
 
@@ -198,7 +213,11 @@ class KBRunner_Storage(KBRunner):
                                         'reaches the stop limit.')
                             tc_flag = False
                             break
-
+                if timeout_vms:
+                    LOG.warning('KloudBuster is stopping the iteration because of there are %d '
+                                'VMs timing out' % timeout_vms)
+                    tc_flag = False
+                    break
                 yield self.tool_result
         else:
             self.single_run(test_only=test_only)

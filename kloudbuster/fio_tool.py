@@ -22,6 +22,10 @@ import log as logging
 
 LOG = logging.getLogger(__name__)
 
+def assign_dict(dest, key, value, cond_key=None):
+    if not cond_key or cond_key in dest:
+        if value:
+            dest[key] = value
 
 class FioTool(PerfTool):
 
@@ -34,46 +38,45 @@ class FioTool(PerfTool):
 
         # Sample Output:
         # Refer to kloudbuster/fio_example.json for a sample output
-
+        parsed_output = {'tool': self.name}
         try:
             result = json.loads(stdout)
-            read_iops = result['jobs'][0]['read']['iops']
-            read_bw = result['jobs'][0]['read']['bw']
-            write_iops = result['jobs'][0]['write']['iops']
-            write_bw = result['jobs'][0]['write']['bw']
-            read_hist = result['jobs'][0]['read']['clat']['hist']
-            write_hist = result['jobs'][0]['write']['clat']['hist']
+            assign_dict(parsed_output, 'tool', result['fio version'])
+
+            job = result['jobs'][0]
+
+            assign_dict(parsed_output, 'read_iops', job['read']['iops'])
+            assign_dict(parsed_output, 'read_bw', job['read']['bw'])
+            assign_dict(parsed_output, 'read_runtime_ms', job['read']['runtime'])
+            assign_dict(parsed_output, 'read_KB', job['read']['io_bytes'])
+            assign_dict(parsed_output, 'read_hist', job['read']['clat']['hist'], 'read_bw')
+
+            assign_dict(parsed_output, 'write_iops', job['write']['iops'])
+            assign_dict(parsed_output, 'write_bw', job['write']['bw'])
+            assign_dict(parsed_output, 'write_runtime_ms', job['write']['runtime'])
+            assign_dict(parsed_output, 'write_KB', job['write']['io_bytes'])
+            assign_dict(parsed_output, 'write_hist', job['write']['clat']['hist'], 'write_bw')
+
         except Exception:
             return self.parse_error('Could not parse: "%s"' % (stdout))
-
-        parsed_output = {'tool': self.name}
-        if read_iops:
-            parsed_output['read_iops'] = read_iops
-        if read_bw:
-            parsed_output['read_bw'] = read_bw
-        if write_iops:
-            parsed_output['write_iops'] = write_iops
-        if write_bw:
-            parsed_output['write_bw'] = write_bw
-        if read_bw and read_hist:
-            parsed_output['read_hist'] = read_hist
-        if write_bw and write_hist:
-            parsed_output['write_hist'] = write_hist
-
         return parsed_output
 
     @staticmethod
     def consolidate_results(results):
-        all_res = {'tool': 'fio'}
         total_count = len(results)
         if not total_count:
-            return all_res
+            return {'tool': 'fio'}
 
-        for key in ['read_iops', 'read_bw', 'write_iops', 'write_bw']:
-            all_res[key] = 0
+        all_res = {}
+        for key in ['read_iops', 'read_bw', 'write_iops', 'write_bw',
+                    'read_runtime_ms', 'write_runtime_ms',
+                    'read_KB', 'write_KB']:
+            total = 0
             for item in results:
-                all_res[key] += item['results'].get(key, 0)
-            all_res[key] = int(all_res[key])
+                total += item['results'].get(key, 0)
+            if total:
+                all_res[key] = int(total)
+        all_res['tool'] = results[0]['results']['tool']
 
         clat_list = []
         # perc_list = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 99.5, 99.9, 99.95, 99.99]

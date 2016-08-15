@@ -1,0 +1,67 @@
+# KloudBuster Storage Scale Test configuration file
+# Workload for reading and writing 1GB file in random and sequential mode
+# as fast as possible using just 1 VM
+
+# (pass this file using the -c option)
+# Example of invocation (git installation)
+# python kloudbuster.py --rc pod2rc.sh --passwd uVpEeMWyKa7Q2zGV -c cfg.1G.yaml --storage --json res-1GB.json
+#
+
+
+client:
+    # Flavor to use for the test images
+    flavor:
+        # Number of vCPUs for the flavor
+        vcpus: 1
+        # Memory for the flavor in MB
+        ram: 2048
+        # Size of local disk in GB
+        disk: 0
+
+    # Storage specific configs during staging phase
+    # Will effect only in storage testing mode.
+    storage_stage_configs:
+        # The number of VMs for running storage tests
+        vm_count: 1
+        # KloudBuster supports to run storage tests on Cinder Volumes or Ephemeral
+        # Disks. Available options to be configured: ['volume', 'ephemeral'].
+        target: 'volume'
+        # Volumes size in GB for each VM
+        disk_size: 10
+        # The size of the test file for running IO tests in GB. Must be less or
+        # equal than disk_size.
+        io_file_size: 1
+
+    #
+    # runtime: 
+    #     Maximum test duration in seconds, each test will finish
+    #     when the configured runtime elapses or when the full 1GB
+    #     file is read or written (whichever is earlier)
+    # block_size:
+    #     Block size for I/O operations
+    # iodepth:
+    #     Number of I/O operations to keep in flight against the file
+    # iops and rate are not configured, so they will be unrestricted
+    # (as high as possible)
+    #
+    storage_tool_configs:
+        - description: 'Random Read 1GB/1VM/4KB blocks/IO depth 4'
+          mode: 'randread'
+          block_size: '4k'
+          iodepth: 4
+          runtime: 120
+        - description: 'Random Write 1GB/1VM/4KB blocks/IO depth 4'
+          mode: 'randwrite'
+          block_size: '4k'
+          iodepth: 4
+          runtime: 240
+        - description: 'Sequential Read 1GB/1VM/64KB blocks/IO depth 64'
+          mode: 'read'
+          block_size: '64k'
+          iodepth: 64
+          runtime: 60
+        - description: 'Sequential Write 1GB/1VM/64KB blocks/IO depth 64'
+          mode: 'write'
+          block_size: '64k'
+          iodepth: 64
+          runtime: 60

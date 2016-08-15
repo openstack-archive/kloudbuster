@@ -76,6 +76,8 @@ class Credentials(object):
                     self.rc_tenant_name = value
                 elif name == 'CACERT':
                     self.rc_cacert = value
+                elif name == 'PASSWORD':
+                    self.rc_password = value
 
     # Read a openrc file and take care of the password
     # The 2 args are passed from the command line and can be None

@@ -258,7 +258,7 @@ client:
         # Volumes size in GB for each VM
         disk_size: 10
         # The size of the test file for running IO tests in GB. Must be less or
-        # equal than disk_size.
+        # equal than disk_size. Defaults to 1 GB
         io_file_size: 1
 
     # Storage tool specific configs (per VM)
@@ -266,10 +266,10 @@ client:
     # a default profile which consists of six testing scenarios:
     # (1) Random read
     # (2) Random write
-    # (3) Random mixed read/write
+    # (3) Random mixed read/write (70% read, 30% write)
     # (4) Sequential read
     # (5) Sequential write
-    # (6) Sequential mixed read/write
+    # (6) Sequential mixed read/write (70% read, 30% write)
     #
     # Accepted testing parameters for each scenario:
     # description: (Required)
@@ -278,19 +278,23 @@ client:
     #     Self-explained with the name, must be one of the below:
     #     ['randread', 'randwrite', 'randrw', 'read', 'write', 'rw']
     # runtime: (Required)
-    #     Test duration in seconds
+    #     Maximum test duration in seconds or 0 if unlimited
     # block_size: (Required, default=4k)
-    #     Block size for I/O units
+    #     Block size for I/O operations
     # iodepth: (Required, default=1)
-    #     Number of I/O units to keep in flight against the file
+    #     Number of I/O operations to keep in flight against the file
     # rate_iops: (Optional, default=unlimited)
-    #     Cap the bandwidth to this number of IOPS
+    #     Cap the bandwidth to this number of IOPS for each VM
+    #     This is a per VM cap.
+    #     Omit or use 0 for unrestricted iops
     # rate: (Optional, default=unlimited)
-    #     Cap the bandwidth to this number of bytes/sec, normal postfix rules apply
+    #     Cap the bandwidth to this number of bytes/sec for each VM, normal postfix rules apply
+    #     This is a per VM cap.
+    #     Omit or use 0 for unrestricted rate
     # rwmixread: (Required when mode is 'randrw' or 'rw')
-    #     Percentage of a mixed workload that should be reads
+    #     Percentage of a mixed workload that should be reads (a value between 0 and 100)
     # extra_opts: (Optional, default=None)
-    #     Extra options that will be added to the FIO client
+    #     Extra options that will be added verbatim to the FIO client
     storage_tool_configs:
         - description: 'Random Read'
           mode: 'randread'

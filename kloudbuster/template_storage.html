@@ -325,7 +325,12 @@
                     if($scope.perrow.total_client_vms == 1 && countRep!=1) $scope.xaxis = 0;
                     else $scope.xaxis = $scope.perrow.total_client_vms;
                     $scope.xaxisList.push($scope.xaxis);
-
+                    if (!$scope.perrow.rate_iops) {
+                        $scope.perrow.rate_iops = 0;
+                    }
+                    if (!$scope.perrow.rate) {
+                        $scope.perrow.rate = 0;
+                    }
                     if (mode == "randread") {
                         $scope.data.push({
                             x: $scope.xaxis,
@@ -335,9 +340,8 @@
                             "latency3": $scope.perrow.read_hist[4][1] / 1000,
                             "requested_rate": $scope.perrow.rate_iops / $scope.perrow.total_client_vms
                         });
-                        max = $scope.perrow.rate_iops / $scope.perrow.total_client_vms;
-                    }
-                    if (mode == "randwrite") {
+                        max = Math.max($scope.perrow.rate_iops, $scope.perrow.read_iops)
+                    } else if (mode == "randwrite") {
                         $scope.data.push({
                             x: $scope.xaxis,
                             "IOPS": $scope.perrow.write_iops / $scope.perrow.total_client_vms,
@@ -346,10 +350,8 @@
                             "latency3": $scope.perrow.write_hist[4][1] / 1000,
                             "requested_rate": $scope.perrow.rate_iops / $scope.perrow.total_client_vms
                         });
-                        max = $scope.perrow.rate_iops / $scope.perrow.total_client_vms;
-
-                    }
-                    if (mode == "read") {
+                        max = Math.max($scope.perrow.rate_iops, $scope.perrow.write_iops);
+                    } else if (mode == "read") {
                         $scope.data.push({
                             x: $scope.xaxis,
                             "IOPS": $scope.perrow.read_bw / $scope.perrow.total_client_vms,
@@ -358,10 +360,8 @@
                             "latency3": $scope.perrow.read_hist[4][1] / 1000,
                             "requested_rate": $scope.perrow.rate / $scope.perrow.total_client_vms
                         });
-                        max = $scope.perrow.rate / $scope.perrow.total_client_vms;
-
-                    }
-                    if (mode == "write") {
+                        max = Math.max($scope.perrow.rate, $scope.perrow.read_bw);
+                    } else if (mode == "write") {
                         $scope.data.push({
                             x: $scope.xaxis,
                             "IOPS": $scope.perrow.write_bw / $scope.perrow.total_client_vms,
@@ -370,12 +370,12 @@
                             "latency3": $scope.perrow.write_hist[4][1] / 1000,
                             "requested_rate": $scope.perrow.rate / $scope.perrow.total_client_vms
                         });
-                        max = $scope.perrow.rate / $scope.perrow.total_client_vms;
+                        max = Math.max($scope.perrow.rate, $scope.perrow.write_bw);
                     }
+                    max = max / $scope.perrow.total_client_vms;
                     var pickColor = get_color();
                     var chName = "mode-" + $scope.perrow.mode + "_VM-" + $scope.perrow.total_client_vms;
                     $scope.pushTableData(chName, $scope.perrow, pickColor)
-
                 }
             }
         }

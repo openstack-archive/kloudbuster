@@ -155,6 +155,51 @@ What kind of VM storage are supported?
 KloudBuster cam measure the performance of ephemeral disks and Cinder attached
 volumes at scale.
 
+How to measure the fastest IOPs or Throughput from a VM ?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This feature is only available from the CLI by using a properly defined configuration file.
+To measure the fastest IOPs, omit the "rate_iops" and "rate" parameters from the
+workload definition in the configuration file.
+
+The file kloudbuster/cfg.1GB.yaml provides and example of configuration file to measure
+the highest IOPs and throughput for random/sequential, read/write for 1 VM on 1 1GB file
+residing on an attached volume.
+
+How to interpret the generated results in json?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+General parameters:
+
+- test_mode: is always "storage" 
+- storage_target: indicates if the storage used is a Cinder block storage ("volume") or an ephemeral disk, 
+- time: time the test was executed
+- version: KloudBuster version
+- tool: the FIO version used to generate the results
+- block_size: the unit in the value indicates the unit (e.g "4k" = 4 kilobytes)
+- iodepth: number of in-flight operations, 
+- total_client_vms: total number of VMs running an FIO client
+- timeout_vms: number of VM/fio clients that did not return a result within the allocated time 
+  (this parameter is absent if there was no VM timing out, should not be present for most runs) 
+
+
+These parameters represent aggregated values for all VMs (to get a per VM count, divide the value by the number of
+client Vms (total_client_vms):
+
+- read_runtime_ms, write_runtime_ms: aggregated time the fio tests ran in msec as measured by fio
+- rate_iops: aggregated requested number of IOPs, 0 or missing = unlimited (i.e. test as high as possible)
+- read_iops, wrote_iops: aggregated read or write IO operations per second as measured by fio
+  (if rate_iops is not zero, will be <= rate_iops)
+- rate: aggregated requested kilobytes per second, 0 or missing = unlimited (i.e. test as high as possible)
+- read_bw, write_bw: aggregated read or write bandwidth in KB/sec 
+  (if rate is not zero, will be <= rate)
+- read_KB, write_KB: aggregated number of kilobytes read or written as measured by fio
+
+Latency values are reported using a list of pre-defined percentiles:
+
+- read_hist: a list of pairs where each pair has a percentile value and a latency value in micro-seconds
+  e.g. [99.9, 1032] indicates that 99.9% of all I/O operations will take 1032 usec or less to complete
+
 
 Common Pitfalls and Limitations
 -------------------------------
