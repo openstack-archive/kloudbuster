@@ -499,7 +499,8 @@ class KBA_Storage_Client(KBA_Client):
 
     def encode_bins(self, p_output):
         p_output = json.loads(p_output)
-        test_list = ['read', 'write', 'trim']
+        p_output['jobs'][0].pop('trim')
+        test_list = ['read', 'write']
 
         for test in test_list:
             histogram = HdrHistogram(1, 5 * 3600 * 1000, 3)
