@@ -145,6 +145,15 @@ class KBConfig(object):
         self.config_scale['server'] = self.server_cfg
         self.config_scale['client'] = self.client_cfg
 
+        # missing rate or rate_iops = 0 = no-limit
+        # note we need to use key based access to modify the content
+        # (self.config_scale['client'].storage_tool_configs will make a shallow copy)
+        for tc in self.config_scale['client']['storage_tool_configs']:
+            if 'rate' not in tc:
+                tc['rate'] = '0'
+            if 'rate_iops' not in tc:
+                tc['rate_iops'] = 0
+
     def init_with_cli(self):
         self.storage_mode = CONF.storage
         self.multicast_mode = CONF.multicast

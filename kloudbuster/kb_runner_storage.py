@@ -71,8 +71,8 @@ class KBRunner_Storage(KBRunner):
         return msg
 
     def init_volume(self, active_range):
-        # timeout is calculated as 30s/GB
-        timeout = 30 * self.config.storage_stage_configs.io_file_size
+        # timeout is calculated as 30s/GB/client VM
+        timeout = 30 * self.config.storage_stage_configs.io_file_size * len(self.client_dict)
         parameter = {'size': str(self.config.storage_stage_configs.io_file_size) + 'GiB'}
         parameter['mkfs'] = True \
             if self.config.storage_stage_configs.target == 'volume' else False
@@ -205,14 +205,18 @@ class KBRunner_Storage(KBRunner):
                             cur_iops = int(self.tool_result[idx]['write_iops'])
                             cur_rate = int(self.tool_result[idx]['write_bw'])
 
-                        degrade_iops = (req_iops - cur_iops) * 100 / req_iops if req_iops else 0
-                        degrade_rate = (req_rate - cur_rate) * 100 / req_rate if req_rate else 0
-                        if ((cur_tc['mode'] in ['randread', 'randwrite'] and degrade_iops > limit)
-                           or (cur_tc['mode'] in ['read', 'write'] and degrade_rate > limit)):
-                            LOG.warning('KloudBuster is stopping the iteration because the result '
-                                        'reaches the stop limit.')
-                            tc_flag = False
-                            break
+                        # some runs define an unlimited iops/bw in this case
+                        # we never abort the iteration
+                        if req_iops or req_rate:
+                            degrade_iops = (req_iops - cur_iops) * 100 / req_iops if req_iops else 0
+                            degrade_rate = (req_rate - cur_rate) * 100 / req_rate if req_rate else 0
+                            if ((cur_tc['mode'] in ['randread', 'randwrite'] and
+                                degrade_iops > limit)
+                               or (cur_tc['mode'] in ['read', 'write'] and degrade_rate > limit)):
+                                LOG.warning('KloudBuster is stopping the iteration '
+                                            'because the result reaches the stop limit.')
+                                tc_flag = False
+                                break
                 if timeout_vms:
                     LOG.warning('KloudBuster is stopping the iteration because of there are %d '
                                 'VMs timing out' % timeout_vms)

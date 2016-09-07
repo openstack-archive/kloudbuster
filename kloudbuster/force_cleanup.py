@@ -168,6 +168,8 @@ class StorageCleaner(AbstractCleaner):
                         except NotFound:
                             print 'WARNING: Volume %s attached to an instance that no longer '\
                                   'exists (will require manual cleanup of the database)' % (id)
+                        except Exception as e:
+                            print str(e)
                     else:
                         # no attachments
                         kb_volumes.append(vol)
