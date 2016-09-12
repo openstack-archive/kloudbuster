@@ -18,9 +18,7 @@ import json
 from perf_tool import PerfTool
 
 from hdrh.histogram import HdrHistogram
-import log as logging
 
-LOG = logging.getLogger(__name__)
 
 def assign_dict(dest, key, value, cond_key=None):
     if not cond_key or cond_key in dest:

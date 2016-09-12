@@ -15,11 +15,9 @@
 
 from base_compute import BaseCompute
 from fio_tool import FioTool
-import log as logging
 from nuttcp_tool import NuttcpTool
 from wrk_tool import WrkTool
 
-LOG = logging.getLogger(__name__)
 
 # An openstack instance (can be a VM or a LXC)
 class PerfInstance(BaseCompute):

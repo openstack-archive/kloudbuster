@@ -17,9 +17,6 @@ import json
 
 from perf_tool import PerfTool
 
-import log as logging
-
-LOG = logging.getLogger(__name__)
 
 class NuttcpTool(PerfTool):
 
