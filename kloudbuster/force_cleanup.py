@@ -209,7 +209,10 @@ class StorageCleaner(AbstractCleaner):
             # finally delete the volumes
             for vol in kb_volumes:
                 if not self.dryrun:
-                    vol.force_delete()
+                    try:
+                        vol.force_delete()
+                    except cinderclient.exceptions.BadRequest as exc:
+                        print str(exc)
                 self.report_deletion('VOLUME', vol.name)
         except KeyError:
             pass

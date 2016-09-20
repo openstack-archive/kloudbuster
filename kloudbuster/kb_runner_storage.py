@@ -72,7 +72,7 @@ class KBRunner_Storage(KBRunner):
 
     def init_volume(self, active_range):
         # timeout is calculated as 30s/GB/client VM
-        timeout = 30 * self.config.storage_stage_configs.io_file_size * len(self.client_dict)
+        timeout = 60 * self.config.storage_stage_configs.io_file_size * len(self.client_dict)
         parameter = {'size': str(self.config.storage_stage_configs.io_file_size) + 'GiB'}
         parameter['mkfs'] = True \
             if self.config.storage_stage_configs.target == 'volume' else False
