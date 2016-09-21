@@ -113,20 +113,25 @@ class Kloud(object):
             nova_client = self.tenant_list[0].user_list[0].nova_client
             flavor_manager = base_compute.Flavor(nova_client)
             flavor_dict = self.scale_cfg.flavor
+            extra_specs = flavor_dict.pop('extra_specs', None)
+
             if self.storage_mode:
                 flavor_dict['ephemeral'] = self.scale_cfg['storage_stage_configs']['disk_size'] \
                     if self.scale_cfg['storage_stage_configs']['target'] == 'ephemeral' else 0
             else:
                 flavor_dict['ephemeral'] = 0
             if self.testing_side:
-                flv = flavor_manager.create_flavor('KB.client', override=True, **flavor_dict)
-                self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
                 flv = flavor_manager.create_flavor('KB.proxy', override=True,
                                                    ram=2048, vcpus=1, disk=0, ephemeral=0)
+                self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
+                flv = flavor_manager.create_flavor('KB.client', override=True, **flavor_dict)
                 self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
             else:
                 flv = flavor_manager.create_flavor('KB.server', override=True, **flavor_dict)
                 self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
+            if extra_specs:
+                flv.set_keys(extra_specs)
+
 
     def delete_resources(self):
         # Deleting flavors created by KloudBuster
