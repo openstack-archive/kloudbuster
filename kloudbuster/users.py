@@ -149,7 +149,7 @@ class User(object):
             if flavor['vcpus'] == fcand['vcpus'] and flavor['ram'] < fcand['ram']:
                 fcand = flavor
             if flavor['vcpus'] == fcand['vcpus'] and flavor['ram'] == fcand['ram'] and\
-                flavor['disk'] < fcand['disk']:
+               flavor['disk'] < fcand['disk']:
                 fcand = flavor
             find_flag = True
 
