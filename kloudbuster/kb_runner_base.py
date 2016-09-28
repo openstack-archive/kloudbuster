@@ -203,7 +203,7 @@ class KBRunner(object):
         if not self.agent_version:
             self.agent_version = "0"
             if (LooseVersion(self.agent_version) != LooseVersion(self.expected_agent_version))\
-                and (self.expected_agent_version not in vm_version_mismatches):
+               and (self.expected_agent_version not in vm_version_mismatches):
                 # only warn once for each unexpected VM version
                 vm_version_mismatches.add(self.expected_agent_version)
                 LOG.warning("The VM image you are running (%s) is not the expected version (%s) "
