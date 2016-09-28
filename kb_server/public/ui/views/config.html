@@ -63,7 +63,7 @@ permissions and limitations under the License.
 <md-radio-group ng-model="availability_zone" ng-change="changeTopology()">
 <md-radio-button value="1" class="md-primary">Let Nova Decide</md-radio-button>
 <md-radio-button value="2" class="md-primary">Available Zone</md-radio-button>
-<div class="row" ng-show="availability_zone==2;" popover="Leave empty if you prefer to have the Nova scheduler place the server VMs If you want to pick a particular AZ, put that AZ name (e.g. nova) If you want a paticular compute host, put the AZ and compute host names separated by ':' (e.g. nova:tme100) Note that this is ignored/overriden if you choose 'Use Topology'" popover-trigger="mouseenter" popover-placement="bottom">
+<div class="row" ng-show="availability_zone==2;" popover="Leave empty if you prefer to have the Nova scheduler place the server VMs If you want to pick a particular AZ, put that AZ name (e.g. nova) If you want a paticular compute host, put the AZ and compute host names separated by ':' (e.g. nova:tme100) Note that this is ignored/overridden if you choose 'Use Topology'" popover-trigger="mouseenter" popover-placement="bottom">
 <form name="userForm">
 <div class="col-md-6">
 <div layout="" layout-sm="column">

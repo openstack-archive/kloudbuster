@@ -70,7 +70,7 @@ server:
     # If you want to pick a particular AZ, put that AZ name (e.g. nova)
     # If you want a paticular compute host, put the AZ and compute host names
     # separated by ':' (e.g. nova:tme100)
-    # Note that this is ignored/overriden if you specify a topology file (-t)
+    # Note that this is ignored/overridden if you specify a topology file (-t)
     availability_zone:
 
     # Number of tenants to be created on the cloud
@@ -124,7 +124,7 @@ client:
     # If you want to pick a particular AZ, put that AZ name (e.g. nova)
     # If you want a paticular compute host, put the AZ and compute host names
     # separated by ':' (e.g. nova:tme100)
-    # Note that this is ignored/overriden if you specify a topology file (-t)
+    # Note that this is ignored/overridden if you specify a topology file (-t)
     availability_zone:
 
     # Progression testing configuration
