@@ -36,6 +36,8 @@ class Tenant(object):
         self.kloud = kloud
         self.res_logger = kloud.res_logger
         self.tenant_name = tenant_name
+        self.tenant_api = self.kloud.keystone.tenants \
+            if self.kloud.keystone.version == 'v2.0' else self.kloud.keystone.projects
         if not self.kloud.reusing_tenants:
             self.tenant_object = self._get_tenant()
             self.tenant_id = self.tenant_object.id
@@ -58,9 +60,10 @@ class Tenant(object):
         try:
             LOG.info("Creating tenant: " + self.tenant_name)
             tenant_object = \
-                self.kloud.keystone.tenants.create(tenant_name=self.tenant_name,
-                                                   description="KloudBuster tenant",
-                                                   enabled=True)
+                self.tenant_api.create(self.tenant_name,
+                                       domain="default",
+                                       description="KloudBuster tenant",
+                                       enabled=True)
             return tenant_object
         except keystone_exception.Conflict as exc:
             # ost likely the entry already exists:
@@ -68,7 +71,7 @@ class Tenant(object):
             if exc.http_status != 409:
                 raise exc
             LOG.info("Tenant %s already present, reusing it" % self.tenant_name)
-            return self.kloud.keystone.tenants.find(name=self.tenant_name)
+            return self.tenant_api.find(name=self.tenant_name)
 
         # Should never come here
         raise Exception()
@@ -122,6 +125,6 @@ class Tenant(object):
 
         if not self.reusing_users:
             # Delete the tenant (self)
-            self.kloud.keystone.tenants.delete(self.tenant_id)
+            self.tenant_api.delete(self.tenant_id)
 
         return flag

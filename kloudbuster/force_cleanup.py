@@ -56,8 +56,10 @@ import time
 
 # openstack python clients
 import cinderclient
-import keystoneauth1
-from keystoneclient.v2_0 import client as keystoneclient
+from keystoneclient.auth.identity import v2 as keystone_v2
+from keystoneclient.auth.identity import v3 as keystone_v3
+from keystoneclient import client as keystoneclient
+from keystoneclient import session
 import neutronclient
 from novaclient.exceptions import NotFound
 from tabulate import tabulate
@@ -137,12 +139,12 @@ class AbstractCleaner(object):
         pass
 
 class StorageCleaner(AbstractCleaner):
-    def __init__(self, creds, resources, dryrun):
-        from cinderclient.v2 import client as cclient
-        from novaclient.client import Client as nclient
-        creden_nova = creds.get_nova_credentials_v2()
-        self.nova = nclient(endpoint_type='publicURL', **creden_nova)
-        self.cinder = cclient.Client(endpoint_type='publicURL', **creden_nova)
+    def __init__(self, sess, resources, dryrun):
+        from cinderclient import client as cclient
+        from novaclient import client as nclient
+
+        self.nova = nclient.Client('2', endpoint_type='publicURL', session=sess)
+        self.cinder = cclient.Client('2', endpoint_type='publicURL', session=sess)
 
         res_desc = {'volumes': [self.cinder.volumes.list, {"all_tenants": 1}]}
         super(StorageCleaner, self).__init__('Storage', res_desc, resources, dryrun)
@@ -218,13 +220,11 @@ class StorageCleaner(AbstractCleaner):
             pass
 
 class ComputeCleaner(AbstractCleaner):
-    def __init__(self, creds, resources, dryrun):
-        from neutronclient.v2_0 import client as nclient
-        from novaclient.client import Client as novaclient
-        creden = creds.get_credentials()
-        creden_nova = creds.get_nova_credentials_v2()
-        self.neutron_client = nclient.Client(endpoint_type='publicURL', **creden)
-        self.nova_client = novaclient(endpoint_type='publicURL', **creden_nova)
+    def __init__(self, sess, resources, dryrun):
+        from neutronclient.neutron import client as nclient
+        from novaclient import client as novaclient
+        self.neutron_client = nclient.Client('2.0', endpoint_type='publicURL', session=sess)
+        self.nova_client = novaclient.Client('2', endpoint_type='publicURL', session=sess)
         res_desc = {
             'instances': [self.nova_client.servers.list, {"all_tenants": 1}],
             'flavors': [self.nova_client.flavors.list],
@@ -321,10 +321,9 @@ class ComputeCleaner(AbstractCleaner):
 
 class NetworkCleaner(AbstractCleaner):
 
-    def __init__(self, creds, resources, dryrun):
-        from neutronclient.v2_0 import client as nclient
-        creden = creds.get_credentials()
-        self.neutron = nclient.Client(endpoint_type='publicURL', **creden)
+    def __init__(self, sess, resources, dryrun):
+        from neutronclient.neutron import client as nclient
+        self.neutron = nclient.Client('2.0', endpoint_type='publicURL', session=sess)
 
         # because the response has an extra level of indirection
         # we need to extract it to present the list of network or router objects
@@ -430,12 +429,13 @@ class NetworkCleaner(AbstractCleaner):
 
 class KeystoneCleaner(AbstractCleaner):
 
-    def __init__(self, creds, resources, dryrun):
-        crd = creds.get_credentials()
-        self.keystone = keystoneclient.Client(endpoint_type='publicURL', **crd)
+    def __init__(self, sess, resources, dryrun):
+        self.keystone = keystoneclient.Client(endpoint_type='publicURL', session=sess)
+        self.tenant_api = self.keystone.tenants \
+            if self.keystone.version == 'v2.0' else self.keystone.projects
         res_desc = {
             'users': [self.keystone.users.list],
-            'tenants': [self.keystone.tenants.list]
+            'tenants': [self.tenant_api.list]
         }
         super(KeystoneCleaner, self).__init__('Keystone', res_desc, resources, dryrun)
 
@@ -449,7 +449,7 @@ class KeystoneCleaner(AbstractCleaner):
                     else:
                         self.keystone.users.delete(id)
                     self.report_deletion('USER', name)
-                except keystoneauth1.exceptions.http.NotFound:
+                except keystoneclient.auth.exceptions.http.NotFound:
                     self.report_not_found('USER', name)
         except KeyError:
             pass
@@ -458,21 +458,27 @@ class KeystoneCleaner(AbstractCleaner):
             for id, name in self.resources['tenants'].iteritems():
                 try:
                     if self.dryrun:
-                        self.keystone.tenants.get(id)
+                        self.tenant_api.get(id)
                     else:
-                        self.keystone.tenants.delete(id)
+                        self.tenant_api.delete(id)
                     self.report_deletion('TENANT', name)
-                except keystoneauth1.exceptions.http.NotFound:
+                except keystoneclient.auth.exceptions.http.NotFound:
                     self.report_not_found('TENANT', name)
         except KeyError:
             pass
 
 class KbCleaners(object):
 
-    def __init__(self, cred, resources, dryrun):
+    def __init__(self, creds_obj, resources, dryrun):
         self.cleaners = []
+        creds = creds_obj.get_credentials()
+        if creds_obj.rc_identity_api_version == 3:
+            auth = keystone_v3.Password(**creds)
+        else:
+            auth = keystone_v2.Password(**creds)
+        sess = session.Session(auth=auth, verify=creds_obj.rc_cacert)
         for cleaner_type in [StorageCleaner, ComputeCleaner, NetworkCleaner, KeystoneCleaner]:
-            self.cleaners.append(cleaner_type(cred, resources, dryrun))
+            self.cleaners.append(cleaner_type(sess, resources, dryrun))
 
     def show_resources(self):
         table = [["Type", "Name", "UUID"]]

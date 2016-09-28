@@ -16,10 +16,10 @@ import sys
 
 import base_compute
 import base_network
-from cinderclient.v2 import client as cinderclient
+from cinderclient import client as cinderclient
 from keystoneclient import exceptions as keystone_exception
 import log as logging
-from neutronclient.v2_0 import client as neutronclient
+from neutronclient.neutron import client as neutronclient
 from novaclient import client as novaclient
 
 LOG = logging.getLogger(__name__)
@@ -66,9 +66,12 @@ class User(object):
         if not self.tenant.reusing_users:
             self.user = self._get_user()
             current_role = self.tenant.kloud.keystone.roles.find(name=user_role)
-            self.tenant.kloud.keystone.roles.add_user_role(self.user,
-                                                           current_role,
-                                                           tenant.tenant_id)
+            if self.tenant.kloud.keystone.version == 'v2.0':
+                self.tenant.kloud.keystone.roles.add_user_role(
+                    self.user, current_role, tenant.tenant_id)
+            else:
+                self.tenant.kloud.keystone.roles.grant(
+                    current_role, user=self.user, project=tenant.tenant_id)
         else:
             # Only admin can retrive the object via Keystone API
             self.user = None
@@ -190,24 +193,15 @@ class User(object):
         1. Creates the routers
         2. Creates the neutron and nova client objects
         """
-        # Create a new neutron client for this User with correct credentials
-        creden = self.tenant.kloud.cred.get_credentials()
-        creden['username'] = self.user_name
-        creden['password'] = self.password
-        creden['tenant_name'] = self.tenant.tenant_name
+        session = self.tenant.kloud.osclient_session
 
-        # Create the neutron client to be used for all operations
-        self.neutron_client = neutronclient.Client(endpoint_type='publicURL', **creden)
-
-        # Create a new nova and cinder client for this User with correct credentials
-        creden_nova = self.tenant.kloud.cred.get_nova_credentials_v2()
-        creden_nova['username'] = self.user_name
-        creden_nova['api_key'] = self.password
-        creden_nova['project_id'] = self.tenant.tenant_name
-
-        self.nova_client = novaclient.Client(endpoint_type='publicURL',
-                                             http_log_debug=True, **creden_nova)
-        self.cinder_client = cinderclient.Client(endpoint_type='publicURL', **creden_nova)
+        # Create nova/neutron/cinder clients to be used for all operations
+        self.neutron_client = neutronclient.Client('2.0', endpoint_type='publicURL',
+                                                   session=session)
+        self.nova_client = novaclient.Client('2', endpoint_type='publicURL',
+                                             http_log_debug=True, session=session)
+        self.cinder_client = cinderclient.Client('2', endpoint_type='publicURL',
+                                                 session=session)
 
         if self.tenant.kloud.reusing_tenants:
             self.check_resources_quota()
