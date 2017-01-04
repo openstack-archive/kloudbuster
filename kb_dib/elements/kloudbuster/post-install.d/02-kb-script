@@ -27,8 +27,8 @@ net.ipv4.conf.all.rp_filter=0
 net.ipv4.conf.all.arp_filter=0
 net.ipv4.conf.default.rp_filter=0
 net.ipv4.conf.default.arp_filter=0
-net.ipv4.conf.eth0.rp_filter=0
-net.ipv4.conf.eth0.arp_filter=0
+net.ipv4.conf.ens32.rp_filter=0
+net.ipv4.conf.ens32.arp_filter=0
 EOF
 sysctl -p
 
@@ -55,6 +55,14 @@ sed -i "s/^exit\s0/cd \/kb_test\n\0/g" /etc/rc.local
 sed -i "s/^exit\s0/if wget http\:\/\/169.254.169.254\/latest\/user-data; then \:; fi\n\0/g" /etc/rc.local
 sed -i "s/^exit\s0/python kb_vm_agent.py \&\n\0/g" /etc/rc.local
 
+# =================
+# KloudBuster Proxy
+# =================
+cd /kb_test
+git clone git://github.com/openstack/kloudbuster.git
+cd kloudbuster
+pip install -r requirements.txt
+
 # ======
 # Client
 # ======
@@ -80,7 +88,7 @@ mv /usr/local/lib/libhdr_histogram.so /usr/lib/
 
 # Install fio
 cd /tmp
-FIO='fio-2.12'
+FIO='fio-2.16'
 wget http://brick.kernel.dk/snaps/$FIO.tar.gz
 tar xzf $FIO.tar.gz
 cd $FIO
@@ -88,17 +96,9 @@ make
 mv fio /usr/local/bin/fio
 
 # Install nuttcp
-cd /kb_test/kloudbuster/kb_dib/elements/nuttcp
-gcc nuttcp-7.3.3.c -o nuttcp
-mv nuttcp /usr/local/bin/nuttcp
-
-# =================
-# KloudBuster Proxy
-# =================
-cd /kb_test
-git clone git://github.com/openstack/kloudbuster.git
-cd kloudbuster
-pip install -r requirements.txt
+# cd /kb_test/kloudbuster/kb_dib/elements/nuttcp
+# gcc nuttcp-7.3.3.c -o nuttcp
+# mv nuttcp /usr/local/bin/nuttcp
 
 # =======
 # Cleanup
