@@ -17,6 +17,9 @@ export PATH=$PATH:`pwd`/diskimage-builder/bin:`pwd`/dib-utils/bin
 # Add the kloudbuster elements directory to the DIB elements path
 export ELEMENTS_PATH=`pwd`/elements
 
+# Install Ubuntu 16.04
+export DIB_RELEASE=xenial
+
 # Extract image version number '__version__ = 2.0' becomes '__version__=2_0'
 ver=`grep '^__version__' ../kloudbuster/kb_vm_agent.py | tr -d ' ' | tr '.' '_'`
 eval $ver
