@@ -875,7 +875,6 @@ def main():
                    metavar="<source json file>"),
     ]
     CONF.register_cli_opts(cli_opts)
-    CONF.set_default("verbose", True)
     full_version = __version__ + ', VM image: ' + kb_vm_agent.get_image_name()
     CONF(sys.argv[1:], project="kloudbuster", version=full_version)
     logging.setup("kloudbuster")
