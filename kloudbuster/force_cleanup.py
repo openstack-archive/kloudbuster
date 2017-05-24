@@ -56,10 +56,7 @@ import time
 
 # openstack python clients
 import cinderclient
-from keystoneclient.auth.identity import v2 as keystone_v2
-from keystoneclient.auth.identity import v3 as keystone_v3
 from keystoneclient import client as keystoneclient
-from keystoneclient import session
 import neutronclient
 from novaclient.exceptions import NotFound
 from tabulate import tabulate
@@ -472,11 +469,7 @@ class KbCleaners(object):
     def __init__(self, creds_obj, resources, dryrun):
         self.cleaners = []
         creds = creds_obj.get_credentials()
-        if creds_obj.rc_identity_api_version == 3:
-            auth = keystone_v3.Password(**creds)
-        else:
-            auth = keystone_v2.Password(**creds)
-        sess = session.Session(auth=auth, verify=creds_obj.rc_cacert)
+        sess = creds.get_session()
         for cleaner_type in [StorageCleaner, ComputeCleaner, NetworkCleaner, KeystoneCleaner]:
             self.cleaners.append(cleaner_type(sess, resources, dryrun))
 
