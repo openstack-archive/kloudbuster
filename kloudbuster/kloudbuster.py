@@ -25,7 +25,7 @@ import webbrowser
 
 import base_compute
 import base_network
-from glanceclient import client as glanceclient
+from glanceclient.v2 import client as glanceclient
 import glanceclient.exc as glance_exception
 from kb_config import KBConfig
 from kb_res_logger import KBResLogger
@@ -35,10 +35,9 @@ from kb_runner_multicast import KBRunner_Multicast
 from kb_runner_storage import KBRunner_Storage
 from kb_scheduler import KBScheduler
 import kb_vm_agent
-from keystoneclient.auth.identity import v2 as keystone_v2
-from keystoneclient.auth.identity import v3 as keystone_v3
+
 from keystoneclient import client as keystoneclient
-from keystoneclient import session
+
 import log as logging
 from novaclient import client as novaclient
 from oslo_config import cfg
@@ -56,19 +55,6 @@ __version__ = pbr.version.VersionInfo('kloudbuster').version_string_with_vcs()
 class KBVMCreationException(Exception):
     pass
 
-def create_auth_session(creds_obj):
-    """
-    Return the authenticated session
-    """
-    creds = creds_obj.get_credentials()
-    if creds_obj.rc_identity_api_version == 3:
-        auth = keystone_v3.Password(**creds)
-    else:
-        auth = keystone_v2.Password(**creds)
-    sess = session.Session(auth=auth, verify=creds_obj.rc_cacert)
-
-    return sess
-
 class Kloud(object):
     def __init__(self, scale_cfg, cred, reusing_tenants,
                  testing_side=False, storage_mode=False, multicast_mode=False):
@@ -78,7 +64,7 @@ class Kloud(object):
         self.reusing_tenants = reusing_tenants
         self.storage_mode = storage_mode
         self.multicast_mode = multicast_mode
-        self.osclient_session = create_auth_session(cred)
+        self.osclient_session = cred.get_session()
         self.flavor_to_use = None
         self.vm_up_count = 0
         self.res_logger = KBResLogger()
@@ -92,10 +78,8 @@ class Kloud(object):
         self.placement_az = scale_cfg['availability_zone'] \
             if scale_cfg['availability_zone'] else None
         self.exc_info = None
-
         self.keystone = keystoneclient.Client(session=self.osclient_session,
                                               endpoint_type='publicURL')
-
         LOG.info("Creating kloud: " + self.prefix)
         if self.placement_az:
             LOG.info('%s Availability Zone: %s' % (self.name, self.placement_az))
@@ -299,7 +283,7 @@ class KloudBuster(object):
 
     def get_hypervisor_list(self, cred):
         ret_list = []
-        sess = create_auth_session(cred)
+        sess = cred.get_session()
         nova_client = novaclient('2', endpoint_type='publicURL',
                                  http_log_debug=True, session=sess)
         for hypervisor in nova_client.hypervisors.list():
@@ -310,7 +294,7 @@ class KloudBuster(object):
 
     def get_az_list(self, cred):
         ret_list = []
-        sess = create_auth_session(cred)
+        sess = cred.get_session()
         nova_client = novaclient('2', endpoint_type='publicURL',
                                  http_log_debug=True, session=sess)
         for az in nova_client.availability_zones.list():
@@ -323,14 +307,14 @@ class KloudBuster(object):
 
     def check_and_upload_images(self, retry_count=150):
         retry = 0
-        creds_list = [create_auth_session(self.server_cred),
-                      create_auth_session(self.client_cred)]
+        creds_list = [self.server_cred.get_session(),
+                      self.client_cred.get_session()]
         creds_dict = dict(zip(['Server kloud', 'Client kloud'], creds_list))
         img_name_dict = dict(zip(['Server kloud', 'Client kloud'],
                                  [self.server_cfg.image_name, self.client_cfg.image_name]))
 
         for kloud, sess in creds_dict.items():
-            glance_client = glanceclient.Client('1', session=sess)
+            glance_client = glanceclient.Client('2', session=sess)
             try:
                 # Search for the image
                 img = glance_client.images.list(filters={'name': img_name_dict[kloud]}).next()
