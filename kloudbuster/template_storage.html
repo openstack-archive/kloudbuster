@@ -85,7 +85,7 @@
             <td title="cols[2].title" data-sortable="cols[2].field">{{row.total_client_vms}}</td>
             <td title="cols[3].title" data-sortable="cols[3].field">{{row.block_size}}b</td>
             <td title="cols[4].title" data-sortable="cols[4].field">{{row.iodepth}}</td>
-            <td title="cols[5].title" data-sortable="cols[5].field" ng-if="current_mode.group[0] == 'rand'">
+            <td title="cols[5].title" data-sortable="cols[5].field" ng-if="current_mode.group[0] == 'rand' && show_req_rate">
                 {{row.rate_iops}}
             </td>
             <td title="cols[6].title" data-sortable="cols[6].field" ng-if="current_mode.group[1] == 'read'">
@@ -94,7 +94,7 @@
             <td title="cols[7].title" data-sortable="cols[7].field" ng-if="current_mode.group[1] == 'write'">
                 {{row.write_iops}}
             </td>
-            <td title="cols[8].title" data-sortable="cols[8].field" ng-if="current_mode.group[0] == 'seq'">
+            <td title="cols[8].title" data-sortable="cols[8].field" ng-if="current_mode.group[0] == 'seq' && show_req_rate">
                 {{row.rate}} KB/s
             </td>
             <td title="cols[9].title" data-sortable="cols[9].field" ng-if="current_mode.group[1] == 'read'">
@@ -314,16 +314,19 @@
             $scope.tableParams.reload()
         };
 
-        var max;
+        var max = 0;
+        var has_req_rate = false;
         $scope.xaxisList = [];
         $scope.data = [];
         for (var i = 0; i < countRep; i++) {
             for (var k = 0; k < countRep2; k++) {
+                var row_max = 0;
                 $scope.perrow = $scope.results[i][k];
                 if ($scope.perrow["mode"] == $scope.current_mode_name && $scope.perrow["description"] == $scope.current_mode_description) {
 
-                    if($scope.perrow.total_client_vms == 1 && countRep!=1) $scope.xaxis = 0;
-                    else $scope.xaxis = $scope.perrow.total_client_vms;
+                    //if($scope.perrow.total_client_vms == 1 && countRep!=1) $scope.xaxis = 0;
+                    //else 
+                    $scope.xaxis = $scope.perrow.total_client_vms;
                     $scope.xaxisList.push($scope.xaxis);
                     if (!$scope.perrow.rate_iops) {
                         $scope.perrow.rate_iops = 0;
@@ -332,64 +335,45 @@
                         $scope.perrow.rate = 0;
                     }
                     if (mode == "randread") {
-                        $scope.data.push({
-                            x: $scope.xaxis,
-                            "IOPS": $scope.perrow.read_iops / $scope.perrow.total_client_vms,
-                            "latency1": $scope.perrow.read_hist[2][1] / 1000,
-                            "latency2": $scope.perrow.read_hist[3][1] / 1000,
-                            "latency3": $scope.perrow.read_hist[4][1] / 1000,
-                            "requested_rate": $scope.perrow.rate_iops / $scope.perrow.total_client_vms
-                        });
-                        max = Math.max($scope.perrow.rate_iops, $scope.perrow.read_iops)
+                        row_iops = $scope.perrow.read_iops;
+                        row_req_rate = $scope.perrow.rate_iops;
+                        row_hist = $scope.perrow.read_hist;
                     } else if (mode == "randwrite") {
-                        $scope.data.push({
-                            x: $scope.xaxis,
-                            "IOPS": $scope.perrow.write_iops / $scope.perrow.total_client_vms,
-                            "latency1": $scope.perrow.write_hist[2][1] / 1000,
-                            "latency2": $scope.perrow.write_hist[3][1] / 1000,
-                            "latency3": $scope.perrow.write_hist[4][1] / 1000,
-                            "requested_rate": $scope.perrow.rate_iops / $scope.perrow.total_client_vms
-                        });
-                        max = Math.max($scope.perrow.rate_iops, $scope.perrow.write_iops);
+                        row_iops = $scope.perrow.write_iops;
+                        row_req_rate = $scope.perrow.rate_iops;
+                        row_hist = $scope.perrow.write_hist;
                     } else if (mode == "read") {
-                        $scope.data.push({
-                            x: $scope.xaxis,
-                            "IOPS": $scope.perrow.read_bw / $scope.perrow.total_client_vms,
-                            "latency1": $scope.perrow.read_hist[2][1] / 1000,
-                            "latency2": $scope.perrow.read_hist[3][1] / 1000,
-                            "latency3": $scope.perrow.read_hist[4][1] / 1000,
-                            "requested_rate": $scope.perrow.rate / $scope.perrow.total_client_vms
-                        });
-                        max = Math.max($scope.perrow.rate, $scope.perrow.read_bw);
-                    } else if (mode == "write") {
-                        $scope.data.push({
-                            x: $scope.xaxis,
-                            "IOPS": $scope.perrow.write_bw / $scope.perrow.total_client_vms,
-                            "latency1": $scope.perrow.write_hist[2][1] / 1000,
-                            "latency2": $scope.perrow.write_hist[3][1] / 1000,
-                            "latency3": $scope.perrow.write_hist[4][1] / 1000,
-                            "requested_rate": $scope.perrow.rate / $scope.perrow.total_client_vms
-                        });
-                        max = Math.max($scope.perrow.rate, $scope.perrow.write_bw);
+                        row_iops = $scope.perrow.read_bw;
+                        row_req_rate = $scope.perrow.rate;
+                        row_hist = $scope.perrow.read_hist;
+                    } else {
+                        row_iops = $scope.perrow.write_bw;
+                        row_req_rate = $scope.perrow.rate;
+                        row_hist = $scope.perrow.write_hist;
                     }
-                    max = max / $scope.perrow.total_client_vms;
+
+                    data = {
+                        x: $scope.xaxis,
+                        "IOPS": row_iops / $scope.perrow.total_client_vms,
+                        "latency1": row_hist[2][1] / 1000,
+                        "latency2": row_hist[3][1] / 1000,
+                        "latency3": row_hist[4][1] / 1000
+                    };
+                    if (row_req_rate != 0) {
+                        data['requested_rate'] = row_req_rate / $scope.perrow.total_client_vms;
+                        has_req_rate = true;
+                    }
+                    $scope.data.push(data);
+                    row_max = Math.max(row_req_rate, row_iops)/ $scope.perrow.total_client_vms;
+                    max = Math.max(max, row_max);
                     var pickColor = get_color();
                     var chName = "mode-" + $scope.perrow.mode + "_VM-" + $scope.perrow.total_client_vms;
-                    $scope.pushTableData(chName, $scope.perrow, pickColor)
+                    $scope.pushTableData(chName, $scope.perrow, pickColor);
                 }
             }
         }
-        $scope.options = {
-            series: [
+        var series_list = [
                 {y: "IOPS", color: "#F44336", type: "column", striped: true, label: $scope.current_mode["y_label"]},
-                {
-                    y: "requested_rate",
-                    color: "#696969",
-                    drawDots: false,
-                    thickness: "1px",
-                    label: "Requested Rate",
-                    lineMode: "dashed"
-                },
                 {
                     y: "latency1",
                     axis: "y2",
@@ -417,7 +401,22 @@
                     thickness: "3px",
                     label: "Latency(ms)--99.9%"
                 }
-            ],
+            ];
+        if (has_req_rate) {
+            $scope.show_req_rate = true
+            series_list.push({
+                    y: "requested_rate",
+                    color: "#696969",
+                    drawDots: false,
+                    thickness: "1px",
+                    label: "Requested Rate",
+                    lineMode: "dashed"
+                })
+        } else {
+            $scope.show_req_rate = false
+        }
+        $scope.options = {
+            series: series_list,
             axes: {
                 x: {key: "x", type: "linear", ticks: $scope.xaxisList, ticksFormatter:  function(x) {
                     if($.inArray(x, $scope.xaxisList)!=-1) {
