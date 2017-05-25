@@ -176,7 +176,7 @@ class KBRunner_Storage(KBRunner):
 
             while tc_flag:
                 cur_vm_count = len(self.client_dict)
-                if start == 1:
+                if start == 1 and multiple != 1:
                     target_vm_count = 1 if cur_stage == 1 else (cur_stage - 1) * multiple
                 else:
                     target_vm_count = cur_stage * multiple
