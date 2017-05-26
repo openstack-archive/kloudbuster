@@ -53,6 +53,7 @@ import argparse
 import re
 import sys
 import time
+import traceback
 
 # openstack python clients
 import cinderclient
@@ -81,6 +82,7 @@ def fetch_resources(fetcher, options=None):
             res_list = fetcher()
     except Exception as e:
         res_list = []
+        traceback.print_exc()
         print "Warning exception while listing resources:" + str(e)
     resources = {}
     for res in res_list:
@@ -468,8 +470,7 @@ class KbCleaners(object):
 
     def __init__(self, creds_obj, resources, dryrun):
         self.cleaners = []
-        creds = creds_obj.get_credentials()
-        sess = creds.get_session()
+        sess = creds_obj.get_session()
         for cleaner_type in [StorageCleaner, ComputeCleaner, NetworkCleaner, KeystoneCleaner]:
             self.cleaners.append(cleaner_type(sess, resources, dryrun))
 

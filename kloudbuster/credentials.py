@@ -96,7 +96,7 @@ class Credentials(object):
     # Read a openrc file and take care of the password
     # The 2 args are passed from the command line and can be None
     #
-    def __init__(self, openrc_file, pwd, no_env):
+    def __init__(self, openrc_file, pwd=None, no_env=False):
         self.rc_password = None
         self.rc_username = None
         self.rc_tenant_name = None
@@ -106,7 +106,7 @@ class Credentials(object):
         self.rc_user_domain_name = None
         self.rc_project_domain_name = None
         self.rc_project_name = None
-        self.rc_identity_api_version = '2'
+        self.rc_identity_api_version = 2
         success = True
 
         if openrc_file:
