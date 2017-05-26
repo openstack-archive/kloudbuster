@@ -36,7 +36,7 @@ from kb_runner_storage import KBRunner_Storage
 from kb_scheduler import KBScheduler
 import kb_vm_agent
 
-from keystoneclient import client as keystoneclient
+from keystoneclient.v2_0 import client as keystoneclient
 
 import log as logging
 from novaclient import client as novaclient
@@ -78,8 +78,7 @@ class Kloud(object):
         self.placement_az = scale_cfg['availability_zone'] \
             if scale_cfg['availability_zone'] else None
         self.exc_info = None
-        self.keystone = keystoneclient.Client(session=self.osclient_session,
-                                              endpoint_type='publicURL')
+        self.keystone = keystoneclient.Client(session=self.osclient_session)
         LOG.info("Creating kloud: " + self.prefix)
         if self.placement_az:
             LOG.info('%s Availability Zone: %s' % (self.name, self.placement_az))
