@@ -152,12 +152,12 @@ class BaseNetwork(object):
         """
         # Create the security groups first
         for secgroup_count in range(config_scale['secgroups_per_network']):
-            secgroup_instance = base_compute.SecGroup(self.nova_client)
+            secgroup_instance = base_compute.SecGroup(self.nova_client, self.neutron_client)
             self.secgroup_list.append(secgroup_instance)
             secgroup_name = network_prefix + "-SG" + str(secgroup_count)
             secgroup_instance.create_secgroup_with_rules(secgroup_name)
-            self.res_logger.log('sec_groups', secgroup_instance.secgroup.name,
-                                secgroup_instance.secgroup.id)
+            self.res_logger.log('sec_groups', secgroup_instance.secgroup['name'],
+                                secgroup_instance.secgroup['id'])
 
         LOG.info("Scheduled to create VMs for network %s..." % network_prefix)
 

@@ -74,7 +74,7 @@ class BaseCompute(object):
                                                   availability_zone=avail_zone,
                                                   userdata=user_data,
                                                   config_drive=config_drive,
-                                                  security_groups=[sec_group.id])
+                                                  security_groups=[sec_group['id']])
         self.res_logger.log('instances', self.vm_name, instance.id)
 
         if not instance:
@@ -140,63 +140,84 @@ class BaseCompute(object):
 
 class SecGroup(object):
 
-
-    def __init__(self, novaclient):
+    def __init__(self, novaclient, neutronclient):
         self.secgroup = None
         self.secgroup_name = None
         self.novaclient = novaclient
-
+        self.neutronclient = neutronclient
 
     def create_secgroup_with_rules(self, group_name):
-        group = self.novaclient.security_groups.create(name=group_name,
-                                                       description="Test sec group")
+        body = {
+            'security_group': {
+                'name': group_name,
+                'description': 'Test sec group'
+            }
+        }
+        group = self.neutronclient.create_security_group(body)['security_group']
+
+        body = {
+            'security_group_rule': {
+                'direction': 'ingress',
+                'security_group_id': group['id'],
+                'remote_group_id': None
+            }
+        }
+
         # Allow ping traffic
-        self.novaclient.security_group_rules.create(group.id,
-                                                    ip_protocol="icmp",
-                                                    from_port=-1,
-                                                    to_port=-1)
+        body['security_group_rule']['protocol'] = 'icmp'
+        body['security_group_rule']['port_range_min'] = None
+        body['security_group_rule']['port_range_max'] = None
+        self.neutronclient.create_security_group_rule(body)
+
         # Allow SSH traffic
-        self.novaclient.security_group_rules.create(group.id,
-                                                    ip_protocol="tcp",
-                                                    from_port=22,
-                                                    to_port=22)
+        body['security_group_rule']['protocol'] = 'tcp'
+        body['security_group_rule']['port_range_min'] = 22
+        body['security_group_rule']['port_range_max'] = 22
+        self.neutronclient.create_security_group_rule(body)
+
         # Allow HTTP traffic
-        self.novaclient.security_group_rules.create(group.id,
-                                                    ip_protocol="tcp",
-                                                    from_port=80,
-                                                    to_port=80)
+        body['security_group_rule']['protocol'] = 'tcp'
+        body['security_group_rule']['port_range_min'] = 80
+        body['security_group_rule']['port_range_max'] = 80
+        self.neutronclient.create_security_group_rule(body)
+
         # Allow Redis traffic
-        self.novaclient.security_group_rules.create(group.id,
-                                                    ip_protocol="tcp",
-                                                    from_port=6379,
-                                                    to_port=6379)
+        body['security_group_rule']['protocol'] = 'tcp'
+        body['security_group_rule']['port_range_min'] = 6379
+        body['security_group_rule']['port_range_max'] = 6379
+        self.neutronclient.create_security_group_rule(body)
+
         # Allow Nuttcp traffic
-        self.novaclient.security_group_rules.create(group.id,
-                                                    ip_protocol="tcp",
-                                                    from_port=5000,
-                                                    to_port=6000)
-        self.novaclient.security_group_rules.create(group.id,
-                                                    ip_protocol="tcp",
-                                                    from_port=12000,
-                                                    to_port=13000)
+        body['security_group_rule']['protocol'] = 'tcp'
+        body['security_group_rule']['port_range_min'] = 5000
+        body['security_group_rule']['port_range_max'] = 6000
+        self.neutronclient.create_security_group_rule(body)
 
+        body['security_group_rule']['protocol'] = 'tcp'
+        body['security_group_rule']['port_range_min'] = 12000
+        body['security_group_rule']['port_range_max'] = 13000
+        self.neutronclient.create_security_group_rule(body)
 
-        self.novaclient.security_group_rules.create(group.id,
-                                                    ip_protocol="udp",
-                                                    from_port=123,
-                                                    to_port=123)
-        self.novaclient.security_group_rules.create(group.id,
-                                                    ip_protocol="udp",
-                                                    from_port=5000,
-                                                    to_port=6000)
-        self.novaclient.security_group_rules.create(group.id,
-                                                    ip_protocol="udp",
-                                                    from_port=12000,
-                                                    to_port=14000)
-        self.novaclient.security_group_rules.create(group.id,
-                                                    ip_protocol="udp",
-                                                    from_port=319,
-                                                    to_port=320)
+        body['security_group_rule']['protocol'] = 'udp'
+        body['security_group_rule']['port_range_min'] = 123
+        body['security_group_rule']['port_range_max'] = 123
+        self.neutronclient.create_security_group_rule(body)
+
+        body['security_group_rule']['protocol'] = 'udp'
+        body['security_group_rule']['port_range_min'] = 5000
+        body['security_group_rule']['port_range_max'] = 6000
+        self.neutronclient.create_security_group_rule(body)
+
+        body['security_group_rule']['protocol'] = 'udp'
+        body['security_group_rule']['port_range_min'] = 12000
+        body['security_group_rule']['port_range_max'] = 14000
+        self.neutronclient.create_security_group_rule(body)
+
+        body['security_group_rule']['protocol'] = 'udp'
+        body['security_group_rule']['port_range_min'] = 319
+        body['security_group_rule']['port_range_max'] = 320
+        self.neutronclient.create_security_group_rule(body)
+
         self.secgroup = group
         self.secgroup_name = group_name
 
@@ -211,12 +232,12 @@ class SecGroup(object):
 
         for _ in range(10):
             try:
-                self.novaclient.security_groups.delete(self.secgroup)
+                self.neutronclient.delete_security_group(self.secgroup['id'])
                 return True
             except Exception:
                 time.sleep(2)
 
-        LOG.error('Failed while deleting security group %s.' % self.secgroup.id)
+        LOG.error('Failed while deleting security group %s.' % self.secgroup['id'])
         return False
 
 class KeyPair(object):
