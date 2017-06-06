@@ -64,15 +64,3 @@ class BaseStorage(object):
     # def detach_vol(self, volume):
     #     self.cinderclient.volumes.detach(volume)
 
-
-class CinderQuota(object):
-
-    def __init__(self, cinderclient, tenant_id):
-        self.cinderclient = cinderclient
-        self.tenant_id = tenant_id
-
-    def get(self):
-        return vars(self.cinderclient.quotas.get(self.tenant_id))
-
-    def update_quota(self, **kwargs):
-        self.cinderclient.quotas.update(self.tenant_id, **kwargs)
