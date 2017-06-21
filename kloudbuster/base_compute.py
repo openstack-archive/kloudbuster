@@ -125,7 +125,7 @@ class BaseCompute(object):
         Given a image name return the image id
         """
         try:
-            image = self.novaclient.images.find(name=image_name)
+            image = self.novaclient.glance.find_image(image_name)
             return image
         except Exception:
             return None
