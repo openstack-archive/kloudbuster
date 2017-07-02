@@ -49,6 +49,28 @@ class Credentials(object):
             auth = v2.Password(**dct)
         return session.Session(auth=auth, verify=self.rc_cacert)
 
+    def get_user_session(self, username, password, tenant_name):
+        dct = {
+            'username': username,
+            'password': password,
+            'auth_url': self.rc_auth_url
+        }
+        auth = None
+
+        if self.rc_identity_api_version == 3:
+            dct.update({
+                'project_name': tenant_name,
+                'project_domain_name': self.rc_project_domain_name,
+                'user_domain_name': self.rc_user_domain_name
+            })
+            auth = v3.Password(**dct)
+        else:
+            dct.update({
+                'tenant_name': tenant_name
+            })
+            auth = v2.Password(**dct)
+        return session.Session(auth=auth, verify=self.rc_cacert)
+
     def __parse_openrc(self, file):
         export_re = re.compile('export OS_([A-Z_]*)="?(.*)')
         for line in file:

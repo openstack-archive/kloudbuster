@@ -12,11 +12,22 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import base_compute
+import base_network
+import base_storage
+
 from keystoneclient import exceptions as keystone_exception
 import log as logging
+import sys
 import users
 
 LOG = logging.getLogger(__name__)
+
+class KBFlavorCheckException(Exception):
+    pass
+
+class KBQuotaCheckException(Exception):
+    pass
 
 class Tenant(object):
     """
@@ -61,7 +72,7 @@ class Tenant(object):
             LOG.info("Creating tenant: " + self.tenant_name)
             tenant_object = \
                 self.tenant_api.create(self.tenant_name,
-                                       domain="default",
+                                       # domain="default",
                                        description="KloudBuster tenant",
                                        enabled=True)
             return tenant_object
@@ -76,11 +87,76 @@ class Tenant(object):
         # Should never come here
         raise Exception()
 
+    def update_quota(self):
+        nova_quota = base_compute.NovaQuota(self.kloud.nova_client, self.tenant_id)
+        nova_quota.update_quota(**self.tenant_quota['nova'])
+
+        if self.kloud.storage_mode:
+            cinder_quota = base_storage.CinderQuota(self.kloud.cinder_client, self.tenant_id)
+            cinder_quota.update_quota(**self.tenant_quota['cinder'])
+
+        neutron_quota = base_network.NeutronQuota(self.kloud.neutron_client, self.tenant_id)
+        neutron_quota.update_quota(self.tenant_quota['neutron'])
+
+    def check_quota(self):
+        # Flavor check
+        flavor_manager = base_compute.Flavor(self.kloud.nova_client)
+        find_flag = False
+        fcand = {'vcpus': sys.maxint, 'ram': sys.maxint, 'disk': sys.maxint}
+        for flavor in flavor_manager.list():
+            flavor = vars(flavor)
+            if flavor['vcpus'] < 1 or flavor['ram'] < 1024 or flavor['disk'] < 10:
+                continue
+            if flavor['vcpus'] < fcand['vcpus']:
+                fcand = flavor
+            if flavor['vcpus'] == fcand['vcpus'] and flavor['ram'] < fcand['ram']:
+                fcand = flavor
+            if flavor['vcpus'] == fcand['vcpus'] and flavor['ram'] == fcand['ram'] and\
+               flavor['disk'] < fcand['disk']:
+                fcand = flavor
+            find_flag = True
+
+        if find_flag:
+            LOG.info('Automatically selects flavor %s to instantiate VMs.' % fcand['name'])
+            self.kloud.flavor_to_use = fcand['name']
+        else:
+            LOG.error('Cannot find a flavor which meets the minimum '
+                      'requirements to instantiate VMs.')
+            raise KBFlavorCheckException()
+
+        # Nova/Cinder/Neutron quota check
+        tenant_id = self.tenant_id
+        meet_quota = True
+        for quota_type in ['nova', 'cinder', 'neutron']:
+            if quota_type == 'nova':
+                quota_manager = base_compute.NovaQuota(self.kloud.nova_client, tenant_id)
+            elif quota_type == 'cinder':
+                quota_manager = base_storage.CinderQuota(self.kloud.cinder_client, tenant_id)
+            else:
+                quota_manager = base_network.NeutronQuota(self.kloud.neutron_client, tenant_id)
+
+            meet_quota = True
+            quota = quota_manager.get()
+            for key, value in self.tenant_quota[quota_type].iteritems():
+                if quota[key] < value:
+                    meet_quota = False
+                    break
+
+        if not meet_quota:
+            LOG.error('%s quota is too small. Minimum requirement: %s.' %
+                      (quota_type, self.tenant_quota[quota_type]))
+            raise KBQuotaCheckException()
+
     def create_resources(self):
         """
         Creates all the entities associated with
         a user offloads tasks to user class
         """
+        if self.kloud.reusing_tenants:
+            self.check_quota()
+        else:
+            self.update_quota()
+
         if self.reusing_users:
             user_name = self.reusing_users['username']
             password = self.reusing_users['password']

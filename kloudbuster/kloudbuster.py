@@ -25,7 +25,8 @@ import webbrowser
 
 import base_compute
 import base_network
-import glanceclient.exc as glance_exception
+from cinderclient import client as cinderclient
+from glanceclient import exc as glance_exception
 from glanceclient.v2 import client as glanceclient
 from kb_config import KBConfig
 from kb_res_logger import KBResLogger
@@ -36,9 +37,11 @@ from kb_runner_storage import KBRunner_Storage
 from kb_scheduler import KBScheduler
 import kb_vm_agent
 
+import keystoneauth1
 from keystoneclient.v2_0 import client as keystoneclient
 
 import log as logging
+from neutronclient.neutron import client as neutronclient
 from novaclient import client as novaclient
 from oslo_config import cfg
 import pbr.version
@@ -64,6 +67,7 @@ class Kloud(object):
         self.reusing_tenants = reusing_tenants
         self.storage_mode = storage_mode
         self.multicast_mode = multicast_mode
+        self.credentials = cred
         self.osclient_session = cred.get_session()
         self.flavor_to_use = None
         self.vm_up_count = 0
@@ -78,7 +82,15 @@ class Kloud(object):
         self.placement_az = scale_cfg['availability_zone'] \
             if scale_cfg['availability_zone'] else None
         self.exc_info = None
+        # these client handles use the kloudbuster credentials (usually admin)
+        # to do tenant creation, tenant nova+cinder quota allocation and the like
         self.keystone = keystoneclient.Client(session=self.osclient_session)
+        self.neutron_client = neutronclient.Client('2.0', endpoint_type='publicURL',
+                                                   session=self.osclient_session)
+        self.nova_client = novaclient.Client('2', endpoint_type='publicURL',
+                                             session=self.osclient_session)
+        self.cinder_client = cinderclient.Client('2', endpoint_type='publicURL',
+                                                 session=self.osclient_session)
         LOG.info("Creating kloud: " + self.prefix)
         if self.placement_az:
             LOG.info('%s Availability Zone: %s' % (self.name, self.placement_az))
@@ -306,46 +318,70 @@ class KloudBuster(object):
 
     def check_and_upload_images(self, retry_count=150):
         retry = 0
-        creds_list = [self.server_cred.get_session(),
-                      self.client_cred.get_session()]
-        creds_dict = dict(zip(['Server kloud', 'Client kloud'], creds_list))
-        img_name_dict = dict(zip(['Server kloud', 'Client kloud'],
-                                 [self.server_cfg.image_name, self.client_cfg.image_name]))
-
-        for kloud, sess in creds_dict.items():
+        image_location = None
+        image_name = self.client_cfg.image_name
+        image_url = self.client_cfg.vm_image_file
+        kloud_name_list = ['Server kloud', 'Client kloud']
+        session_list = [self.server_cred.get_session(),
+                        self.client_cred.get_session()]
+        for kloud, sess in zip(kloud_name_list, session_list):
             glance_client = glanceclient.Client('2', session=sess)
             try:
                 # Search for the image
-                img = glance_client.images.list(filters={'name': img_name_dict[kloud]}).next()
+                img = glance_client.images.list(filters={'name': image_name}).next()
                 continue
             except StopIteration:
-                pass
+                sys.exc_clear()
 
             # Trying to upload images
-            kb_image_name = kb_vm_agent.get_image_name() + '.qcow2'
-            image_url = 'http://storage.apps.openstack.org/images/%s' % kb_image_name
-            LOG.info("Image is not found in %s, uploading from OpenStack App Store..." % kloud)
+            LOG.info("KloudBuster VM Image is not found in %s, trying to upload it..." % kloud)
+
+            if not image_location:
+                if not image_url:
+                    LOG.error('Configuration file is missing a VM image URL (vm_image_name)')
+                    return False
+                file_prefix = 'file://'
+                if not image_url.startswith(file_prefix):
+                    LOG.error('vm_image_name (%s) must start with "%s", aborting' %
+                              (image_url, file_prefix))
+                    return False
+                image_location = image_url.split(file_prefix)[1]
+            retry = 0
             try:
-                img = glance_client.images.create(name=img_name_dict[kloud],
-                                                  disk_format="qcow2",
-                                                  container_format="bare",
-                                                  is_public=True,
-                                                  copy_from=image_url)
+                LOG.info("Uploading VM Image from %s..." % image_location)
+                with open(image_location) as f_image:
+                    img = glance_client.images.create(name=image_name,
+                                                      disk_format="qcow2",
+                                                      container_format="bare",
+                                                      visibility="public")
+                    glance_client.images.upload(img.id, image_data=f_image)
+                # Check for the image in glance
                 while img.status in ['queued', 'saving'] and retry < retry_count:
-                    img = glance_client.images.find(name=img.name)
-                    retry = retry + 1
+                    img = glance_client.images.get(img.id)
+                    retry += 1
+                    LOG.debug("Image not yet active, retrying %s of %s...", retry, retry_count)
                     time.sleep(2)
                 if img.status != 'active':
-                    raise Exception
+                    LOG.error("Image uploaded but too long to get to active state")
+                    raise Exception("Image update active state timeout")
             except glance_exception.HTTPForbidden:
-                LOG.error("Cannot upload image without admin access. Please make sure the "
-                          "image is uploaded and is either public or owned by you.")
+                LOG.error("Cannot upload image without admin access. Please make "
+                          "sure the image is uploaded and is either public or owned by you.")
+                return False
+            except IOError as exc:
+                # catch the exception for file based errors.
+                LOG.error("Failed while uploading the image. Please make sure the "
+                          "image at the specified location %s is correct: %s",
+                          image_url, str(exc))
+                return False
+            except keystoneauth1.exceptions.http.NotFound as exc:
+                LOG.error("Authentication error while uploading the image: " + str(exc))
                 return False
             except Exception:
-                LOG.error("Failed while uploading the image, please make sure the cloud "
-                          "under test has the access to URL: %s." % image_url)
+                LOG.error(traceback.format_exc())
+                LOG.error("Failed while uploading the image: %s", str(exc))
                 return False
-
+            return True
         return True
 
     def print_provision_info(self):
@@ -611,7 +647,8 @@ class KloudBuster(object):
 
         cleanup_flag = False
         try:
-            cleanup_flag = self.testing_kloud.delete_resources()
+            if self.testing_kloud:
+                cleanup_flag = self.testing_kloud.delete_resources()
         except Exception:
             traceback.print_exc()
         if not cleanup_flag:

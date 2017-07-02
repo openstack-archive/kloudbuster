@@ -157,8 +157,11 @@ class KBConfig(object):
     def init_with_cli(self):
         self.storage_mode = CONF.storage
         self.multicast_mode = CONF.multicast
-        self.get_credentials()
         self.get_configs()
+        # check if an openrc file was passed from config file
+        if not CONF.tested_rc and self.config_scale['openrc_file']:
+            CONF.tested_rc = self.config_scale['openrc_file']
+        self.get_credentials()
         self.get_topo_cfg()
         self.get_tenants_list()
         self.update_configs()

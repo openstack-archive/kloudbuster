@@ -12,8 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
-
 import base_compute
 import base_network
 from cinderclient import client as cinderclient
@@ -23,12 +21,6 @@ from neutronclient.neutron import client as neutronclient
 from novaclient import client as novaclient
 
 LOG = logging.getLogger(__name__)
-
-class KBFlavorCheckException(Exception):
-    pass
-
-class KBQuotaCheckException(Exception):
-    pass
 
 class User(object):
     """
@@ -49,10 +41,17 @@ class User(object):
         self.tenant = tenant
         self.res_logger = tenant.res_logger
         self.router_list = []
-        # Store the nova, neutron and cinder client
-        self.nova_client = None
-        self.neutron_client = None
-        self.cinder_client = None
+        # nova, neutron and cinder client for this user
+        session = self.tenant.kloud.credentials.get_user_session(user_name, password,
+                                                                 tenant.tenant_name)
+
+        # Create nova/neutron/cinder clients to be used for all operations
+        self.neutron_client = neutronclient.Client('2.0', endpoint_type='publicURL',
+                                                   session=session)
+        self.nova_client = novaclient.Client('2', endpoint_type='publicURL',
+                                             http_log_debug=True, session=session)
+        self.cinder_client = cinderclient.Client('2', endpoint_type='publicURL',
+                                                 session=session)
         # Each user is associated to 1 key pair at most
         self.key_pair = None
         self.key_name = None
@@ -127,86 +126,12 @@ class User(object):
 
         return flag
 
-    def update_tenant_quota(self, tenant_quota):
-        nova_quota = base_compute.NovaQuota(self.nova_client, self.tenant.tenant_id)
-        nova_quota.update_quota(**tenant_quota['nova'])
-
-        if self.tenant.kloud.storage_mode:
-            cinder_quota = base_compute.CinderQuota(self.cinder_client, self.tenant.tenant_id)
-            cinder_quota.update_quota(**tenant_quota['cinder'])
-
-        neutron_quota = base_network.NeutronQuota(self.neutron_client, self.tenant.tenant_id)
-        neutron_quota.update_quota(tenant_quota['neutron'])
-
-    def check_resources_quota(self):
-        # Flavor check
-        flavor_manager = base_compute.Flavor(self.nova_client)
-        find_flag = False
-        fcand = {'vcpus': sys.maxint, 'ram': sys.maxint, 'disk': sys.maxint}
-        for flavor in flavor_manager.list():
-            flavor = vars(flavor)
-            if flavor['vcpus'] < 1 or flavor['ram'] < 1024 or flavor['disk'] < 10:
-                continue
-            if flavor['vcpus'] < fcand['vcpus']:
-                fcand = flavor
-            if flavor['vcpus'] == fcand['vcpus'] and flavor['ram'] < fcand['ram']:
-                fcand = flavor
-            if flavor['vcpus'] == fcand['vcpus'] and flavor['ram'] == fcand['ram'] and\
-               flavor['disk'] < fcand['disk']:
-                fcand = flavor
-            find_flag = True
-
-        if find_flag:
-            LOG.info('Automatically selects flavor %s to instantiate VMs.' % fcand['name'])
-            self.tenant.kloud.flavor_to_use = fcand['name']
-        else:
-            LOG.error('Cannot find a flavor which meets the minimum '
-                      'requirements to instantiate VMs.')
-            raise KBFlavorCheckException()
-
-        # Nova/Cinder/Neutron quota check
-        tenant_id = self.tenant.tenant_id
-        meet_quota = True
-        for quota_type in ['nova', 'cinder', 'neutron']:
-            if quota_type == 'nova':
-                quota_manager = base_compute.NovaQuota(self.nova_client, tenant_id)
-            elif quota_type == 'cinder':
-                quota_manager = base_compute.CinderQuota(self.cinder_client, tenant_id)
-            else:
-                quota_manager = base_network.NeutronQuota(self.neutron_client, tenant_id)
-
-            meet_quota = True
-            quota = quota_manager.get()
-            for key, value in self.tenant.tenant_quota[quota_type].iteritems():
-                if quota[key] < value:
-                    meet_quota = False
-                    break
-
-        if not meet_quota:
-            LOG.error('%s quota is too small. Minimum requirement: %s.' %
-                      (quota_type, self.tenant.tenant_quota[quota_type]))
-            raise KBQuotaCheckException()
-
     def create_resources(self):
         """
         Creates all the User elements associated with a User
         1. Creates the routers
         2. Creates the neutron and nova client objects
         """
-        session = self.tenant.kloud.osclient_session
-
-        # Create nova/neutron/cinder clients to be used for all operations
-        self.neutron_client = neutronclient.Client('2.0', endpoint_type='publicURL',
-                                                   session=session)
-        self.nova_client = novaclient.Client('2', endpoint_type='publicURL',
-                                             http_log_debug=True, session=session)
-        self.cinder_client = cinderclient.Client('2', endpoint_type='publicURL',
-                                                 session=session)
-
-        if self.tenant.kloud.reusing_tenants:
-            self.check_resources_quota()
-        else:
-            self.update_tenant_quota(self.tenant.tenant_quota)
 
         config_scale = self.tenant.kloud.scale_cfg
 

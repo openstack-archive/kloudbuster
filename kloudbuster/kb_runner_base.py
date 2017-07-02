@@ -19,6 +19,7 @@ from distutils.version import LooseVersion
 import json
 import log as logging
 import redis
+import sys
 import threading
 import time
 
@@ -83,6 +84,9 @@ class KBRunner(object):
                 self.redis_obj.get("test")
                 success = True
             except (redis.exceptions.ConnectionError):
+                # clear active exception to avoid the exception summary
+                # appended to LOG.info by oslo log
+                sys.exc_clear()
                 LOG.info("Connecting to redis server... Retry #%d/%d", retry, retry_count)
                 time.sleep(self.config.polling_interval)
                 continue
@@ -133,6 +137,8 @@ class KBRunner(object):
                     msg = self.message_queue.popleft()
                 except IndexError:
                     # No new message, commands are in executing
+                    # clear active exc to prevent LOG pollution
+                    sys.exc_clear()
                     break
 
                 payload = eval(msg['data'])
