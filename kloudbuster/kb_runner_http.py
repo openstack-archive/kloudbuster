@@ -34,8 +34,8 @@ class KBRunner_HTTP(KBRunner):
     Control the testing VMs on the testing cloud
     """
 
-    def __init__(self, client_list, config, expected_agent_version, single_cloud=True):
-        KBRunner.__init__(self, client_list, config, expected_agent_version, single_cloud)
+    def __init__(self, client_list, config, single_cloud=True):
+        KBRunner.__init__(self, client_list, config, single_cloud)
 
     def header_formatter(self, stage, vm_count):
         conns = vm_count * self.config.http_tool_configs.connections

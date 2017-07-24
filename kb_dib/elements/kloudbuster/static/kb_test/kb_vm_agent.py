@@ -29,26 +29,13 @@ import traceback
 # Define the version of the KloudBuster agent and VM image
 #
 # When VM is up running, the agent will send the READY message to the
-# KloudBuster main program, along with its version. The main program
-# will check the version to see whether the image meets the minimum
-# requirements to run, and stopped with an error if not.
+# KloudBuster main program, along with its version.
 #
-# This version must be incremented if the interface changes or if new features
-# are added to the agent VM
-__version__ = '6'
+# This version is no longer checked starting from release 7
+# and can be left constant moving forward.
+__version__ = '7'
 
 # TODO(Logging on Agent)
-
-def get_image_name():
-    '''Return the versioned VM image name that corresponds to this
-    agent code. This string must match the way DIB names the kloudbuster image.
-    Return:
-        the versioned image name without the extension ('.qcow2' is implicit)
-    '''
-    return 'kloudbuster_v' + __version__
-
-def get_image_version():
-    return __version__
 
 def exec_command(cmd, cwd=None):
     p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

@@ -1,5 +1,5 @@
 =====================
-KloudBuster version 6
+KloudBuster version 7
 =====================
 
 How good is your OpenStack **data plane** or **storage service** under real
@@ -61,6 +61,9 @@ Feature List
 
    * Supports any mix of read/write
 
+   * Supports fixed load (e.g. 1000 IOPs/VM) or highest load measurement
+     (KloudBuster will increase the load until latency spikes)
+
    * IOPs, bandwitdh and loss-less millisecond-precision latency aggregation
      for every IO operation (typically millions per run)
 
@@ -95,6 +98,14 @@ graphical charts generated straight off the tool.
 
 **Examples of results** are available in :ref:`gallery`.
 
+New in Release 7
+----------------
+
+* The KloudBuster Docker container now includes the KloudBuster VM image for easier
+  setup (no more need to install/uplaod the VM image separately)
+
+* Supports more recent OpenStack releases with newer API versions (Newton, Ocata)
+
 
 Limitations and Non-Goals
 -------------------------
@@ -125,8 +136,8 @@ Contributions and Feedbacks
 If you are interested in OpenStack Performance and Scale, contributions and
 feedbacks are welcome!
 
-If you have any feedbacks or would like to make small or large contributions,
-simply send an email to openstack-dev@lists.openstack.org with a '[kloudbuster]'
+If you have any feedbacks or would like to contribute,
+send an email to openstack-dev@lists.openstack.org with a '[kloudbuster]'
 tag in the subject.
 
 

@@ -26,4 +26,5 @@ except ImportError:
 
 setuptools.setup(
     setup_requires=['pbr'],
+    scripts=['kb_extract_img_from_docker.sh'],
     pbr=True)

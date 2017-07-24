@@ -22,7 +22,7 @@ from oslo_config import cfg
 from pkg_resources import resource_string
 
 import credentials
-import kb_vm_agent
+import kloudbuster
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -113,9 +113,25 @@ class KBConfig(object):
             self.config_scale = self.config_scale + AttrDict(self.alt_cfg)
 
         # Use the default image name for Glance
-        # defaults to something like "kloudbuster_v3"
+        # defaults to something like "kloudbuster-7.0.0"
+        default_image_name = 'kloudbuster-' + kloudbuster.__version__
         if not self.config_scale['image_name']:
-            self.config_scale['image_name'] = kb_vm_agent.get_image_name()
+            self.config_scale['image_name'] = default_image_name
+
+        # Check if the default image is located at the default locations
+        # if vm_image_file is empty
+        if not self.config_scale['vm_image_file']:
+            # check current directory
+            default_image_file = default_image_name + '.qcow2'
+            if os.path.isfile(default_image_file):
+                self.config_scale['vm_image_file'] = default_image_file
+            else:
+                # check at the root of the package
+                # root is up one level where this module resides
+                pkg_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                default_image_file = pkg_root + '/' + default_image_file
+                if os.path.isfile(default_image_file):
+                    self.config_scale['vm_image_file'] = default_image_file
 
         # A bit of config dict surgery, extract out the client and server side
         # and transplant the remaining (common part) into the client and server dict

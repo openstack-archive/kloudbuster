@@ -1,3 +1,7 @@
-.git
 .gitignore
 .gitreview
+.tox
+.mailmap
+.coveragerc
+.test*
+*.egg-info/

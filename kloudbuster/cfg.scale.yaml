@@ -15,19 +15,25 @@ openrc_file:
 
 # Name of the image to use for all test VMs (client, server and proxy)
 # without the qcow2 extension
-# The image name must exist in OpenStack and built with appropriate packages.
-# The default test VM image is named "kloudbuster_v<version>" where
-# <version> is the KloudBuster test VM image version (e.g. "kloudbuster_v6")
+# 
 # Leave empty to use the default test VM image (recommended).
 # If non empty use quotes if there are space characters in the name (e.g. 'my image')
+# The default test VM image is named "kloudbuster-<version>" where
+# <version> is the KloudBuster version (e.g. "kloudbuster-7.0.0")
 image_name:
 
 # KloudBuster can automatically upload a VM image if the image named by
 # image_name is missing, for that you need to specify a file location where
 # the image can be retrieved
 #
-# To upload the image as a file, download it to preferred location
-# file://<full path of the image with qcow2 extension>
+# To upload the image, download it first to a local file system before running kloudbuster
+# Fill with the full pathname of the image with qcow2 extension
+# e.g. 
+# vm_image_file: /kloudbuster/kloudbuster-7.0.0.qcow2
+# If empty, KloudBuster will attempt to locate that file (with the default name) 
+# under the following directories:
+# - root of the kloudbuster package
+# - current directory
 vm_image_file:
 
 # Keystone admin role name (default should work in most deployments)

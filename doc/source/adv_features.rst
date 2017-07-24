@@ -89,39 +89,39 @@ are given to help get started quickly.
     make sure KloudBuster is talking to the clouds well.
 
 
-Example 1: Single-cloud Mode
-""""""""""""""""""""""""""""
+Example 1: HTTP Scale, Single-cloud Mode
+""""""""""""""""""""""""""""""""""""""""
 
 Kloudbuster will create both server VMs and client VMs in the same cloud if
 only one RC file is provided::
 
-    $ kloudbuster --tested-rc ~/admin_openrc.sh --tested-passwd admin
+    $ kloudbuster --rc ~/admin_openrc.sh --passwd admin
 
 
-Example 2: Dual-cloud Mode, Save results
-""""""""""""""""""""""""""""""""""""""""
+Example 2: HTTP Scale, Dual-cloud Mode, Save results
+""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Assume the cloud for server VMs is ~/admin_openrc1.sh, and the cloud for
 client VMs is ~/admin_openrc2.sh. The password for both clouds is "admin".
 Also save the results to a JSON file once the run is finished::
 
-    $ kloudbuster --tested-rc ~/admin_openrc1.sh --tested-passwd admin --testing-rc ~/admin_openrc2.sh --testing-passwd admin --json result.json
+    $ kloudbuster --rc ~/admin_openrc1.sh --passwd admin --testing-rc ~/admin_openrc2.sh --testing-passwd admin --json result.json
 
 
-Example 3: Single-cloud Mode, Customized VM placements
-""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-.. code::
-
-    $ kloudbuster --tested-rc ~/admin_openrc.sh --tested-passwd admin -t cfg.topo.yaml
-
-
-Example 4: Single-cloud Mode, Running storage test, Save results to JSON
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Example 3: HTTP Scale, Single-cloud Mode, Customized VM placements
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. code::
 
-    $ kloudbuster --tested-rc ~/aio-openrc.sh --tested-passwd lab --storage --json aio.json
+    $ kloudbuster --rc ~/admin_openrc.sh --passwd admin -t cfg.topo.yaml
+
+
+Example 4: Storage benchmark, Save results to JSON
+""""""""""""""""""""""""""""""""""""""""""""""""""
+
+.. code::
+
+    $ kloudbuster --rc ~/aio-openrc.sh --passwd lab --storage --json aio.json
 
 
 

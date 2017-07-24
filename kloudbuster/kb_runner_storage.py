@@ -28,8 +28,8 @@ class KBRunner_Storage(KBRunner):
     Control the testing VMs on the testing cloud
     """
 
-    def __init__(self, client_list, config, expected_agent_version):
-        KBRunner.__init__(self, client_list, config, expected_agent_version, single_cloud=True)
+    def __init__(self, client_list, config):
+        KBRunner.__init__(self, client_list, config, single_cloud=True)
 
     def header_formatter(self, stage, vm_count):
         rr_iops = rw_iops = sr_tp = sw_tp = 0

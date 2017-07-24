@@ -15,7 +15,6 @@
 from __future__ import division
 import abc
 from collections import deque
-from distutils.version import LooseVersion
 import json
 import log as logging
 import redis
@@ -42,7 +41,7 @@ class KBRunner(object):
     Control the testing VMs on the testing cloud
     """
 
-    def __init__(self, client_list, config, expected_agent_version, single_cloud=True):
+    def __init__(self, client_list, config, single_cloud=True):
         self.full_client_dict = dict(zip([x.vm_name for x in client_list], client_list))
         self.client_dict = self.full_client_dict
         self.config = config
@@ -50,7 +49,6 @@ class KBRunner(object):
         self.result = {}
         self.host_stats = {}
         self.tool_result = {}
-        self.expected_agent_version = expected_agent_version
         self.agent_version = None
         self.report = None
 
@@ -206,15 +204,6 @@ class KBRunner(object):
         if cnt_succ != len(self.client_dict):
             raise KBVMUpException("Some VMs failed to start.")
         self.send_cmd('ACK', None, None)
-        if not self.agent_version:
-            self.agent_version = "0"
-            if (LooseVersion(self.agent_version) != LooseVersion(self.expected_agent_version))\
-               and (self.expected_agent_version not in vm_version_mismatches):
-                # only warn once for each unexpected VM version
-                vm_version_mismatches.add(self.expected_agent_version)
-                LOG.warning("The VM image you are running (%s) is not the expected version (%s) "
-                            "this may cause some incompatibilities" %
-                            (self.agent_version, self.expected_agent_version))
 
     def gen_host_stats(self):
         self.host_stats = {}

@@ -96,8 +96,19 @@ How are KloudBuster VM images managed?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 KloudBuster VM images are built using OpenStack diskimage-builder (or DIB) and
-have a version (single number). The default name of an image is
-"kloudbuster_v<version>" (e.g. "kludbuster_v6"). Normally each KloudBuster
+have a version (single number). 
+
+Starting from version 7.0.0
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The name of the VM image is "kloudbuster-<version>" (e.g. "kloudbuster-7.0.0").
+That image is now always included in the container image (which is why it is big).
+When running KloudBuster from the container, it will automatically upload
+that VM image from the local copy in the container.
+
+Prior to version 7.0.0
+^^^^^^^^^^^^^^^^^^^^^^
+The default name of an image is
+"kloudbuster_v<version>" (e.g. "kloudbuster_v6"). Normally each KloudBuster
 application is associated to a recommended KloudBuster VM image version.
 
 This is indicated in the output of --version::

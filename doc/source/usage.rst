@@ -27,7 +27,7 @@ KloudBuster Installation Options
 
 There are 4 different ways to install KloudBuster:
 
-- use a pre-built Docker container (recommended if you already use Docker)
+- use a pre-built Docker container (recommended)
 - use a pre-built VM image (if you prefer to run the KloudBuster application in a VM and do not need CLI)
 - install from PyPI (if you prefer to use pip install)
 - install directly from GitHub (git clone, for code development or if you want to browse the code)
@@ -90,61 +90,50 @@ Examples of REST requests
 
 .. _upload_kb_image:
 
-KloudBuster VM Image Upload
----------------------------
+Get the KloudBuster VM Image
+----------------------------
 
-Before you can use KloudBuster you must upload the KloudBuster VM image to your
-OpenStack cloud under test. KloudBuster needs one "universal" test VM image
+KloudBuster needs one "universal" test VM image
 (referred to as "KloudBuster image") that contains the necessary test software.
 The KloudBuster image is then instantiated by the KloudBuster application in
 potentially large number of VMs using the appropriate role (HTTP server, HTTP
 traffic generator...).
-
-Pre-built VM images are available for download from the
-`OpenStack App Catalog <http://apps.openstack.org/#tab=glance-images>`_.
+Upload of the VM image to OpenStack is automatic with the KloudBuster container (as the VM image is
+included in the container itself). For non container usages, it requires building a VM image or obtaining
+it from the Internet (see below).
 
 .. note::
 
    The same KloudBuster VM image can be instantiated for running the test functions
    (HTTP servers, HTTP traffic generators, file access tools) and for running KloudBuster as a web service.
 
-.. note::
-
-    If your OpenStack Glance is able to access the Internet and you only use
-    the CLI to launch KloudBuster, you can skip this section (KloudBuster CLI
-    will request Glance to download the image from the OpenStack App Catalog when
-    it is not present in Glance).
-
-Download the KloudBuster VM image to the local directory
+Extract the KloudBuster VM image to the local directory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You must download a local copy if your OpenStack cloud does not have dirct
-access to the Internet. Download the latest image directly from
-`OpenStack App Catalog <http://apps.openstack.org/#tab=glance-images>`_ using
-your favorite browser (search for "kloudbuster") or using wget. KloudBuster VM
-images are qcow2 images named "kloudbuster_v<version>.qcow2" (e.g.
-"kloudbuster_v6.qcow2"). Look for an image named with the "kloudbuster_v"
-prefix and download the latest version from the list.
+This requires Docker to be installed and requires Internet access to DockerHub.
 
-Example for downloading the v6 image using wget:
+Use the kb_extract_img_from_socker.sh script to download a copy of the VM image from DockerHub.
+By default the script will download the VM image with the same version as the installed
+KloudBuster package.
 
 .. code-block:: bash
 
-   wget http://storage.apps.openstack.org/images/kloudbuster_v6.qcow2
+   kb_extract_img_from_socker.sh
 
-Upload the KloudBuster VM image using the Horizon Dashboard
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Once extracted, you can let KloudBuster upload the VM image for you on a subsequent run (simplest and recommended) or the VM image can be manually uploaded to OpenStack using Horizon or the glance API.
+KloudBuster by default will look into the root of the KloudBuster package or into the current directory to
+check if the VM image file is present, and automatically upload it if it is not already in OpenStack.
 
-From the dashboard, create a new image and select either "Image File" if you
-want to uplaod from the local copy of the image or "Image Location" if you want
-to upload directly from the OpenStack App Catalog (you will need the complete
-URL of the image).
 
-The name of the image in Glance *must* match exactly the image name in the App
-Catalog (without the .qcow2 extension, e.g. "kloudbuster_v6").
+Upload the KloudBuster VM image using the Horizon Dashboard (optional)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Upload the KloudBuster VM image using the Glance CLI
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+From the dashboard, create a new image and select "Image File" and select the VM image file.
+
+The name of the image in Glance *must* match exactly the image name (without the .qcow2 extension, e.g. "kloudbuster-7.0.0").
+
+Upload the KloudBuster VM image using the Glance CLI (optional)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This assumes that you have installed the OpenStack Glance API and have sourced
 the appropriate openrc file.
@@ -153,6 +142,6 @@ To upload the image from a local copy of that image using the Glance CLI:
 
 .. code-block:: bash
 
-    glance image-create --file kloudbuster_v6.qcow2 --disk-format qcow2 --container-format bare --visibility public --name kloudbuster_v6
+    glance image-create --file kloudbuster-7.0.0.qcow2 --disk-format qcow2 --container-format bare --visibility public --name kloudbuster-7.0.0
 
 

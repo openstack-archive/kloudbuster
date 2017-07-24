@@ -97,7 +97,7 @@ The default HTTP scale test is described :ref:`here <default_http_scale>`.
 
 .. code-block:: bash
 
-    kloudbuster --tested-rc admin-openrc.sh --tested-passwd admin
+    kloudbuster --rc admin-openrc.sh --passwd admin
 
 Run the default storage scale test
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -106,7 +106,7 @@ The default storage scale test is described :ref:`here <default_storage_scale>`.
 
 .. code-block:: bash
 
-    kloudbuster --tested-rc admin-openrc.sh --tested-passwd admin --storage
+    kloudbuster --rc admin-openrc.sh --passwd admin --storage
 
 Run KloudBuster with a custom configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -124,7 +124,7 @@ the custom configuration:
 
 .. code-block:: bash
 
-    kloudbuster --tested-rc admin-openrc.sh --tested-passwd admin --config kb.cfg
+    kloudbuster --rc admin-openrc.sh --passwd admin --config kb.cfg
 
 6. Running KloudBuster as a WebUI/REST Server
 ---------------------------------------------

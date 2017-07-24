@@ -6,8 +6,7 @@ KloudBuster Git Quick Start Guide
 
 This is the default installation method for code development.
 
-It is recommended to run KloudBuster inside a virtual environment. However,
-it can be skipped if installed in a dedicated VM.
+It is recommended to run KloudBuster inside a virtual environment.
 
 1. Install Dependencies and Clone Git Repository
 ------------------------------------------------
@@ -23,6 +22,7 @@ Quick installation on Ubuntu/Debian
     $ source ./vkb/bin/activate
     $ git clone https://github.com/openstack/kloudbuster.git
     $ cd kloudbuster
+    $ pip install -e .
     $ pip install -r requirements-dev.txt
 
 Quick installation on RHEL/Fedora/CentOS
@@ -36,6 +36,7 @@ Quick installation on RHEL/Fedora/CentOS
     $ source ./vkb/bin/activate
     $ git clone https://github.com/openstack/kloudbuster.git
     $ cd kloudbuster
+    $ pip install -e .
     $ pip install -r requirements-dev.txt
 
 Quick installation on MacOSX
@@ -58,6 +59,7 @@ First, download XCode from App Store, then execute below commands:
     $ source ./vkb/bin/activate
     $ git clone https://github.com/openstack/kloudbuster.git
     $ cd kloudbuster
+    $ pip install -e .
     $ pip install -r requirements-dev.txt
 
 If you need to run the KloudBuster Web UI you need to install coreutils
@@ -77,7 +79,7 @@ To verify kloudbuster is installed, from the root of the kloudbuster repository 
 
 .. code-block:: bash
 
-    $ python kloudbuster/kloudbuster.py --help
+    kloudbuster --version
 
 2. Upload the KloudBuster VM image
 ----------------------------------
@@ -105,7 +107,7 @@ The default HTTP scale test is described :ref:`here <default_http_scale>`.
 
 .. code-block:: bash
 
-    python kloudbuster/kloudbuster.py --tested-rc admin-openrc.sh --tested-passwd admin
+    python kloudbuster/kloudbuster.py --rc admin-openrc.sh --passwd admin
 
 Run the default storage scale test
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -114,7 +116,7 @@ The default storage scale test is described :ref:`here <default_storage_scale>`.
 
 .. code-block:: bash
 
-    python kloudbuster/kloudbuster.py --tested-rc admin-openrc.sh --tested-passwd admin --storage
+    kloudbuster --rc admin-openrc.sh --passwd admin --storage
 
 Run KloudBuster with a custom configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -131,14 +133,14 @@ the custom configuration:
 
 .. code-block:: bash
 
-    python kloudbuster/kloudbuster.py --tested-rc admin-openrc.sh --tested-passwd admin --config kb.cfg
+    kloudbuster --rc admin-openrc.sh -passwd admin --config kb.cfg
 
 5. Running KloudBuster as a WebUI/REST Server
 ---------------------------------------------
 
 .. code-block:: bash
 
-    python kloudbuster/start_server.py&
+    kb_start_server&
 
 You should see a message similar to the one below, which indicates the server
 is up running::

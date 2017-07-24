@@ -30,8 +30,8 @@ class KBRunner_Multicast(KBRunner):
     Control the testing VMs on the testing cloud
     """
 
-    def __init__(self, client_list, config, expected_agent_version, single_cloud=True):
-        KBRunner.__init__(self, client_list, config, expected_agent_version, single_cloud)
+    def __init__(self, client_list, config, single_cloud=True):
+        KBRunner.__init__(self, client_list, config, single_cloud)
 
     def header_formatter(self, stage, nTests, nReceiver, pktsize):
         msg = "Stage %d/%d: %d Receiver(s) with a Packet Size of %dkb" %\

@@ -35,7 +35,6 @@ from kb_runner_http import KBRunner_HTTP
 from kb_runner_multicast import KBRunner_Multicast
 from kb_runner_storage import KBRunner_Storage
 from kb_scheduler import KBScheduler
-import kb_vm_agent
 
 import keystoneauth1
 from keystoneclient.v2_0 import client as keystoneclient
@@ -318,7 +317,6 @@ class KloudBuster(object):
 
     def check_and_upload_images(self, retry_count=150):
         retry = 0
-        image_location = None
         image_name = self.client_cfg.image_name
         image_url = self.client_cfg.vm_image_file
         kloud_name_list = ['Server kloud', 'Client kloud']
@@ -335,21 +333,13 @@ class KloudBuster(object):
 
             # Trying to upload images
             LOG.info("KloudBuster VM Image is not found in %s, trying to upload it..." % kloud)
-
-            if not image_location:
-                if not image_url:
-                    LOG.error('Configuration file is missing a VM image URL (vm_image_name)')
-                    return False
-                file_prefix = 'file://'
-                if not image_url.startswith(file_prefix):
-                    LOG.error('vm_image_name (%s) must start with "%s", aborting' %
-                              (image_url, file_prefix))
-                    return False
-                image_location = image_url.split(file_prefix)[1]
+            if not image_url:
+                LOG.error('Configuration file is missing a VM image pathname (vm_image_name)')
+                return False
             retry = 0
             try:
-                LOG.info("Uploading VM Image from %s..." % image_location)
-                with open(image_location) as f_image:
+                LOG.info("Uploading VM Image from %s..." % image_url)
+                with open(image_url) as f_image:
                     img = glance_client.images.create(name=image_name,
                                                       disk_format="qcow2",
                                                       container_format="bare",
@@ -550,16 +540,13 @@ class KloudBuster(object):
         self.kb_proxy.boot_info['user_data'] = str(self.kb_proxy.user_data)
         self.testing_kloud.create_vm(self.kb_proxy)
         if self.storage_mode:
-            self.kb_runner = KBRunner_Storage(client_list, self.client_cfg,
-                                              kb_vm_agent.get_image_version())
+            self.kb_runner = KBRunner_Storage(client_list, self.client_cfg)
         elif self.multicast_mode:
             self.kb_runner = KBRunner_Multicast(client_list, self.client_cfg,
-                                                kb_vm_agent.get_image_version(),
                                                 self.single_cloud)
 
         else:
             self.kb_runner = KBRunner_HTTP(client_list, self.client_cfg,
-                                           kb_vm_agent.get_image_version(),
                                            self.single_cloud)
 
         self.kb_runner.setup_redis(self.kb_proxy.fip_ip or self.kb_proxy.fixed_ip)
@@ -895,8 +882,7 @@ def main():
                    metavar="<source json file>"),
     ]
     CONF.register_cli_opts(cli_opts)
-    full_version = __version__ + ', VM image: ' + kb_vm_agent.get_image_name()
-    CONF(sys.argv[1:], project="kloudbuster", version=full_version)
+    CONF(sys.argv[1:], project="kloudbuster", version=__version__)
     logging.setup("kloudbuster")
 
     if CONF.rc and not CONF.tested_rc:

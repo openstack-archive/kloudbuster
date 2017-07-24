@@ -18,11 +18,3 @@ test_kloudbuster
 
 Tests for `kloudbuster` module.
 """
-
-from kloudbuster.tests import base
-
-
-class TestKloudbuster(base.TestCase):
-
-    def test_something(self):
-        pass

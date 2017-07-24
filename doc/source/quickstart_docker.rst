@@ -2,8 +2,7 @@
 KloudBuster Docker Container Quick Start Guide
 ==============================================
 
-The KloudBuster Docker container provides a quick way to use KloudBuster if you
-are already familiar with Docker.
+The recommended way to install KloudBuster is using Docker as it is the simplest.
 
 Prerequisites
 -------------
@@ -32,40 +31,11 @@ admin user to run KloudBuster as much as possible (otherwise there are
 restrictions on what you can do). Instructions below assume a copy of that
 file is saved under the local directory with the name "admin-openrc.sh"
 
+We assume in the below example that you have an openrc file available called
+"admin-openrc.sh" in the local directory and that the corresponding OpenStack
+password is "admin".
 
-3. Upload the KloudBuster VM image to the cloud under test
-----------------------------------------------------------
-
-If your OpenStack cloud has full access to the Internet, you can skip this step
-as KloudBuster will instruct Glance to download the KloudBuster VM image
-directly from the OpenStack (skip to next step).
-
-Otherwise, :ref:`download the latest kloudbuster image <upload_kb_image>` from
-the OpenStack App Catalog.
-
-In addition to the method described to upload the image using the Horizon
-dashboard or the glance CLI, you can also use the glance CLI that is already
-available in the KloudBuster container. Start a bash shell in the container
-and map the local directory to '/opt/kb' in the container so that you have
-access to the image and the RC file:
-
-.. code-block:: bash
-
-   docker run -v $PWD:/opt/kb --rm -it berrypatch/kloudbuster bash
-
-Then from inside the container bash prompt, source the openrc file, invoke the
-glance CLI to upload the VM image (should take a few minutes) then exit and
-terminate the container:
-
-.. code-block:: bash
-
-   source /opt/kb/admin-openrc.sh
-   glance image-create --name "kloudbuster_v6" --visibility public --disk-format qcow2 --container-format bare --file /opt/kb/kloudbuster_v6.qcow2
-
-Now you should be back to the host and should see the kloudbuster image in the
-current directory.
-
-4. Running the KloudBuster CLI
+3. Running the KloudBuster CLI
 ------------------------------
 
 If you do not really need a Web UI or REST interface, you can simply run
@@ -73,12 +43,8 @@ KloudBuster scale test straight from CLI in the container.
 
 .. code-block:: bash
 
-   docker run -v $PWD:/opt/kb --rm -t berrypatch/kloudbuster kloudbuster -h
-
-
-We assume in the below example that you have an openrc file available called
-"admin-openrc.sh" in the local directory and that the corresponding OpenStack
-password is "admin".
+   docker run -v $PWD:/opt/kb --rm berrypatch/kloudbuster kloudbuster --version
+   docker run -v $PWD:/opt/kb --rm berrypatch/kloudbuster kloudbuster -h
 
 
 Run the default HTTP data plane scale test
@@ -88,7 +54,7 @@ The default HTTP scale test is described :ref:`here <default_http_scale>`.
 
 .. code-block:: bash
 
-    docker run --rm -t -v $PWD:/opt/kb berrypatch/kloudbuster kloudbuster --tested-rc /opt/kb/admin-openrc.sh --tested-passwd admin
+    docker run --rm -v $PWD:/opt/kb berrypatch/kloudbuster kloudbuster --rc /opt/kb/admin-openrc.sh --passwd admin
 
 Run the default storage scale test
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -97,7 +63,7 @@ The default storage scale test is described :ref:`here <default_storage_scale>`.
 
 .. code-block:: bash
 
-    docker run --rm -t -v $PWD:/opt/kb berrypatch/kloudbuster kloudbuster --tested-rc /opt/kb/admin-openrc.sh --tested-passwd admin --storage
+    docker run --rm -v $PWD:/opt/kb berrypatch/kloudbuster kloudbuster --rc /opt/kb/admin-openrc.sh --passwd admin --storage
 
 
 Run KloudBuster with a custom configuration
@@ -117,7 +83,7 @@ local directory to "/opt/kb" (for example):
 
 .. code-block:: bash
 
-    docker run --rm -t -v $PWD:/opt/kb berrypatch/kloudbuster kloudbuster --tested-rc /opt/kb/admin-openrc.sh --tested-passwd admin --config /opt/kb/kb.cfg
+    docker run --rm -t -v $PWD:/opt/kb berrypatch/kloudbuster kloudbuster --rc /opt/kb/admin-openrc.sh --passwd admin --config /opt/kb/kb.cfg
 
 5. Running KloudBuster as a WebUI/REST Server
 ---------------------------------------------
@@ -128,7 +94,7 @@ the same port number at the host level:
 
 .. code-block:: bash
 
-    docker run -p 8080:8080 --rm berrypatch/kloudbuster kb_start_server&
+    docker run -d -p 8080:8080 --rm berrypatch/kloudbuster kb_start_server
 
 The first port number is the host listen port (any port of your choice) while
 the second one after the column is the container listen port (always 8080 for
