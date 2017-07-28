@@ -1,5 +1,5 @@
 =====================
-KloudBuster version 6
+KloudBuster version 7
 =====================
 
 How good is your OpenStack **data plane** or **storage service** under real
