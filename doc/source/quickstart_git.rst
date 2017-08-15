@@ -16,7 +16,7 @@ Quick installation on Ubuntu/Debian
 
 .. code-block:: bash
 
-    $ sudo apt-get install python-dev python-virtualenv git git-review qemu-utils
+    $ sudo apt-get install build-essential python-dev python-virtualenv git git-review qemu-utils
     $ # create a virtual environment
     $ virtualenv ./vkb
     $ source ./vkb/bin/activate
@@ -30,7 +30,7 @@ Quick installation on RHEL/Fedora/CentOS
 
 .. code-block:: bash
 
-    $ sudo yum install python-devel python-virtualenv git qemu-img
+    $ sudo yum install gcc python-devel python-virtualenv git qemu-img
     $ # create a virtual environment
     $ virtualenv ./vkb
     $ source ./vkb/bin/activate

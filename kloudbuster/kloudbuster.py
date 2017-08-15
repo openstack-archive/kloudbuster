@@ -557,7 +557,8 @@ class KloudBuster(object):
             start = self.client_cfg.progression.vm_start
             multiple = self.client_cfg.progression.vm_multiple
             cur_vm_count = 1 if start else multiple
-            total_vm = self.get_tenant_vm_count(self.client_cfg)
+            # Minus 1 for KB-Proxy
+            total_vm = self.get_tenant_vm_count(self.client_cfg) - 1
             while (cur_vm_count <= total_vm):
                 log_info += "\n" + self.kb_runner.header_formatter(stage, cur_vm_count)
                 cur_vm_count = (stage + 1 - start) * multiple
@@ -737,17 +738,17 @@ class KloudBuster(object):
 
     def calc_cinder_quota(self):
         total_vm = self.get_tenant_vm_count(self.server_cfg)
-        svr_disk = self.server_cfg['flavor']['disk']\
-            if self.server_cfg['flavor']['disk'] != 0 else 20
+        svr_disk = self.server_cfg['flavor']['disk']
         server_quota = {}
-        server_quota['gigabytes'] = total_vm * svr_disk
+        server_quota['gigabytes'] = total_vm * svr_disk \
+            if svr_disk != 0 else -1
         server_quota['volumes'] = total_vm
 
         total_vm = self.get_tenant_vm_count(self.client_cfg)
-        clt_disk = self.client_cfg['flavor']['disk']\
-            if self.client_cfg['flavor']['disk'] != 0 else 20
+        clt_disk = self.client_cfg['flavor']['disk']
         client_quota = {}
-        client_quota['gigabytes'] = total_vm * clt_disk + 20
+        client_quota['gigabytes'] = total_vm * clt_disk + 20 \
+            if clt_disk != 0 else -1
         client_quota['volumes'] = total_vm
 
         return [server_quota, client_quota]
