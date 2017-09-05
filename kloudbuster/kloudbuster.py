@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from __init__ import __version__
+
 from concurrent.futures import ThreadPoolExecutor
 import datetime
 import json
@@ -43,7 +45,6 @@ import log as logging
 from neutronclient.neutron import client as neutronclient
 from novaclient import client as novaclient
 from oslo_config import cfg
-import pbr.version
 from pkg_resources import resource_filename
 from pkg_resources import resource_string
 from tabulate import tabulate
@@ -51,8 +52,6 @@ import tenant
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
-__version__ = pbr.version.VersionInfo('kloudbuster').version_string_with_vcs()
-
 
 class KBVMCreationException(Exception):
     pass

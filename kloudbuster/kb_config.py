@@ -16,13 +16,13 @@ import os
 import sys
 import yaml
 
+from __init__ import __version__
 from attrdict import AttrDict
 import log as logging
 from oslo_config import cfg
 from pkg_resources import resource_string
 
 import credentials
-import kloudbuster
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ class KBConfig(object):
 
         # Use the default image name for Glance
         # defaults to something like "kloudbuster-7.0.0"
-        default_image_name = 'kloudbuster-' + kloudbuster.__version__
+        default_image_name = 'kloudbuster-' + __version__
         if not self.config_scale['image_name']:
             self.config_scale['image_name'] = default_image_name
 
