@@ -736,20 +736,22 @@ class KloudBuster(object):
         return [server_quota, client_quota]
 
     def calc_cinder_quota(self):
-        total_vm = self.get_tenant_vm_count(self.server_cfg)
-        svr_disk = self.server_cfg['flavor']['disk']
+        # Cinder quotas are only set for storage mode
+        # Since storage mode only uses client tenant
+        # Server tenant cinder quota is only used for non-storage case
+        # we can leave the server quota empty
         server_quota = {}
-        server_quota['gigabytes'] = total_vm * svr_disk \
-            if svr_disk != 0 else -1
-        server_quota['volumes'] = total_vm
 
-        total_vm = self.get_tenant_vm_count(self.client_cfg)
-        clt_disk = self.client_cfg['flavor']['disk']
+        # Client tenant quota is based on the number of
+        # storage VMs and disk size per VM
+        # (note this is not the flavor disk size!)
         client_quota = {}
-        client_quota['gigabytes'] = total_vm * clt_disk + 20 \
-            if clt_disk != 0 else -1
-        client_quota['volumes'] = total_vm
-
+        if self.storage_mode:
+            storage_cfg = self.client_cfg['storage_stage_configs']
+            vm_count = storage_cfg['vm_count']
+            client_quota['gigabytes'] = vm_count * storage_cfg['disk_size']
+            client_quota['volumes'] = vm_count
+            LOG.info('Cinder quotas: volumes=%d storage=%dGB', vm_count, client_quota['gigabytes'])
         return [server_quota, client_quota]
 
     def calc_tenant_quota(self):
