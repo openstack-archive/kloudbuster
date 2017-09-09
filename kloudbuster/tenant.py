@@ -18,13 +18,9 @@ import base_storage
 
 from keystoneclient import exceptions as keystone_exception
 import log as logging
-import sys
 import users
 
 LOG = logging.getLogger(__name__)
-
-class KBFlavorCheckException(Exception):
-    pass
 
 class KBQuotaCheckException(Exception):
     pass
@@ -99,30 +95,6 @@ class Tenant(object):
         neutron_quota.update_quota(self.tenant_quota['neutron'])
 
     def check_quota(self):
-        # Flavor check
-        flavor_manager = base_compute.Flavor(self.kloud.nova_client)
-        find_flag = False
-        fcand = {'vcpus': sys.maxint, 'ram': sys.maxint, 'disk': sys.maxint}
-        for flavor in flavor_manager.list():
-            flavor = vars(flavor)
-            if flavor['vcpus'] < 1 or flavor['ram'] < 1024 or flavor['disk'] < 10:
-                continue
-            if flavor['vcpus'] < fcand['vcpus']:
-                fcand = flavor
-            if flavor['vcpus'] == fcand['vcpus'] and flavor['ram'] < fcand['ram']:
-                fcand = flavor
-            if flavor['vcpus'] == fcand['vcpus'] and flavor['ram'] == fcand['ram'] and\
-               flavor['disk'] < fcand['disk']:
-                fcand = flavor
-            find_flag = True
-
-        if find_flag:
-            LOG.info('Automatically selects flavor %s to instantiate VMs.' % fcand['name'])
-            self.kloud.flavor_to_use = fcand['name']
-        else:
-            LOG.error('Cannot find a flavor which meets the minimum '
-                      'requirements to instantiate VMs.')
-            raise KBFlavorCheckException()
 
         # Nova/Cinder/Neutron quota check
         tenant_id = self.tenant_id

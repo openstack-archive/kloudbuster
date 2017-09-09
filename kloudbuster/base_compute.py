@@ -16,6 +16,7 @@ import os
 import time
 
 import log as logging
+from novaclient.exceptions import BadRequest
 
 LOG = logging.getLogger(__name__)
 
@@ -60,15 +61,14 @@ class BaseCompute(object):
         5. Security group instance
         6. Optional parameters: availability zone, user data, config drive
         """
-
-        # Get the image id and flavor id from their logical names
-        image = self.find_image(image_name)
-        flavor_type = self.find_flavor(flavor_type)
+        kloud = self.network.router.user.tenant.kloud
+        image = kloud.vm_img
+        flavor = kloud.flavors[flavor_type]
 
         # Also attach the created security group for the test
         instance = self.novaclient.servers.create(name=self.vm_name,
                                                   image=image,
-                                                  flavor=flavor_type,
+                                                  flavor=flavor,
                                                   key_name=keyname,
                                                   nics=nic,
                                                   availability_zone=avail_zone,
@@ -118,17 +118,12 @@ class BaseCompute(object):
         if self.instance and self.vol:
             attached_vols = self.novaclient.volumes.get_server_volumes(self.instance.id)
             if len(attached_vols):
-                self.novaclient.volumes.delete_server_volume(self.instance.id, self.vol.id)
-
-    def find_image(self, image_name):
-        """
-        Given a image name return the image id
-        """
-        try:
-            image = self.novaclient.glance.find_image(image_name)
-            return image
-        except Exception:
-            return None
+                try:
+                    self.novaclient.volumes.delete_server_volume(self.instance.id, self.vol.id)
+                except BadRequest:
+                    # WARNING Some resources in client cloud are not cleaned up properly.:
+                    # BadRequest: Invalid volume: Volume must be attached in order to detach
+                    pass
 
     def find_flavor(self, flavor_type):
         """
@@ -287,16 +282,21 @@ class Flavor(object):
     def list(self):
         return self.novaclient.flavors.list()
 
-    def create_flavor(self, name, ram, vcpus, disk, ephemeral, override=False):
-        # Creating flavors
-        if override:
-            self.delete_flavor(name)
-        return self.novaclient.flavors.create(name=name, ram=ram, vcpus=vcpus,
-                                              disk=disk, ephemeral=ephemeral)
+    def create_flavor(self, flavor_dict):
+        '''Delete the old flavor with same name if any and create a new one
 
-    def delete_flavor(self, name):
+        flavor_dict: dict with following keys: name, ram, vcpus, disk, ephemeral
+        '''
+        name = flavor_dict['name']
+        flavor = self.get(name)
+        if flavor:
+            LOG.info('Deleting old flavor %s', name)
+            self.delete_flavor(flavor)
+        LOG.info('Creating flavor %s', name)
+        return self.novaclient.flavors.create(**flavor_dict)
+
+    def delete_flavor(self, flavor):
         try:
-            flavor = self.novaclient.flavors.find(name=name)
             flavor.delete()
         except Exception:
             pass

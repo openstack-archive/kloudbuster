@@ -183,7 +183,7 @@ class KBRunner(object):
                 else:
                     LOG.error('[%s] received invalid command: %s' + (vm_name, cmd))
 
-            log_msg = "%d Succeed, %d Failed, %d Pending... Retry #%d" %\
+            log_msg = "VMs: %d Ready, %d Failed, %d Pending... Retry #%d" %\
                       (cnt_succ, cnt_failed, len(clist), retry)
             if sample_count != 0:
                 log_msg += " (%d sample(s) received)" % sample_count

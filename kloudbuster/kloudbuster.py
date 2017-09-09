@@ -56,8 +56,17 @@ LOG = logging.getLogger(__name__)
 class KBVMCreationException(Exception):
     pass
 
+class KBFlavorCheckException(Exception):
+    pass
+
+# flavor names to use
+FLAVOR_KB_PROXY = 'KB.proxy'
+FLAVOR_KB_CLIENT = 'KB.client'
+FLAVOR_KB_SERVER = 'KB.server'
+
 class Kloud(object):
-    def __init__(self, scale_cfg, cred, reusing_tenants,
+
+    def __init__(self, scale_cfg, cred, reusing_tenants, vm_img,
                  testing_side=False, storage_mode=False, multicast_mode=False):
         self.tenant_list = []
         self.testing_side = testing_side
@@ -67,9 +76,9 @@ class Kloud(object):
         self.multicast_mode = multicast_mode
         self.credentials = cred
         self.osclient_session = cred.get_session()
-        self.flavor_to_use = None
         self.vm_up_count = 0
         self.res_logger = KBResLogger()
+        self.vm_img = vm_img
         if testing_side:
             self.prefix = 'KBc'
             self.name = 'Client Kloud'
@@ -92,8 +101,43 @@ class Kloud(object):
         LOG.info("Creating kloud: " + self.prefix)
         if self.placement_az:
             LOG.info('%s Availability Zone: %s' % (self.name, self.placement_az))
+        # A dict of flavors indexed by flavor name
+        self.flavors = {}
+
+    def select_flavor(self):
+        # Select an existing flavor that Flavor check
+        flavor_manager = base_compute.Flavor(self.nova_client)
+        fcand = {'vcpus': sys.maxint, 'ram': sys.maxint, 'disk': sys.maxint}
+        # find the smallest flavor that is at least 1vcpu, 1024MB ram and 10MB disk
+        for flavor in flavor_manager.list():
+            flavor = vars(flavor)
+            if flavor['vcpus'] < 1 or flavor['ram'] < 1024 or flavor['disk'] < 10:
+                continue
+            if flavor['vcpus'] < fcand['vcpus']:
+                fcand = flavor
+            elif flavor['vcpus'] == fcand['vcpus']:
+                if flavor['ram'] < fcand['ram']:
+                    fcand = flavor
+                elif flavor['ram'] == fcand['ram'] and flavor['disk'] < fcand['disk']:
+                    fcand = flavor
+            find_flag = True
+
+        if find_flag:
+            LOG.info('Automatically selecting flavor %s to instantiate VMs.' % fcand['name'])
+            return fcand
+        LOG.error('Cannot find a flavor which meets the minimum '
+                  'requirements to instantiate VMs.')
+        raise KBFlavorCheckException()
 
     def create_resources(self, tenant_quota):
+        def create_flavor(fm, name, flavor_dict, extra_specs):
+            flavor_dict['name'] = name
+            flv = fm.create_flavor(flavor_dict)
+            if extra_specs:
+                flv.set_keys(extra_specs)
+            self.flavors[name] = flv
+            self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
+
         if self.reusing_tenants:
             for tenant_info in self.reusing_tenants:
                 tenant_name = tenant_info['name']
@@ -112,7 +156,17 @@ class Kloud(object):
         for tenant_instance in self.tenant_list:
             tenant_instance.create_resources()
 
-        if not self.reusing_tenants:
+        # Create/reuse flavors for this cloud
+        if self.reusing_tenants:
+            # If tenants are reused, we do not create new flavors but pick one
+            # existing that is good enough
+            flavor = self.select_flavor()
+            if self.testing_side:
+                self.flavors[FLAVOR_KB_PROXY] = flavor
+                self.flavors[FLAVOR_KB_CLIENT] = flavor
+            else:
+                self.flavors[FLAVOR_KB_SERVER] = flavor
+        else:
             # Create flavors for servers, clients, and kb-proxy nodes
             nova_client = self.tenant_list[0].user_list[0].nova_client
             flavor_manager = base_compute.Flavor(nova_client)
@@ -125,35 +179,29 @@ class Kloud(object):
             else:
                 flavor_dict['ephemeral'] = 0
             if self.testing_side:
-                flv = flavor_manager.create_flavor('KB.proxy', override=True,
-                                                   ram=2048, vcpus=1, disk=0, ephemeral=0)
-                self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
-                flv = flavor_manager.create_flavor('KB.client', override=True, **flavor_dict)
-                self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
+                proxy_flavor = {
+                    "vcpus": 1,
+                    "ram": 2048,
+                    "disk": 0,
+                    "ephemeral": 0
+                }
+                create_flavor(flavor_manager, FLAVOR_KB_PROXY, proxy_flavor, extra_specs)
+                create_flavor(flavor_manager, FLAVOR_KB_CLIENT, flavor_dict, extra_specs)
             else:
-                flv = flavor_manager.create_flavor('KB.server', override=True, **flavor_dict)
-                self.res_logger.log('flavors', vars(flv)['name'], vars(flv)['id'])
-            if extra_specs:
-                flv.set_keys(extra_specs)
+                create_flavor(flavor_manager, FLAVOR_KB_SERVER, flavor_dict, extra_specs)
 
 
     def delete_resources(self):
-        # Deleting flavors created by KloudBuster
-        try:
-            nova_client = self.tenant_list[0].user_list[0].nova_client
-        except Exception:
-            # NOVA Client is not yet initialized, so skip cleaning up...
-            return True
+
+        if not self.reusing_tenants:
+            for fn, flavor in self.flavors.iteritems():
+                LOG.info('Deleting flavor %s', fn)
+                try:
+                    flavor.delete()
+                except Exception as exc:
+                    LOG.warning('Error deleting flavor %s: %s', fn, str(exc))
 
         flag = True
-        if not self.reusing_tenants:
-            flavor_manager = base_compute.Flavor(nova_client)
-            if self.testing_side:
-                flavor_manager.delete_flavor('KB.client')
-                flavor_manager.delete_flavor('KB.proxy')
-            else:
-                flavor_manager.delete_flavor('KB.server')
-
         for tnt in self.tenant_list:
             flag = flag & tnt.delete_resources()
 
@@ -256,7 +304,6 @@ class KloudBuster(object):
         self.storage_mode = storage_mode
         self.multicast_mode = multicast_mode
 
-
         if topology and tenants_list:
             self.topology = None
             LOG.warning("REUSING MODE: Topology configs will be ignored.")
@@ -289,6 +336,8 @@ class KloudBuster(object):
         self.fp_logfile = None
         self.kloud = None
         self.testing_kloud = None
+        self.server_vm_img = None
+        self.client_vm_img = None
 
     def get_hypervisor_list(self, cred):
         ret_list = []
@@ -314,64 +363,79 @@ class KloudBuster(object):
 
         return ret_list
 
-    def check_and_upload_images(self, retry_count=150):
+    def check_and_upload_image(self, kloud_name, image_name, image_url, sess, retry_count):
+        '''Check a VM image and upload it if not found
+        '''
+        glance_client = glanceclient.Client('2', session=sess)
+        try:
+            # Search for the image
+            img = glance_client.images.list(filters={'name': image_name}).next()
+            # image found
+            return img
+        except StopIteration:
+            sys.exc_clear()
+
+        # Trying to upload image
+        LOG.info("KloudBuster VM Image is not found in %s, trying to upload it..." % kloud_name)
+        if not image_url:
+            LOG.error('Configuration file is missing a VM image pathname (vm_image_name)')
+            return None
         retry = 0
+        try:
+            LOG.info("Uploading VM Image from %s..." % image_url)
+            with open(image_url) as f_image:
+                img = glance_client.images.create(name=image_name,
+                                                  disk_format="qcow2",
+                                                  container_format="bare",
+                                                  visibility="public")
+                glance_client.images.upload(img.id, image_data=f_image)
+            # Check for the image in glance
+            while img.status in ['queued', 'saving'] and retry < retry_count:
+                img = glance_client.images.get(img.id)
+                retry += 1
+                LOG.debug("Image not yet active, retrying %s of %s...", retry, retry_count)
+                time.sleep(2)
+            if img.status != 'active':
+                LOG.error("Image uploaded but too long to get to active state")
+                raise Exception("Image update active state timeout")
+        except glance_exception.HTTPForbidden:
+            LOG.error("Cannot upload image without admin access. Please make "
+                      "sure the image is uploaded and is either public or owned by you.")
+            return None
+        except IOError as exc:
+            # catch the exception for file based errors.
+            LOG.error("Failed while uploading the image. Please make sure the "
+                      "image at the specified location %s is correct: %s",
+                      image_url, str(exc))
+            return None
+        except keystoneauth1.exceptions.http.NotFound as exc:
+            LOG.error("Authentication error while uploading the image: " + str(exc))
+            return None
+        except Exception:
+            LOG.error(traceback.format_exc())
+            LOG.error("Failed while uploading the image: %s", str(exc))
+            return None
+        return img
+
+    def check_and_upload_images(self, retry_count=150):
         image_name = self.client_cfg.image_name
         image_url = self.client_cfg.vm_image_file
-        kloud_name_list = ['Server kloud', 'Client kloud']
-        session_list = [self.server_cred.get_session(),
-                        self.client_cred.get_session()]
-        for kloud, sess in zip(kloud_name_list, session_list):
-            glance_client = glanceclient.Client('2', session=sess)
-            try:
-                # Search for the image
-                img = glance_client.images.list(filters={'name': image_name}).next()
-                continue
-            except StopIteration:
-                sys.exc_clear()
-
-            # Trying to upload images
-            LOG.info("KloudBuster VM Image is not found in %s, trying to upload it..." % kloud)
-            if not image_url:
-                LOG.error('Configuration file is missing a VM image pathname (vm_image_name)')
-                return False
-            retry = 0
-            try:
-                LOG.info("Uploading VM Image from %s..." % image_url)
-                with open(image_url) as f_image:
-                    img = glance_client.images.create(name=image_name,
-                                                      disk_format="qcow2",
-                                                      container_format="bare",
-                                                      visibility="public")
-                    glance_client.images.upload(img.id, image_data=f_image)
-                # Check for the image in glance
-                while img.status in ['queued', 'saving'] and retry < retry_count:
-                    img = glance_client.images.get(img.id)
-                    retry += 1
-                    LOG.debug("Image not yet active, retrying %s of %s...", retry, retry_count)
-                    time.sleep(2)
-                if img.status != 'active':
-                    LOG.error("Image uploaded but too long to get to active state")
-                    raise Exception("Image update active state timeout")
-            except glance_exception.HTTPForbidden:
-                LOG.error("Cannot upload image without admin access. Please make "
-                          "sure the image is uploaded and is either public or owned by you.")
-                return False
-            except IOError as exc:
-                # catch the exception for file based errors.
-                LOG.error("Failed while uploading the image. Please make sure the "
-                          "image at the specified location %s is correct: %s",
-                          image_url, str(exc))
-                return False
-            except keystoneauth1.exceptions.http.NotFound as exc:
-                LOG.error("Authentication error while uploading the image: " + str(exc))
-                return False
-            except Exception:
-                LOG.error(traceback.format_exc())
-                LOG.error("Failed while uploading the image: %s", str(exc))
-                return False
-            return True
-        return True
+        self.server_vm_img = self.check_and_upload_image('Server kloud',
+                                                         image_name,
+                                                         image_url,
+                                                         self.server_cred.get_session(),
+                                                         retry_count)
+        if self.server_vm_img is None:
+            return False
+        if self.client_cred == self.server_cred:
+            self.client_vm_img = self.server_vm_img
+        else:
+            self.client_vm_img = self.check_and_upload_image('Client kloud',
+                                                             image_name,
+                                                             image_url,
+                                                             self.client_cred.get_session(),
+                                                             retry_count)
+        return self.client_vm_img is not None
 
     def print_provision_info(self):
         """
@@ -408,8 +472,7 @@ class KloudBuster(object):
             for ins in server_list:
                 ins.user_data['role'] = 'HTTP_Server'
                 ins.user_data['http_server_configs'] = ins.config['http_server_configs']
-                ins.boot_info['flavor_type'] = 'KB.server' if \
-                    not self.tenants_list['server'] else self.kloud.flavor_to_use
+                ins.boot_info['flavor_type'] = FLAVOR_KB_SERVER
                 ins.boot_info['user_data'] = str(ins.user_data)
         elif test_mode == 'multicast':
             # Nuttcp tests over first /25
@@ -433,8 +496,7 @@ class KloudBuster(object):
                 ins.user_data['multicast_listener_address_start'] = listener_addr_start
                 ins.user_data['ntp_clocks'] = clocks
                 ins.user_data['pktsizes'] = self.client_cfg.multicast_tool_configs.pktsizes
-                ins.boot_info['flavor_type'] = 'KB.server' if \
-                    not self.tenants_list['server'] else self.kloud.flavor_to_use
+                ins.boot_info['flavor_type'] = FLAVOR_KB_SERVER
                 ins.boot_info['user_data'] = str(ins.user_data)
 
     def gen_client_user_data(self, test_mode):
@@ -457,8 +519,7 @@ class KloudBuster(object):
                 ins.user_data['target_shared_interface_ip'] = server_list[idx].shared_interface_ip
                 if role == 'Multicast_Client':
                     ins.user_data['ntp_clocks'] = clocks
-                ins.boot_info['flavor_type'] = 'KB.client' if \
-                    not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
+                ins.boot_info['flavor_type'] = FLAVOR_KB_CLIENT
                 ins.boot_info['user_data'] = str(ins.user_data)
         else:
             for idx, ins in enumerate(client_list):
@@ -466,8 +527,7 @@ class KloudBuster(object):
                 ins.user_data['vm_name'] = ins.vm_name
                 ins.user_data['redis_server'] = self.kb_proxy.fixed_ip
                 ins.user_data['redis_server_port'] = 6379
-                ins.boot_info['flavor_type'] = 'KB.client' if \
-                    not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
+                ins.boot_info['flavor_type'] = FLAVOR_KB_CLIENT
                 ins.boot_info['user_data'] = str(ins.user_data)
 
     def gen_metadata(self):
@@ -505,12 +565,15 @@ class KloudBuster(object):
         tenant_quota = self.calc_tenant_quota()
         if not self.storage_mode:
             self.kloud = Kloud(self.server_cfg, self.server_cred, self.tenants_list['server'],
+                               self.server_vm_img,
                                storage_mode=self.storage_mode, multicast_mode=self.multicast_mode)
             self.server_vm_create_thread = threading.Thread(target=self.kloud.create_vms,
                                                             args=[vm_creation_concurrency])
             self.server_vm_create_thread.daemon = True
         self.testing_kloud = Kloud(self.client_cfg, self.client_cred,
-                                   self.tenants_list['client'], testing_side=True,
+                                   self.tenants_list['client'],
+                                   self.client_vm_img,
+                                   testing_side=True,
                                    storage_mode=self.storage_mode,
                                    multicast_mode=self.multicast_mode)
         self.client_vm_create_thread = threading.Thread(target=self.testing_kloud.create_vms,
@@ -528,8 +591,7 @@ class KloudBuster(object):
 
         self.kb_proxy.vm_name = 'KB-PROXY'
         self.kb_proxy.user_data['role'] = 'KB-PROXY'
-        self.kb_proxy.boot_info['flavor_type'] = 'KB.proxy' if \
-            not self.tenants_list['client'] else self.testing_kloud.flavor_to_use
+        self.kb_proxy.boot_info['flavor_type'] = FLAVOR_KB_PROXY
         if self.topology:
             proxy_hyper = self.topology.clients_rack[0]
             self.kb_proxy.boot_info['avail_zone'] = \
@@ -661,6 +723,7 @@ class KloudBuster(object):
         self.fp_logfile = None
 
     def get_tenant_vm_count(self, config):
+        # this does not apply for storage mode!
         return (config['routers_per_tenant'] * config['networks_per_router'] *
                 config['vms_per_network'])
 
@@ -721,35 +784,50 @@ class KloudBuster(object):
         return [server_quota, client_quota]
 
     def calc_nova_quota(self):
-        total_vm = self.get_tenant_vm_count(self.server_cfg)
         server_quota = {}
-        server_quota['instances'] = total_vm
-        server_quota['cores'] = total_vm * self.server_cfg['flavor']['vcpus']
-        server_quota['ram'] = total_vm * self.server_cfg['flavor']['ram']
-
         client_quota = {}
-        total_vm = self.get_tenant_vm_count(self.client_cfg)
+        if self.storage_mode:
+            # in case of storage, the number of VMs is to be taken from the
+            # the storage config
+            total_vm = self.client_cfg['storage_stage_configs']['vm_count']
+        else:
+            total_vm = self.get_tenant_vm_count(self.server_cfg)
+            server_quota['instances'] = total_vm
+            server_quota['cores'] = total_vm * self.server_cfg['flavor']['vcpus']
+            server_quota['ram'] = total_vm * self.server_cfg['flavor']['ram']
+            LOG.info('Server tenant Nova quotas: instances=%d vcpus=%d ram=%dMB',
+                     server_quota['instances'],
+                     server_quota['cores'],
+                     server_quota['ram'])
+            total_vm = self.get_tenant_vm_count(self.client_cfg)
+
+        # add 1 for the proxy
         client_quota['instances'] = total_vm + 1
         client_quota['cores'] = total_vm * self.client_cfg['flavor']['vcpus'] + 1
         client_quota['ram'] = total_vm * self.client_cfg['flavor']['ram'] + 2048
-
+        LOG.info('Client tenant Nova quotas: instances=%d vcpus=%d ram=%dMB',
+                 client_quota['instances'],
+                 client_quota['cores'],
+                 client_quota['ram'])
         return [server_quota, client_quota]
 
     def calc_cinder_quota(self):
-        total_vm = self.get_tenant_vm_count(self.server_cfg)
-        svr_disk = self.server_cfg['flavor']['disk']
+        # Cinder quotas are only set for storage mode
+        # Since storage mode only uses client tenant
+        # Server tenant cinder quota is only used for non-storage case
+        # we can leave the server quota empty
         server_quota = {}
-        server_quota['gigabytes'] = total_vm * svr_disk \
-            if svr_disk != 0 else -1
-        server_quota['volumes'] = total_vm
 
-        total_vm = self.get_tenant_vm_count(self.client_cfg)
-        clt_disk = self.client_cfg['flavor']['disk']
+        # Client tenant quota is based on the number of
+        # storage VMs and disk size per VM
+        # (note this is not the flavor disk size!)
         client_quota = {}
-        client_quota['gigabytes'] = total_vm * clt_disk + 20 \
-            if clt_disk != 0 else -1
-        client_quota['volumes'] = total_vm
-
+        if self.storage_mode:
+            storage_cfg = self.client_cfg['storage_stage_configs']
+            vm_count = storage_cfg['vm_count']
+            client_quota['gigabytes'] = vm_count * storage_cfg['disk_size']
+            client_quota['volumes'] = vm_count
+            LOG.info('Cinder quotas: volumes=%d storage=%dGB', vm_count, client_quota['gigabytes'])
         return [server_quota, client_quota]
 
     def calc_tenant_quota(self):
