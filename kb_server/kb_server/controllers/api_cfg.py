@@ -139,12 +139,14 @@ class ConfigController(object):
 
             # Parsing credentials from application input
             cred_config = user_config['credentials']
-            cred_tested = Credentials(openrc_contents=cred_config['tested-rc'],
-                                      pwd=cred_config['tested-passwd'])
+            cred_tested = Credentials(openrc=cred_config['tested-rc'].splitlines(),
+                                      is_file=False,
+                                      pwd=cred_config.get('tested-passwd', None))
             if ('testing-rc' in cred_config and
                cred_config['testing-rc'] != cred_config['tested-rc']):
-                cred_testing = Credentials(openrc_contents=cred_config['testing-rc'],
-                                           pwd=cred_config['testing-passwd'])
+                cred_testing = Credentials(openrc=cred_config['testing-rc'].splitlines(),
+                                           is_file=False,
+                                           pwd=cred_config.get('testing-passwd', None))
             else:
                 # Use the same openrc file for both cases
                 cred_testing = cred_tested

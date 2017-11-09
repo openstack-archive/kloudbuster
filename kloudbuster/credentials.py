@@ -118,7 +118,7 @@ class Credentials(object):
     # Read a openrc file and take care of the password
     # The 2 args are passed from the command line and can be None
     #
-    def __init__(self, openrc_file, pwd=None, no_env=False):
+    def __init__(self, openrc, is_file=True, pwd=None, no_env=False):
         self.rc_password = None
         self.rc_username = None
         self.rc_tenant_name = None
@@ -131,15 +131,15 @@ class Credentials(object):
         self.rc_identity_api_version = 2
         success = True
 
-        if openrc_file:
-            if isinstance(openrc_file, str):
-                if os.path.exists(openrc_file):
-                    self.__parse_openrc(open(openrc_file))
+        if openrc:
+            if is_file:
+                if os.path.exists(openrc):
+                    self.__parse_openrc(open(openrc).readlines())
                 else:
-                    LOG.error('Error: rc file does not exist %s', openrc_file)
+                    LOG.error('Error: rc file does not exist %s', openrc)
                     success = False
             else:
-                self.__parse_openrc(openrc_file)
+                self.__parse_openrc(openrc)
         elif not no_env:
             # no openrc file passed - we assume the variables have been
             # sourced by the calling shell
