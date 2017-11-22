@@ -198,11 +198,11 @@ class KBConfig(object):
 
     def get_credentials(self):
         # Retrieve the credentials
-        self.cred_tested = credentials.Credentials(openrc_file=CONF.tested_rc,
+        self.cred_tested = credentials.Credentials(openrc=CONF.tested_rc,
                                                    pwd=CONF.tested_passwd,
                                                    no_env=CONF.no_env)
         if CONF.testing_rc:
-            self.cred_testing = credentials.Credentials(openrc_file=CONF.testing_rc,
+            self.cred_testing = credentials.Credentials(openrc=CONF.testing_rc,
                                                         pwd=CONF.testing_passwd,
                                                         no_env=CONF.no_env)
         else:

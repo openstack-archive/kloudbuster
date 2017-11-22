@@ -990,7 +990,7 @@ def main():
         kb_config = KBConfig()
         kb_config.init_with_cli()
     except TypeError:
-        LOG.error('Error parsing the configuration file')
+        LOG.exception('Error parsing the configuration file')
         sys.exit(1)
 
     # The KloudBuster class is just a wrapper class
