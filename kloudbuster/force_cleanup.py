@@ -544,7 +544,7 @@ def main():
                         metavar='<any-python-regex>')
     opts = parser.parse_args()
 
-    cred = credentials.Credentials(openrc_file=opts.rc)
+    cred = credentials.Credentials(opts.rc)
 
     if opts.file:
         resources = get_resources_from_cleanup_log(opts.file)
