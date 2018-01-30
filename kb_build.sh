@@ -8,10 +8,22 @@ function check_in_venv {
   echo $IN_VENV
 }
 
+function cleanup_qcow2 {
+  echo
+  echo "Error: found unrelated qcow2 files that would make the container image too large."
+  echo "Cleanup qcow2 files before re-running:"
+  ls -l *.qcow2
+  exit 3
+}
+
 # build the VM image first
 function build_vm {
   kb_image_name=kloudbuster-$KB_TAG
+  qcow_count=$(find . -name '*qcow2' | wc -l)
   if [ ! -f $kb_image_name.qcow2 ]; then
+    if [ $qcow_count -gt 0 ]; then
+      cleanup_qcow2
+    fi
     echo "Building $kb_image_name.qcow2..."
 
     pip install diskimage-builder
@@ -28,6 +40,9 @@ function build_vm {
     mv $kb_image_name.qcow2 ..
     cd ..
   else
+    if [ $qcow_count -gt 1 ]; then
+      cleanup_qcow2
+    fi
     echo "Reusing $kb_image_name.qcow2"
   fi
 
@@ -36,7 +51,10 @@ function build_vm {
 
 # Build container
 function build_container {
+  echo "docker build --tag=berrypatch/kloudbuster:$KB_TAG ."
   sudo docker build --tag=berrypatch/kloudbuster:$KB_TAG .
+  echo "sudo docker build --tag=berrypatch/kloudbuster:latest ."
+  sudo docker build --tag=berrypatch/kloudbuster:latest .
 }
 
 function help {
