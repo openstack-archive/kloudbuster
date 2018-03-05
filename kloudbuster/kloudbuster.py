@@ -17,6 +17,7 @@ from __init__ import __version__
 
 from concurrent.futures import ThreadPoolExecutor
 import datetime
+import importlib
 import json
 import os
 import sys
@@ -53,19 +54,22 @@ import tenant
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
+
 class KBVMCreationException(Exception):
     pass
 
+
 class KBFlavorCheckException(Exception):
     pass
+
 
 # flavor names to use
 FLAVOR_KB_PROXY = 'KB.proxy'
 FLAVOR_KB_CLIENT = 'KB.client'
 FLAVOR_KB_SERVER = 'KB.server'
 
-class Kloud(object):
 
+class Kloud(object):
     def __init__(self, scale_cfg, cred, reusing_tenants, vm_img,
                  testing_side=False, storage_mode=False, multicast_mode=False):
         self.tenant_list = []
@@ -190,7 +194,6 @@ class Kloud(object):
             else:
                 create_flavor(flavor_manager, FLAVOR_KB_SERVER, flavor_dict, extra_specs)
 
-
     def delete_resources(self):
 
         if not self.reusing_tenants:
@@ -274,8 +277,6 @@ class Kloud(object):
             nc = instance.network.router.user.neutron_client
             base_network.disable_port_security(nc, instance.fixed_ip)
 
-
-
     def create_vms(self, vm_creation_concurrency):
         try:
             with ThreadPoolExecutor(max_workers=vm_creation_concurrency) as executor:
@@ -283,6 +284,7 @@ class Kloud(object):
                     self.vm_up_count += 1
         except Exception:
             self.exc_info = sys.exc_info()
+
 
 class KloudBuster(object):
     """
@@ -296,7 +298,7 @@ class KloudBuster(object):
 
     def __init__(self, server_cred, client_cred, server_cfg, client_cfg,
                  topology, tenants_list, storage_mode=False, multicast_mode=False,
-                 interactive=False):
+                 interactive=False, tsdb_connector=None):
         # List of tenant objects to keep track of all tenants
         self.server_cred = server_cred
         self.client_cred = client_cred
@@ -305,6 +307,7 @@ class KloudBuster(object):
         self.storage_mode = storage_mode
         self.multicast_mode = multicast_mode
         self.interactive = interactive
+        self.tsdb_connector = tsdb_connector
 
         if topology and tenants_list:
             self.topology = None
@@ -598,7 +601,7 @@ class KloudBuster(object):
             proxy_hyper = self.topology.clients_rack[0]
             self.kb_proxy.boot_info['avail_zone'] = \
                 "%s:%s" % (self.testing_kloud.placement_az, proxy_hyper) \
-                if self.testing_kloud.placement_az else "nova:%s" % (proxy_hyper)
+                    if self.testing_kloud.placement_az else "nova:%s" % (proxy_hyper)
 
         self.kb_proxy.boot_info['user_data'] = str(self.kb_proxy.user_data)
         self.testing_kloud.create_vm(self.kb_proxy)
@@ -671,7 +674,8 @@ class KloudBuster(object):
         if not test_only:
             # Resources are already staged, just re-run the storage benchmarking tool
             self.kb_runner.wait_for_vm_up()
-        # Run the runner to perform benchmarkings
+            # Run the runner to perform benchmarkings
+
         while 1:
             if self.interactive:
                 print()
@@ -687,176 +691,185 @@ class KloudBuster(object):
             if not self.interactive:
                 break
 
-    def stop_test(self):
-        self.kb_runner.stop()
-        LOG.info('Testing is stopped by request.')
 
-    def cleanup(self):
-        # Stop the runner, shutdown the redis thread
-        if self.kb_runner:
-            try:
-                self.kb_runner.dispose()
-            except Exception:
-                pass
+def stop_test(self):
+    self.kb_runner.stop()
+    LOG.info('Testing is stopped by request.')
 
-        # Cleanup: start with tested side first
-        # then testing side last (order is important because of the shared network)
-        cleanup_flag = False
+
+def cleanup(self):
+    # Stop the runner, shutdown the redis thread
+    if self.kb_runner:
         try:
-            cleanup_flag = self.kloud.delete_resources() if not self.storage_mode else True
+            self.kb_runner.dispose()
         except Exception:
-            traceback.print_exc()
-        if not cleanup_flag:
-            LOG.warning('Some resources in server cloud are not cleaned up properly.')
-            KBResLogger.dump_and_save('svr', self.kloud.res_logger.resource_list)
+            pass
 
-        cleanup_flag = False
-        try:
-            if self.testing_kloud:
-                cleanup_flag = self.testing_kloud.delete_resources()
-        except Exception:
-            traceback.print_exc()
-        if not cleanup_flag:
-            LOG.warning('Some resources in client cloud are not cleaned up properly.')
-            KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
+    # Cleanup: start with tested side first
+    # then testing side last (order is important because of the shared network)
+    cleanup_flag = False
+    try:
+        cleanup_flag = self.kloud.delete_resources() if not self.storage_mode else True
+    except Exception:
+        traceback.print_exc()
+    if not cleanup_flag:
+        LOG.warning('Some resources in server cloud are not cleaned up properly.')
+        KBResLogger.dump_and_save('svr', self.kloud.res_logger.resource_list)
 
-        # Set the kloud to None
-        self.kloud = None
-        self.testing_kloud = None
+    cleanup_flag = False
+    try:
+        if self.testing_kloud:
+            cleanup_flag = self.testing_kloud.delete_resources()
+    except Exception:
+        traceback.print_exc()
+    if not cleanup_flag:
+        LOG.warning('Some resources in client cloud are not cleaned up properly.')
+        KBResLogger.dump_and_save('clt', self.testing_kloud.res_logger.resource_list)
+
+    # Set the kloud to None
+    self.kloud = None
+    self.testing_kloud = None
 
 
-    def dump_logs(self, offset=0):
-        if not self.fp_logfile:
-            return ""
+def dump_logs(self, offset=0):
+    if not self.fp_logfile:
+        return ""
 
-        self.fp_logfile.seek(offset)
-        return self.fp_logfile.read()
+    self.fp_logfile.seek(offset)
+    return self.fp_logfile.read()
 
-    def dispose(self):
-        if self.fp_logfile:
-            self.fp_logfile.close()
-        logging.delete_logfile('kloudbuster', self.fp_logfile.name)
-        self.fp_logfile = None
 
-    def get_tenant_vm_count(self, config):
-        # this does not apply for storage mode!
-        return (config['routers_per_tenant'] * config['networks_per_router'] *
-                config['vms_per_network'])
+def dispose(self):
+    if self.fp_logfile:
+        self.fp_logfile.close()
+    logging.delete_logfile('kloudbuster', self.fp_logfile.name)
+    self.fp_logfile = None
 
-    def calc_neutron_quota(self):
+
+def get_tenant_vm_count(self, config):
+    # this does not apply for storage mode!
+    return (config['routers_per_tenant'] * config['networks_per_router'] *
+            config['vms_per_network'])
+
+
+def calc_neutron_quota(self):
+    total_vm = self.get_tenant_vm_count(self.server_cfg)
+
+    server_quota = {}
+    server_quota['network'] = self.server_cfg['routers_per_tenant'] * \
+                              self.server_cfg['networks_per_router']
+    server_quota['subnet'] = server_quota['network']
+    server_quota['router'] = self.server_cfg['routers_per_tenant']
+    if (self.server_cfg['use_floatingip']):
+        # (1) Each VM has one floating IP
+        # (2) Each Router has one external IP
+        server_quota['floatingip'] = total_vm + server_quota['router']
+        # (1) Each VM Floating IP takes up 1 port, total of $total_vm port(s)
+        # (2) Each VM Fixed IP takes up 1 port, total of $total_vm port(s)
+        # (3) Each Network has one router_interface (gateway), and one DHCP agent, total of
+        #     server_quota['network'] * 2 port(s)
+        # (4) Each Router has one external IP, takes up 1 port, total of
+        #     server_quota['router'] port(s)
+        server_quota['port'] = 2 * total_vm + 2 * server_quota['network'] + \
+                               server_quota['router'] + 10
+    else:
+        server_quota['floatingip'] = server_quota['router']
+        server_quota['port'] = total_vm + 2 * server_quota['network'] + \
+                               server_quota['router'] + 10
+    server_quota['security_group'] = server_quota['network'] + 1
+    server_quota['security_group_rule'] = server_quota['security_group'] * 10
+
+    client_quota = {}
+    total_vm = self.get_tenant_vm_count(self.client_cfg)
+    client_quota['network'] = 1
+    client_quota['subnet'] = 1
+    client_quota['router'] = 1
+    if (self.client_cfg['use_floatingip']):
+        # (1) Each VM has one floating IP
+        # (2) Each Router has one external IP, total of 1 router
+        # (3) KB-Proxy node has one floating IP
+        client_quota['floatingip'] = total_vm + 1 + 1
+        # (1) Each VM Floating IP takes up 1 port, total of $total_vm port(s)
+        # (2) Each VM Fixed IP takes up 1 port, total of $total_vm port(s)
+        # (3) Each Network has one router_interface (gateway), and one DHCP agent, total of
+        #     client_quota['network'] * 2 port(s)
+        # (4) KB-Proxy node takes up 2 ports, one for fixed IP, one for floating IP
+        # (5) Each Router has one external IP, takes up 1 port, total of 1 router/port
+        client_quota['port'] = 2 * total_vm + 2 * client_quota['network'] + 2 + 1 + 10
+    else:
+        client_quota['floatingip'] = 1 + 1
+        client_quota['port'] = total_vm + 2 * client_quota['network'] + 2 + 1
+    if self.single_cloud:
+        # Under single-cloud mode, the shared network is attached to every router in server
+        # cloud, and each one takes up 1 port on client side.
+        client_quota['port'] = client_quota['port'] + server_quota['router'] + 10
+    client_quota['security_group'] = client_quota['network'] + 1
+    client_quota['security_group_rule'] = client_quota['security_group'] * 10
+
+    return [server_quota, client_quota]
+
+
+def calc_nova_quota(self):
+    server_quota = {}
+    client_quota = {}
+    if self.storage_mode:
+        # in case of storage, the number of VMs is to be taken from the
+        # the storage config
+        total_vm = self.client_cfg['storage_stage_configs']['vm_count']
+    else:
         total_vm = self.get_tenant_vm_count(self.server_cfg)
-
-        server_quota = {}
-        server_quota['network'] = self.server_cfg['routers_per_tenant'] * \
-            self.server_cfg['networks_per_router']
-        server_quota['subnet'] = server_quota['network']
-        server_quota['router'] = self.server_cfg['routers_per_tenant']
-        if (self.server_cfg['use_floatingip']):
-            # (1) Each VM has one floating IP
-            # (2) Each Router has one external IP
-            server_quota['floatingip'] = total_vm + server_quota['router']
-            # (1) Each VM Floating IP takes up 1 port, total of $total_vm port(s)
-            # (2) Each VM Fixed IP takes up 1 port, total of $total_vm port(s)
-            # (3) Each Network has one router_interface (gateway), and one DHCP agent, total of
-            #     server_quota['network'] * 2 port(s)
-            # (4) Each Router has one external IP, takes up 1 port, total of
-            #     server_quota['router'] port(s)
-            server_quota['port'] = 2 * total_vm + 2 * server_quota['network'] + \
-                server_quota['router'] + 10
-        else:
-            server_quota['floatingip'] = server_quota['router']
-            server_quota['port'] = total_vm + 2 * server_quota['network'] + \
-                server_quota['router'] + 10
-        server_quota['security_group'] = server_quota['network'] + 1
-        server_quota['security_group_rule'] = server_quota['security_group'] * 10
-
-        client_quota = {}
+        server_quota['instances'] = total_vm
+        server_quota['cores'] = total_vm * self.server_cfg['flavor']['vcpus']
+        server_quota['ram'] = total_vm * self.server_cfg['flavor']['ram']
+        LOG.info('Server tenant Nova quotas: instances=%d vcpus=%d ram=%dMB',
+                 server_quota['instances'],
+                 server_quota['cores'],
+                 server_quota['ram'])
         total_vm = self.get_tenant_vm_count(self.client_cfg)
-        client_quota['network'] = 1
-        client_quota['subnet'] = 1
-        client_quota['router'] = 1
-        if (self.client_cfg['use_floatingip']):
-            # (1) Each VM has one floating IP
-            # (2) Each Router has one external IP, total of 1 router
-            # (3) KB-Proxy node has one floating IP
-            client_quota['floatingip'] = total_vm + 1 + 1
-            # (1) Each VM Floating IP takes up 1 port, total of $total_vm port(s)
-            # (2) Each VM Fixed IP takes up 1 port, total of $total_vm port(s)
-            # (3) Each Network has one router_interface (gateway), and one DHCP agent, total of
-            #     client_quota['network'] * 2 port(s)
-            # (4) KB-Proxy node takes up 2 ports, one for fixed IP, one for floating IP
-            # (5) Each Router has one external IP, takes up 1 port, total of 1 router/port
-            client_quota['port'] = 2 * total_vm + 2 * client_quota['network'] + 2 + 1 + 10
-        else:
-            client_quota['floatingip'] = 1 + 1
-            client_quota['port'] = total_vm + 2 * client_quota['network'] + 2 + 1
-        if self.single_cloud:
-            # Under single-cloud mode, the shared network is attached to every router in server
-            # cloud, and each one takes up 1 port on client side.
-            client_quota['port'] = client_quota['port'] + server_quota['router'] + 10
-        client_quota['security_group'] = client_quota['network'] + 1
-        client_quota['security_group_rule'] = client_quota['security_group'] * 10
 
-        return [server_quota, client_quota]
+    # add 1 for the proxy
+    client_quota['instances'] = total_vm + 1
+    client_quota['cores'] = total_vm * self.client_cfg['flavor']['vcpus'] + 1
+    client_quota['ram'] = total_vm * self.client_cfg['flavor']['ram'] + 2048
+    LOG.info('Client tenant Nova quotas: instances=%d vcpus=%d ram=%dMB',
+             client_quota['instances'],
+             client_quota['cores'],
+             client_quota['ram'])
+    return [server_quota, client_quota]
 
-    def calc_nova_quota(self):
-        server_quota = {}
-        client_quota = {}
-        if self.storage_mode:
-            # in case of storage, the number of VMs is to be taken from the
-            # the storage config
-            total_vm = self.client_cfg['storage_stage_configs']['vm_count']
-        else:
-            total_vm = self.get_tenant_vm_count(self.server_cfg)
-            server_quota['instances'] = total_vm
-            server_quota['cores'] = total_vm * self.server_cfg['flavor']['vcpus']
-            server_quota['ram'] = total_vm * self.server_cfg['flavor']['ram']
-            LOG.info('Server tenant Nova quotas: instances=%d vcpus=%d ram=%dMB',
-                     server_quota['instances'],
-                     server_quota['cores'],
-                     server_quota['ram'])
-            total_vm = self.get_tenant_vm_count(self.client_cfg)
 
-        # add 1 for the proxy
-        client_quota['instances'] = total_vm + 1
-        client_quota['cores'] = total_vm * self.client_cfg['flavor']['vcpus'] + 1
-        client_quota['ram'] = total_vm * self.client_cfg['flavor']['ram'] + 2048
-        LOG.info('Client tenant Nova quotas: instances=%d vcpus=%d ram=%dMB',
-                 client_quota['instances'],
-                 client_quota['cores'],
-                 client_quota['ram'])
-        return [server_quota, client_quota]
+def calc_cinder_quota(self):
+    # Cinder quotas are only set for storage mode
+    # Since storage mode only uses client tenant
+    # Server tenant cinder quota is only used for non-storage case
+    # we can leave the server quota empty
+    server_quota = {}
 
-    def calc_cinder_quota(self):
-        # Cinder quotas are only set for storage mode
-        # Since storage mode only uses client tenant
-        # Server tenant cinder quota is only used for non-storage case
-        # we can leave the server quota empty
-        server_quota = {}
+    # Client tenant quota is based on the number of
+    # storage VMs and disk size per VM
+    # (note this is not the flavor disk size!)
+    client_quota = {}
+    if self.storage_mode:
+        storage_cfg = self.client_cfg['storage_stage_configs']
+        vm_count = storage_cfg['vm_count']
+        client_quota['gigabytes'] = vm_count * storage_cfg['disk_size']
+        client_quota['volumes'] = vm_count
+        LOG.info('Cinder quotas: volumes=%d storage=%dGB', vm_count, client_quota['gigabytes'])
+    return [server_quota, client_quota]
 
-        # Client tenant quota is based on the number of
-        # storage VMs and disk size per VM
-        # (note this is not the flavor disk size!)
-        client_quota = {}
-        if self.storage_mode:
-            storage_cfg = self.client_cfg['storage_stage_configs']
-            vm_count = storage_cfg['vm_count']
-            client_quota['gigabytes'] = vm_count * storage_cfg['disk_size']
-            client_quota['volumes'] = vm_count
-            LOG.info('Cinder quotas: volumes=%d storage=%dGB', vm_count, client_quota['gigabytes'])
-        return [server_quota, client_quota]
 
-    def calc_tenant_quota(self):
-        quota_dict = {'server': {}, 'client': {}}
-        nova_quota = self.calc_nova_quota()
-        neutron_quota = self.calc_neutron_quota()
-        cinder_quota = self.calc_cinder_quota()
-        for idx, val in enumerate(['server', 'client']):
-            quota_dict[val]['nova'] = nova_quota[idx]
-            quota_dict[val]['neutron'] = neutron_quota[idx]
-            quota_dict[val]['cinder'] = cinder_quota[idx]
+def calc_tenant_quota(self):
+    quota_dict = {'server': {}, 'client': {}}
+    nova_quota = self.calc_nova_quota()
+    neutron_quota = self.calc_neutron_quota()
+    cinder_quota = self.calc_cinder_quota()
+    for idx, val in enumerate(['server', 'client']):
+        quota_dict[val]['nova'] = nova_quota[idx]
+        quota_dict[val]['neutron'] = neutron_quota[idx]
+        quota_dict[val]['cinder'] = cinder_quota[idx]
 
-        return quota_dict
+    return quota_dict
+
 
 def create_html(hfp, template, task_re, is_config):
     for line in template:
@@ -876,6 +889,7 @@ def create_html(hfp, template, task_re, is_config):
         url = 'file://' + os.path.abspath(CONF.html)
         webbrowser.open(url, new=2)
 
+
 def generate_charts(json_results, html_file_name, is_config):
     '''Save results in HTML format file.'''
     LOG.info('Saving results to HTML file: ' + html_file_name + '...')
@@ -894,6 +908,7 @@ def generate_charts(json_results, html_file_name, is_config):
                     template,
                     json.dumps(json_results, sort_keys=True),
                     is_config)
+
 
 def main():
     cli_opts = [
@@ -977,6 +992,9 @@ def main():
                    default=None,
                    help='create charts from json results and exit (requires --html)',
                    metavar="<source json file>"),
+        cfg.BoolOpt("tsdb",
+                    default=False,
+                    help="Get CPU stats for CEPH from a TSDB server defined in configuration")
     ]
     CONF.register_cli_opts(cli_opts)
     CONF(sys.argv[1:], project="kloudbuster", version=__version__)
@@ -1014,30 +1032,33 @@ def main():
 
     # The KloudBuster class is just a wrapper class
     # levarages tenant and user class for resource creations and deletion
+    tsdb_module = importlib.import_module(kb_config.tsdb_module)
+    tsdb_connector = getattr(tsdb_module, kb_config.tsdb_class) if CONF.tsdb else None
     kloudbuster = KloudBuster(
         kb_config.cred_tested, kb_config.cred_testing,
         kb_config.server_cfg, kb_config.client_cfg,
         kb_config.topo_cfg, kb_config.tenants_list,
         storage_mode=CONF.storage, multicast_mode=CONF.multicast,
-        interactive=CONF.interactive)
+        interactive=CONF.interactive, tsdb_connector=tsdb_connector)
+
     if kloudbuster.check_and_upload_images():
         kloudbuster.run()
 
     if CONF.json:
         '''Save results in JSON format file.'''
-        LOG.info('Saving results in json file: ' + CONF.json + "...")
-        with open(CONF.json, 'w') as jfp:
-            json.dump(kloudbuster.final_result, jfp, indent=4, sort_keys=True)
+    LOG.info('Saving results in json file: ' + CONF.json + "...")
+    with open(CONF.json, 'w') as jfp:
+        json.dump(kloudbuster.final_result, jfp, indent=4, sort_keys=True)
 
     if CONF.multicast and CONF.csv and 'kb_result' in kloudbuster.final_result:
         '''Save results in JSON format file.'''
-        if len(kloudbuster.final_result['kb_result']) > 0:
-            LOG.info('Saving results in csv file: ' + CONF.csv + "...")
-            with open(CONF.csv, 'w') as jfp:
-                jfp.write(KBRunner_Multicast.json_to_csv(kloudbuster.final_result['kb_result'][0]))
+    if len(kloudbuster.final_result['kb_result']) > 0:
+        LOG.info('Saving results in csv file: ' + CONF.csv + "...")
+    with open(CONF.csv, 'w') as jfp:
+        jfp.write(KBRunner_Multicast.json_to_csv(kloudbuster.final_result['kb_result'][0]))
 
     if CONF.html:
         generate_charts(kloudbuster.final_result, CONF.html, kb_config.config_scale)
 
-if __name__ == '__main__':
-    main()
+    if __name__ == '__main__':
+        main()

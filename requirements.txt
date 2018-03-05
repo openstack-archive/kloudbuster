@@ -25,6 +25,7 @@ pecan>=1.2.1
 redis>=2.10.5
 tabulate>=0.7.7
 pyyaml>=3.12
+requests
 
 # Workaround for pip install failed on RHEL/CentOS
 functools32>=3.2.3
