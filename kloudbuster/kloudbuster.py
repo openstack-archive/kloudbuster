@@ -295,7 +295,8 @@ class KloudBuster(object):
     """
 
     def __init__(self, server_cred, client_cred, server_cfg, client_cfg,
-                 topology, tenants_list, storage_mode=False, multicast_mode=False):
+                 topology, tenants_list, storage_mode=False, multicast_mode=False,
+                 interactive=False):
         # List of tenant objects to keep track of all tenants
         self.server_cred = server_cred
         self.client_cred = client_cred
@@ -303,6 +304,7 @@ class KloudBuster(object):
         self.client_cfg = client_cfg
         self.storage_mode = storage_mode
         self.multicast_mode = multicast_mode
+        self.interactive = interactive
 
         if topology and tenants_list:
             self.topology = None
@@ -663,13 +665,27 @@ class KloudBuster(object):
         self.print_provision_info()
 
     def run_test(self, test_only=False):
+        runlabel = None
         self.gen_metadata()
         self.kb_runner.config = self.client_cfg
+        if not test_only:
+            # Resources are already staged, just re-run the storage benchmarking tool
+            self.kb_runner.wait_for_vm_up()
         # Run the runner to perform benchmarkings
-        for run_result in self.kb_runner.run(test_only):
-            if not self.multicast_mode or len(self.final_result['kb_result']) == 0:
-                self.final_result['kb_result'].append(self.kb_runner.tool_result)
-        LOG.info('SUMMARY: %s' % self.final_result)
+        while 1:
+            if self.interactive:
+                print()
+                runlabel = raw_input('>> KB ready, enter label for next run or "q" to quit: ')
+                if runlabel.lower() == "q":
+                    break
+
+            for run_result in self.kb_runner.run(test_only, runlabel):
+                if not self.multicast_mode or len(self.final_result['kb_result']) == 0:
+                    self.final_result['kb_result'].append(self.kb_runner.tool_result)
+
+            LOG.info('SUMMARY: %s' % self.final_result)
+            if not self.interactive:
+                break
 
     def stop_test(self):
         self.kb_runner.stop()
@@ -929,6 +945,9 @@ def main():
                    secret=True,
                    help="Testing cloud password",
                    metavar="<password>"),
+        cfg.BoolOpt("interactive",
+                    default=False,
+                    help="Running KloudBuster in interactive mode"),
         cfg.StrOpt("html",
                    default=None,
                    help='store results in HTML file',
@@ -999,7 +1018,8 @@ def main():
         kb_config.cred_tested, kb_config.cred_testing,
         kb_config.server_cfg, kb_config.client_cfg,
         kb_config.topo_cfg, kb_config.tenants_list,
-        storage_mode=CONF.storage, multicast_mode=CONF.multicast)
+        storage_mode=CONF.storage, multicast_mode=CONF.multicast,
+        interactive=CONF.interactive)
     if kloudbuster.check_and_upload_images():
         kloudbuster.run()
 

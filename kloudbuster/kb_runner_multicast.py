@@ -98,10 +98,7 @@ class KBRunner_Multicast(KBRunner):
         except KBMulticastBenchException:
             raise KBException("Error while running multicast benchmarking tool.")
 
-    def run(self, test_only=False):
-        if not test_only:
-            # Resources are already staged, just re-run the multicast benchmarking tool
-            self.wait_for_vm_up()
+    def run(self, test_only=False, run_label=None):
 
         self.tool_result = {}
         vm_list = self.full_client_dict.keys()

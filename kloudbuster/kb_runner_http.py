@@ -112,10 +112,7 @@ class KBRunner_HTTP(KBRunner):
         except KBHTTPBenchException:
             raise KBException("Error while running HTTP benchmarking tool.")
 
-    def run(self, test_only=False):
-        if not test_only:
-            # Resources are already staged, just re-run the HTTP benchmarking tool
-            self.wait_for_vm_up()
+    def run(self, test_only=False, run_label=None):
 
         if self.config.progression.enabled:
             self.tool_result = {}

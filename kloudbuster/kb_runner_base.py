@@ -218,7 +218,7 @@ class KBRunner(object):
             self.host_stats[phy_host] = perf_tool.consolidate_results(self.host_stats[phy_host])
 
     @abc.abstractmethod
-    def run(self, test_only=False):
+    def run(self, test_only=False, run_label=None):
         # must be implemented by sub classes
         return None
 

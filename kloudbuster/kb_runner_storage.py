@@ -104,7 +104,7 @@ class KBRunner_Storage(KBRunner):
                 self.result[key] = instance.perf_client_parser(**self.result[key])
         return cnt_pending
 
-    def single_run(self, active_range=None, test_only=False):
+    def single_run(self, active_range=None, test_only=False, run_label=None):
         try:
             if not test_only:
                 if self.config.storage_stage_configs.target == 'volume':
@@ -150,6 +150,8 @@ class KBRunner_Storage(KBRunner):
                     tc_result['rate'] = req_rate
                 tc_result['total_client_vms'] = vm_count
                 tc_result['timeout_vms'] = timeout_vms
+                if run_label:
+                    tc_result['run_label'] = run_label
                 self.tool_result.append(tc_result)
                 if timeout_vms:
                     return timeout_vms
@@ -158,10 +160,7 @@ class KBRunner_Storage(KBRunner):
         except KBInitVolumeException:
             raise KBException("Could not initilize the volume.")
 
-    def run(self, test_only=False):
-        if not test_only:
-            # Resources are already staged, just re-run the storage benchmarking tool
-            self.wait_for_vm_up()
+    def run(self, test_only=False, run_label=None):
 
         if self.config.progression.enabled:
             self.tool_result = {}
@@ -190,7 +189,8 @@ class KBRunner_Storage(KBRunner):
                 description = "-- %s --" % self.header_formatter(cur_stage, len(self.client_dict))
                 LOG.info(description)
                 timeout_vms = self.single_run(active_range=[0, target_vm_count - 1],
-                                              test_only=test_only)
+                                              test_only=test_only,
+                                              run_label=run_label)
                 LOG.info('-- Stage %s: %s --' % (cur_stage, str(self.tool_result)))
                 cur_stage += 1
 
@@ -224,5 +224,5 @@ class KBRunner_Storage(KBRunner):
                     break
                 yield self.tool_result
         else:
-            self.single_run(test_only=test_only)
+            self.single_run(test_only=test_only, run_label=run_label)
             yield self.tool_result

@@ -31,6 +31,12 @@ command line.
 
 .. note:: Admin access is required to use this feature.
 
+Interactive mode
+----------------
+When using the CLI, the "--interactive" option allows to re-run the workloads any number of times
+from the prompt after the resources are staged.
+This is useful for example to avoid restaging after each run.
+
 
 Running KloudBuster without admin access
 ----------------------------------------
