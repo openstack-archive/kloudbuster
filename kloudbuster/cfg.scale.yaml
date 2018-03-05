@@ -64,6 +64,9 @@ public_key_file:
 # Name of Provider network used for multicast tests.
 multicast_provider_network_name: '' # Leave blank to use first available (default) network.
 
+# TSDB Connector configuration
+tsdb_module: 'tsdb'
+tsdb_class: 'TSDB'
 
 # ==================================================
 # SERVER SIDE CONFIG OPTIONS (HTTP SERVER SIDE ONLY)
