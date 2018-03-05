@@ -37,6 +37,7 @@ from kb_runner_http import KBRunner_HTTP
 from kb_runner_multicast import KBRunner_Multicast
 from kb_runner_storage import KBRunner_Storage
 from kb_scheduler import KBScheduler
+from prometheus import Prometheus
 
 import keystoneauth1
 from keystoneclient.v2_0 import client as keystoneclient
@@ -295,7 +296,7 @@ class KloudBuster(object):
     """
 
     def __init__(self, server_cred, client_cred, server_cfg, client_cfg,
-                 topology, tenants_list, storage_mode=False, multicast_mode=False):
+                 topology, tenants_list, storage_mode=False, multicast_mode=False, prometheus=None):
         # List of tenant objects to keep track of all tenants
         self.server_cred = server_cred
         self.client_cred = client_cred
@@ -303,6 +304,7 @@ class KloudBuster(object):
         self.client_cfg = client_cfg
         self.storage_mode = storage_mode
         self.multicast_mode = multicast_mode
+        self.prometheus = prometheus
 
         if topology and tenants_list:
             self.topology = None
@@ -669,6 +671,8 @@ class KloudBuster(object):
         for run_result in self.kb_runner.run(test_only):
             if not self.multicast_mode or len(self.final_result['kb_result']) == 0:
                 self.final_result['kb_result'].append(self.kb_runner.tool_result)
+        if self.prometheus:
+            self.final_result['prometheus'] = self.prometheus.get_results()
         LOG.info('SUMMARY: %s' % self.final_result)
 
     def stop_test(self):
@@ -958,6 +962,9 @@ def main():
                    default=None,
                    help='create charts from json results and exit (requires --html)',
                    metavar="<source json file>"),
+        cfg.BoolOpt("prometheus",
+                    default=False,
+                    help="Get CPU stats for CEPH from Prometheus server")
     ]
     CONF.register_cli_opts(cli_opts)
     CONF(sys.argv[1:], project="kloudbuster", version=__version__)
@@ -995,11 +1002,13 @@ def main():
 
     # The KloudBuster class is just a wrapper class
     # levarages tenant and user class for resource creations and deletion
+
+    prometheus = Prometheus() if CONF.prometheus else None
     kloudbuster = KloudBuster(
         kb_config.cred_tested, kb_config.cred_testing,
         kb_config.server_cfg, kb_config.client_cfg,
         kb_config.topo_cfg, kb_config.tenants_list,
-        storage_mode=CONF.storage, multicast_mode=CONF.multicast)
+        storage_mode=CONF.storage, multicast_mode=CONF.multicast, prometheus=prometheus)
     if kloudbuster.check_and_upload_images():
         kloudbuster.run()
 
