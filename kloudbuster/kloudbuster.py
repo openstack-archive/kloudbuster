@@ -17,6 +17,7 @@ from __init__ import __version__
 
 from concurrent.futures import ThreadPoolExecutor
 import datetime
+import importlib
 import json
 import os
 import sys
@@ -53,19 +54,22 @@ import tenant
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
+
 class KBVMCreationException(Exception):
     pass
 
+
 class KBFlavorCheckException(Exception):
     pass
+
 
 # flavor names to use
 FLAVOR_KB_PROXY = 'KB.proxy'
 FLAVOR_KB_CLIENT = 'KB.client'
 FLAVOR_KB_SERVER = 'KB.server'
 
-class Kloud(object):
 
+class Kloud(object):
     def __init__(self, scale_cfg, cred, reusing_tenants, vm_img,
                  testing_side=False, storage_mode=False, multicast_mode=False):
         self.tenant_list = []
@@ -190,7 +194,6 @@ class Kloud(object):
             else:
                 create_flavor(flavor_manager, FLAVOR_KB_SERVER, flavor_dict, extra_specs)
 
-
     def delete_resources(self):
 
         if not self.reusing_tenants:
@@ -274,8 +277,6 @@ class Kloud(object):
             nc = instance.network.router.user.neutron_client
             base_network.disable_port_security(nc, instance.fixed_ip)
 
-
-
     def create_vms(self, vm_creation_concurrency):
         try:
             with ThreadPoolExecutor(max_workers=vm_creation_concurrency) as executor:
@@ -283,6 +284,7 @@ class Kloud(object):
                     self.vm_up_count += 1
         except Exception:
             self.exc_info = sys.exc_info()
+
 
 class KloudBuster(object):
     """
@@ -296,7 +298,7 @@ class KloudBuster(object):
 
     def __init__(self, server_cred, client_cred, server_cfg, client_cfg,
                  topology, tenants_list, storage_mode=False, multicast_mode=False,
-                 interactive=False):
+                 interactive=False, tsdb_connector=None):
         # List of tenant objects to keep track of all tenants
         self.server_cred = server_cred
         self.client_cred = client_cred
@@ -305,6 +307,7 @@ class KloudBuster(object):
         self.storage_mode = storage_mode
         self.multicast_mode = multicast_mode
         self.interactive = interactive
+        self.tsdb_connector = tsdb_connector
 
         if topology and tenants_list:
             self.topology = None
@@ -665,6 +668,7 @@ class KloudBuster(object):
         self.print_provision_info()
 
     def run_test(self, test_only=False):
+        start_time = time.time()
         runlabel = None
         self.gen_metadata()
         self.kb_runner.config = self.client_cfg
@@ -682,7 +686,9 @@ class KloudBuster(object):
             for run_result in self.kb_runner.run(test_only, runlabel):
                 if not self.multicast_mode or len(self.final_result['kb_result']) == 0:
                     self.final_result['kb_result'].append(self.kb_runner.tool_result)
-
+            tsdb_result = self.tsdb_connector.get_results(start_time=start_time)
+            if tsdb_result:
+                self.final_result['tsdb'] = tsdb_result
             LOG.info('SUMMARY: %s' % self.final_result)
             if not self.interactive:
                 break
@@ -723,7 +729,6 @@ class KloudBuster(object):
         # Set the kloud to None
         self.kloud = None
         self.testing_kloud = None
-
 
     def dump_logs(self, offset=0):
         if not self.fp_logfile:
@@ -858,6 +863,7 @@ class KloudBuster(object):
 
         return quota_dict
 
+
 def create_html(hfp, template, task_re, is_config):
     for line in template:
         line = line.replace('[[result]]', task_re)
@@ -875,6 +881,7 @@ def create_html(hfp, template, task_re, is_config):
         # bring up the file in the default browser
         url = 'file://' + os.path.abspath(CONF.html)
         webbrowser.open(url, new=2)
+
 
 def generate_charts(json_results, html_file_name, is_config):
     '''Save results in HTML format file.'''
@@ -894,6 +901,7 @@ def generate_charts(json_results, html_file_name, is_config):
                     template,
                     json.dumps(json_results, sort_keys=True),
                     is_config)
+
 
 def main():
     cli_opts = [
@@ -1014,12 +1022,15 @@ def main():
 
     # The KloudBuster class is just a wrapper class
     # levarages tenant and user class for resource creations and deletion
+    tsdb_module = importlib.import_module(kb_config.tsdb_module)
+    tsdb_connector = getattr(tsdb_module, kb_config.tsdb_class)(
+        config=kb_config.tsdb)
     kloudbuster = KloudBuster(
         kb_config.cred_tested, kb_config.cred_testing,
         kb_config.server_cfg, kb_config.client_cfg,
         kb_config.topo_cfg, kb_config.tenants_list,
         storage_mode=CONF.storage, multicast_mode=CONF.multicast,
-        interactive=CONF.interactive)
+        interactive=CONF.interactive, tsdb_connector=tsdb_connector)
     if kloudbuster.check_and_upload_images():
         kloudbuster.run()
 
@@ -1038,6 +1049,7 @@ def main():
 
     if CONF.html:
         generate_charts(kloudbuster.final_result, CONF.html, kb_config.config_scale)
+
 
 if __name__ == '__main__':
     main()

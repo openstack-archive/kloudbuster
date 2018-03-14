@@ -64,6 +64,26 @@ public_key_file:
 # Name of Provider network used for multicast tests.
 multicast_provider_network_name: '' # Leave blank to use first available (default) network.
 
+# TSDB connectors are optional and can be used to retrieve CPU usage information and attach them
+# to the results.
+tsdb:
+    # The default TSDB class will return nothing (i.e. feature disabled by default).
+    # Must be replaced with a functional class module and name to retrieve CPU usage information from
+    # the actual TSDB.
+    module: 'kloudbuster.tsdb'
+    # TSDB class name. This class has to be defined in the module given in tsdb_module.
+    class: 'TSDB'
+    # The interval in seconds between 2 consecutive CPU measurements to be returned by the TSDB.
+    step_size: 30
+    # Duration in seconds of the warmup and cooldown period
+    # If run duration is 110 seconds, CPU metric will be retrieved for the window starting 10 sec from
+    # the start (skip the warmup period) and 10 sec before the end of the run
+    # (skip the cooldown period), and there will be 90/30 = 3 samples retrieved per CPU core.
+    wait_time: 10
+    # TSDB server address
+    server_ip: localhost
+    # TSDB server port
+    server_port: 9090
 
 # ==================================================
 # SERVER SIDE CONFIG OPTIONS (HTTP SERVER SIDE ONLY)

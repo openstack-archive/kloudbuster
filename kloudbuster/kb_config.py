@@ -27,8 +27,10 @@ import credentials
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
+
 class KBConfigParseException(Exception):
     pass
+
 
 # Some hardcoded client side options we do not want users to change
 hardcoded_client_cfg = {
@@ -49,6 +51,7 @@ hardcoded_client_cfg = {
     'secgroups_per_network': 1
 }
 
+
 def get_absolute_path_for_file(file_name):
     '''
     Return the filename in absolute path for any file
@@ -64,8 +67,8 @@ def get_absolute_path_for_file(file_name):
 
     return abs_file_path
 
-class KBConfig(object):
 
+class KBConfig(object):
     def __init__(self):
         # The default configuration file for KloudBuster
         default_cfg = resource_string(__name__, "cfg.scale.yaml")
@@ -80,6 +83,9 @@ class KBConfig(object):
         self.tenants_list = None
         self.storage_mode = False
         self.multicast_mode = False
+        self.tsdb = None
+        self.tsdb_module = False
+        self.tsdb_class = False
 
     def update_configs(self):
         # Initialize the key pair name
@@ -155,7 +161,7 @@ class KBConfig(object):
 
         # If multicast mode, the number of receivers is specified in the multicast config instead.
         if self.multicast_mode:
-            self.server_cfg['vms_per_network'] =\
+            self.server_cfg['vms_per_network'] = \
                 self.client_cfg['multicast_tool_configs']['receivers'][-1]
 
         self.config_scale['server'] = self.server_cfg
@@ -169,6 +175,12 @@ class KBConfig(object):
                 tc['rate'] = '0'
             if 'rate_iops' not in tc:
                 tc['rate_iops'] = 0
+        if not self.tsdb:
+            self.tsdb = self.config_scale['tsdb']
+        if not self.tsdb_module:
+            self.tsdb_module = self.config_scale['tsdb']['module']
+        if not self.tsdb_class:
+            self.tsdb_class = self.config_scale['tsdb']['class']
 
     def init_with_cli(self):
         self.storage_mode = CONF.storage
