@@ -17,6 +17,7 @@ from __init__ import __version__
 
 from concurrent.futures import ThreadPoolExecutor
 import datetime
+import importlib
 import json
 import os
 import sys
@@ -296,7 +297,7 @@ class KloudBuster(object):
 
     def __init__(self, server_cred, client_cred, server_cfg, client_cfg,
                  topology, tenants_list, storage_mode=False, multicast_mode=False,
-                 interactive=False):
+                 interactive=False, tsdb_connector=None):
         # List of tenant objects to keep track of all tenants
         self.server_cred = server_cred
         self.client_cred = client_cred
@@ -305,6 +306,7 @@ class KloudBuster(object):
         self.storage_mode = storage_mode
         self.multicast_mode = multicast_mode
         self.interactive = interactive
+        self.tsdb_connector = tsdb_connector
 
         if topology and tenants_list:
             self.topology = None
@@ -682,7 +684,8 @@ class KloudBuster(object):
             for run_result in self.kb_runner.run(test_only, runlabel):
                 if not self.multicast_mode or len(self.final_result['kb_result']) == 0:
                     self.final_result['kb_result'].append(self.kb_runner.tool_result)
-
+            if self.tsdb_connector:
+                self.final_result['tsdb'] = self.tsdb_connector.get_results()
             LOG.info('SUMMARY: %s' % self.final_result)
             if not self.interactive:
                 break
@@ -977,6 +980,9 @@ def main():
                    default=None,
                    help='create charts from json results and exit (requires --html)',
                    metavar="<source json file>"),
+        cfg.StrOpt("tsdb",
+                   default=None,
+                   help='Get CPU stats for CEPH from a TSDB server defined in configuration'),
     ]
     CONF.register_cli_opts(cli_opts)
     CONF(sys.argv[1:], project="kloudbuster", version=__version__)
@@ -1014,12 +1020,14 @@ def main():
 
     # The KloudBuster class is just a wrapper class
     # levarages tenant and user class for resource creations and deletion
+    tsdb_module = importlib.import_module(kb_config.tsdb_module)
+    tsdb_connector = getattr(tsdb_module, kb_config.tsdb_class) if CONF.tsdb else None
     kloudbuster = KloudBuster(
         kb_config.cred_tested, kb_config.cred_testing,
         kb_config.server_cfg, kb_config.client_cfg,
         kb_config.topo_cfg, kb_config.tenants_list,
         storage_mode=CONF.storage, multicast_mode=CONF.multicast,
-        interactive=CONF.interactive)
+        interactive=CONF.interactive, tsdb_connector=tsdb_connector)
     if kloudbuster.check_and_upload_images():
         kloudbuster.run()
 
