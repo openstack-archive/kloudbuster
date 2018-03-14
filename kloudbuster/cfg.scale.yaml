@@ -64,6 +64,22 @@ public_key_file:
 # Name of Provider network used for multicast tests.
 multicast_provider_network_name: '' # Leave blank to use first available (default) network.
 
+# TSDB Connector configuration
+# TSDB Module Path. Default TSDB class will return nothing. (i.e. feature disabled by default)
+tsdb_module: 'kloudbuster.tsdb'
+# TSDB class name. This class has to be defined in the module given in tsdb_module.
+tsdb_class: 'TSDB'
+# The time difference between two measurements collected by TSDB.
+tsdb_step_size: 30
+# The waiting time for collecting CPU data.
+# If run duration is 110 seconds, CPU metric will be retrieved for the window starting 10 sec
+# after beginning of run and 10 sec before end of the run, and there will be 90/30 = 3 samples
+# retrieved per CPU core.
+tsdb_wait_time: 10
+# TSDB server address
+tsdb_server_ip: localhost
+# TSDB server port
+tsdb_server_port: 9090
 
 # ==================================================
 # SERVER SIDE CONFIG OPTIONS (HTTP SERVER SIDE ONLY)
