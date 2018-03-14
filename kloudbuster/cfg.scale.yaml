@@ -64,6 +64,11 @@ public_key_file:
 # Name of Provider network used for multicast tests.
 multicast_provider_network_name: '' # Leave blank to use first available (default) network.
 
+# TSDB Connector configuration
+tsdb_module: 'kloudbuster.tsdb'
+tsdb_class: 'TSDB'
+tsdb_step_size: 30
+tsdb_wait_time: 10
 
 # ==================================================
 # SERVER SIDE CONFIG OPTIONS (HTTP SERVER SIDE ONLY)
