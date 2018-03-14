@@ -1,0 +1,31 @@
+# The order of packages is significant, because pip processes them in the order
+# of appearance. Changing the order has an impact on the overall integration
+# process, which may cause wedges in the gate later.
+
+pytz>=2016.4
+pbr>=3.0.1
+Babel>=2.3.4
+
+futures>=3.1.1
+python-cinderclient>=2.0.1
+python-glanceclient>=2.6.0
+python-openstackclient>=3.11.0
+python-neutronclient>=6.2.0
+# starting from 10.0.0, floating ip apis are removed from novaclient
+python-novaclient>=9.0.0,<10.0.0
+python-keystoneclient>=3.10.0
+attrdict>=2.0.0
+hdrhistogram>=0.5.2
+# ipaddress is required to get TLS working
+# otherwise certificates with numeric IP addresses in the ServerAltName field will fail
+ipaddress>= 1.0.16
+oslo.config>=4.1.1
+oslo.log>=3.26.1
+pecan>=1.2.1
+redis>=2.10.5
+tabulate>=0.7.7
+pyyaml>=3.12
+requests
+
+# Workaround for pip install failed on RHEL/CentOS
+functools32>=3.2.3
