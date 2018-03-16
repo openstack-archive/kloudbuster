@@ -55,6 +55,8 @@ class FioTool(PerfTool):
             assign_dict(parsed_output, 'write_KB', job['write']['io_bytes'])
             assign_dict(parsed_output, 'write_hist', job['write']['clat']['hist'], 'write_bw')
 
+            assign_dict(parsed_output, 'cpu', {'usr': job['usr_cpu'], 'sys': job['sys_cpu']})
+
         except Exception:
             return self.parse_error('Could not parse: "%s"' % (stdout))
         return parsed_output
@@ -75,6 +77,12 @@ class FioTool(PerfTool):
             if total:
                 all_res[key] = int(total)
         all_res['tool'] = results[0]['results']['tool']
+
+        all_cpus = []
+        for item in results:
+            all_cpus.append(item['results'].get('cpu', None))
+        if all_cpus:
+            all_res['cpu'] = all_cpus
 
         clat_list = []
         # perc_list = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 99.5, 99.9, 99.95, 99.99]
