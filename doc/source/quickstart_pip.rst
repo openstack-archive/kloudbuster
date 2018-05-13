@@ -3,7 +3,7 @@ KloudBuster Pip Install Quick Start Guide
 =========================================
 
 KloudBuster is available in the Python Package Index (PyPI)
-`KloudBuster PyPI <https://pypi.python.org/pypi/KloudBuster>`_
+`KloudBuster PyPI <https://pypi.org/project/KloudBuster>`_
 and can be installed on any system that has python 2.7.
 
 1. Install pip and the python virtualenv (if not installed already)
