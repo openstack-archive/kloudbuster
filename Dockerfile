@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y \
        python-dev \
        python-pip \
     && pip install -U -q pip \
+    && hash -r pip \
     && pip install -U -q setuptools \
     && cd /kloudbuster \
     && pip install -q -e . \

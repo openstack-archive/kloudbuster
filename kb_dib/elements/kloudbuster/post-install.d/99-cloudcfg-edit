@@ -5,7 +5,7 @@ cloudcfg = "/etc/cloud/cloud.cfg"
 user = "cloud-user"
 
 with open(cloudcfg) as f:
-  cfg = safe_yaml.load(f)
+  cfg = yaml.safe_load(f)
 
 try:
   if cfg['system_info']['default_user']['name']:
