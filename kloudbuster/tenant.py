@@ -68,7 +68,7 @@ class Tenant(object):
             LOG.info("Creating tenant: " + self.tenant_name)
             tenant_object = \
                 self.tenant_api.create(self.tenant_name,
-                                       # domain="default",
+                                       domain="default",
                                        description="KloudBuster tenant",
                                        enabled=True)
             return tenant_object
