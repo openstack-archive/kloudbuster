@@ -40,7 +40,7 @@ from kb_runner_storage import KBRunner_Storage
 from kb_scheduler import KBScheduler
 
 import keystoneauth1
-from keystoneclient.v2_0 import client as keystoneclient
+from keystoneclient import client as keystoneclient
 
 import log as logging
 from neutronclient.neutron import client as neutronclient
