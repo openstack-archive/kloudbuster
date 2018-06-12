@@ -165,10 +165,12 @@ class BaseNetwork(object):
         if config_scale['use_floatingip']:
             external_network = find_external_network(self.neutron_client)
 
+        volume_type = None
         storage_mode = self.router.user.tenant.kloud.storage_mode
         if storage_mode and config_scale['storage_stage_configs']['target'] == 'volume':
             bs_obj = base_storage.BaseStorage(self.cinder_client)
             vol_size = config_scale['storage_stage_configs']['disk_size']
+            volume_type = config_scale['storage_stage_configs'].get('volume_type', None)
         else:
             vol_size = 0
 
@@ -182,7 +184,11 @@ class BaseNetwork(object):
             # Don't create volumn for KB-Proxy
             if vol_size and instance_count < vm_total - 1:
                 vol_name = network_prefix + "-V" + str(instance_count)
-                perf_instance.vol = bs_obj.create_vol(vol_size, name=vol_name)
+                if volume_type:
+                    perf_instance.vol = bs_obj.create_vol(vol_size, name=vol_name,
+                                                          type=volume_type)
+                else:
+                    perf_instance.vol = bs_obj.create_vol(vol_size, name=vol_name)
                 self.res_logger.log('volumes', vol_name, perf_instance.vol.id)
 
             perf_instance.subnet_ip = self.network['subnet_ip']
