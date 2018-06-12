@@ -302,6 +302,8 @@ client:
         # The size of the test file for running IO tests in GB. Must be less or
         # equal than disk_size. Defaults to 1 GB
         io_file_size: 1
+        # Optional paramater volume_type used to test multibackends and QOS specs
+        # volume_type: sf_volume
 
     # Storage tool specific configs (per VM)
     # Multiple factors can impact the storage performance numbers, and KloudBuster is defining

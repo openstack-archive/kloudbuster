@@ -211,6 +211,13 @@ This section defines the storage specific configs in the staging phase::
     # The size of the test file for running IO tests in GB. Must be less or
     # equal than disk_size.
     io_file_size: 1
+    # Optional volume_type for cinder volumes
+    # Do not specify unless using QOS specs or testing a specific volume type
+    # Used to test multibackend support and QOS specs
+    # Must be a valid cinder volume type as listed by openstack volume type list
+    # Make sure volume type is public
+    # If an invalid volume type is specified tool will Error out on volume create
+    # volume_type: cephtype
 
 * **client:storage_tool_configs**
 

@@ -29,8 +29,12 @@ class BaseStorage(object):
     def __init__(self, cinderclient):
         self.cinderclient = cinderclient
 
-    def create_vol(self, size, name=None):
-        vol = self.cinderclient.volumes.create(size, name=name)
+    def create_vol(self, size, name=None, type=None):
+        if type:
+            vol = self.cinderclient.volumes.create(size, name=name,
+                                                   volume_type=type)
+        else:
+            vol = self.cinderclient.volumes.create(size, name=name)
         for _ in range(10):
             if vol.status == 'creating':
                 time.sleep(1)

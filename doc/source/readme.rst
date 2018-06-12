@@ -69,6 +69,8 @@ Feature List
 
    * User configurable workload sequence
 
+   * Support for creating cinder volumes with custom volume types and associated QOS specs
+
 * Supports automated scale progressions (VM count series in any multiple
   increment) to reduce dramatically scale testing time
 
