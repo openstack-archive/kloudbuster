@@ -2,6 +2,14 @@
 
 # This script will build the kloudbuster VM image and the container image under the ./build directory
 
+# canned user/password for direct login
+export DIB_DEV_USER_USERNAME=kb
+export DIB_DEV_USER_PASSWORD=kb
+export DIB_DEV_USER_PWDLESS_SUDO=Y
+
+# Set the data sources to have ConfigDrive only
+export DIB_CLOUD_INIT_DATASOURCES="ConfigDrive"
+
 # Check we are in a virtual environment
 function check_in_venv {
   IN_VENV=$(python -c 'import sys; print hasattr(sys, "real_prefix")')

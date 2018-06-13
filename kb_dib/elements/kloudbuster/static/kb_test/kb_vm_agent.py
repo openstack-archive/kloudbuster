@@ -22,6 +22,7 @@ import struct
 import subprocess
 from subprocess import Popen
 import sys
+import syslog
 import threading
 import time
 import traceback
@@ -40,7 +41,10 @@ __version__ = '7'
 def exec_command(cmd, cwd=None):
     p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = p.communicate()
-
+    if p.returncode:
+        syslog.syslog("Command failed: " + cmd)
+        if stderr:
+            syslog.syslog(stderr)
     return p.returncode
 
 def refresh_clock(clocks, force_sync=False):
@@ -599,11 +603,13 @@ if __name__ == "__main__":
         cmd = ['python', 'setup.py', 'develop']
         rc = exec_command(cmd, cwd=cwd)
         if not rc:
+            syslog.syslog("Starting kloudbuster HTTP server")
             cmd = ['/usr/local/bin/pecan', 'serve', 'config.py']
             sys.exit(exec_command(cmd, cwd=cwd))
 
     if user_data.get('role') == 'KB-PROXY':
         agent = KBA_Proxy()
+        syslog.syslog("Starting kloudbuster proxy server")
         sys.exit(agent.start_redis_server())
     if user_data.get('role').endswith('Server'):
         agent = KBA_Server(user_data)
@@ -621,17 +627,20 @@ if __name__ == "__main__":
                                                user_data.get('multicast_ports'),
                                                user_data.get('multicast_listener_address_start'))
         if agent.config_nginx_server():
+            syslog.syslog("Starting kloudbuster nginx server")
             sys.exit(agent.start_nginx_server())
         else:
             sys.exit(1)
     elif user_data.get('role').endswith('Client'):
         if user_data['role'].startswith('HTTP'):
+            syslog.syslog("Starting kloudbuster HTTP client")
             agent = KBA_HTTP_Client(user_data)
         elif user_data['role'].startswith('Multicast'):
             KB_Instance.add_multicast_route()
             refresh_clock(user_data.get('ntp_clocks'), force_sync=True)
             agent = KBA_Multicast_Client(user_data)
         else:
+            syslog.syslog("Starting kloudbuster storage client")
             agent = KBA_Storage_Client(user_data)
         agent.setup_channels()
         agent.hello_thread = threading.Thread(target=agent.send_hello)
