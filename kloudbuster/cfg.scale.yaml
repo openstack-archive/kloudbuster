@@ -15,7 +15,7 @@ openrc_file:
 
 # Name of the image to use for all test VMs (client, server and proxy)
 # without the qcow2 extension
-# 
+#
 # Leave empty to use the default test VM image (recommended).
 # If non empty use quotes if there are space characters in the name (e.g. 'my image')
 # The default test VM image is named "kloudbuster-<version>" where
@@ -28,9 +28,9 @@ image_name:
 #
 # To upload the image, download it first to a local file system before running kloudbuster
 # Fill with the full pathname of the image with qcow2 extension
-# e.g. 
+# e.g.
 # vm_image_file: /kloudbuster/kloudbuster-7.0.0.qcow2
-# If empty, KloudBuster will attempt to locate that file (with the default name) 
+# If empty, KloudBuster will attempt to locate that file (with the default name)
 # under the following directories:
 # - root of the kloudbuster package
 # - current directory
@@ -84,6 +84,9 @@ tsdb:
     server_ip: localhost
     # TSDB server port
     server_port: 9090
+
+# Maximum time allowed for the Proxy Redis server to get ready in seconds
+proxy_timeout_sec: 120
 
 # ==================================================
 # SERVER SIDE CONFIG OPTIONS (HTTP SERVER SIDE ONLY)
@@ -149,7 +152,7 @@ client:
         disk: 0
         # metadata are supported and can be added if needed
         # example:
-        #extra_specs: 
+        #extra_specs:
             #"hw:cpu_policy": dedicated
 
     # Assign floating IP for every client side test VM

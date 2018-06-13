@@ -615,7 +615,8 @@ class KloudBuster(object):
             self.kb_runner = KBRunner_HTTP(client_list, self.client_cfg,
                                            self.single_cloud)
 
-        self.kb_runner.setup_redis(self.kb_proxy.fip_ip or self.kb_proxy.fixed_ip)
+        self.kb_runner.setup_redis(self.kb_proxy.fip_ip or self.kb_proxy.fixed_ip,
+                                   timeout=self.client_cfg.proxy_timeout_sec)
         if self.client_cfg.progression['enabled'] and not self.multicast_mode:
             log_info = "Progression run is enabled, KloudBuster will schedule " \
                        "multiple runs as listed:"
