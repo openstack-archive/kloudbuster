@@ -686,9 +686,10 @@ class KloudBuster(object):
             for run_result in self.kb_runner.run(test_only, runlabel):
                 if not self.multicast_mode or len(self.final_result['kb_result']) == 0:
                     self.final_result['kb_result'].append(self.kb_runner.tool_result)
-            tsdb_result = self.tsdb_connector.get_results(start_time=start_time)
-            if tsdb_result:
-                self.final_result['tsdb'] = tsdb_result
+            if self.tsdb_connector:
+                tsdb_result = self.tsdb_connector.get_results(start_time=start_time)
+                if tsdb_result:
+                    self.final_result['tsdb'] = tsdb_result
             LOG.info('SUMMARY: %s' % self.final_result)
             if not self.interactive:
                 break
