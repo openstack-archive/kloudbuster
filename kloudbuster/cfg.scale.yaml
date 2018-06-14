@@ -154,6 +154,16 @@ client:
         # example:
         #extra_specs:
             #"hw:cpu_policy": dedicated
+    # Flavor to use for proxy instance
+    proxy_flavor:
+        # Number of vCPUs for the flavor
+        vcpus: 1
+        # Memory for the flavor in MB
+        ram: 2048
+        # Size of local disk in GB
+        disk: 0
+        # Size of ephemeral disk in GB
+        ephemeral: 0
 
     # Assign floating IP for every client side test VM
     # Default: no floating IP (only assign internal fixed IP)
