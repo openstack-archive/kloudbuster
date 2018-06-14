@@ -141,8 +141,10 @@ class KBConfig(object):
 
         # A bit of config dict surgery, extract out the client and server side
         # and transplant the remaining (common part) into the client and server dict
+        self.proxy_cfg = AttrDict(self.config_scale.pop('proxy'))
         self.server_cfg = AttrDict(self.config_scale.pop('server'))
         self.client_cfg = AttrDict(self.config_scale.pop('client'))
+        self.proxy_cfg.update(self.config_scale)
         self.server_cfg.update(self.config_scale)
         self.client_cfg.update(self.config_scale)
 

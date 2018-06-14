@@ -89,6 +89,19 @@ tsdb:
 proxy_timeout_sec: 120
 
 # ==================================================
+# SERVER SIDE CONFIG OPTIONS (HTTP CLIENT AND STORAGE)
+# ==================================================
+proxy:
+    # Flavor to use for the test images
+    flavor:
+        # Number of vCPUs for the flavor
+        vcpus: 1
+        # Memory for the flavor in MB
+        ram: 2048
+        # Size of local disk in GB
+        disk: 0
+
+# ==================================================
 # SERVER SIDE CONFIG OPTIONS (HTTP SERVER SIDE ONLY)
 # ==================================================
 server:
