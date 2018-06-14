@@ -34,7 +34,7 @@ function build_vm {
     fi
     echo "Building $kb_image_name.qcow2..."
 
-    pip install diskimage-builder
+    pip install "diskimage-builder>=2.15"
 
     cd ./kb_dib
     # Add the kloudbuster elements directory to the DIB elements path
@@ -43,7 +43,7 @@ function build_vm {
     # Install Ubuntu 16.04
     export DIB_RELEASE=xenial
 
-    time disk-image-create -o $kb_image_name ubuntu kloudbuster
+    time disk-image-create -o $kb_image_name block-device-mbr ubuntu kloudbuster
     rm -rf venv $kb_image_name.d
     mv $kb_image_name.qcow2 ..
     cd ..
