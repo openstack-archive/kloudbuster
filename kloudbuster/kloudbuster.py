@@ -183,13 +183,7 @@ class Kloud(object):
             else:
                 flavor_dict['ephemeral'] = 0
             if self.testing_side:
-                proxy_flavor = {
-                    "vcpus": 1,
-                    "ram": 2048,
-                    "disk": 0,
-                    "ephemeral": 0
-                }
-                create_flavor(flavor_manager, FLAVOR_KB_PROXY, proxy_flavor, extra_specs)
+                create_flavor(flavor_manager, FLAVOR_KB_PROXY, self.scale_cfg.proxy_flavor, extra_specs)
                 create_flavor(flavor_manager, FLAVOR_KB_CLIENT, flavor_dict, extra_specs)
             else:
                 create_flavor(flavor_manager, FLAVOR_KB_SERVER, flavor_dict, extra_specs)
