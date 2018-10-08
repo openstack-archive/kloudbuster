@@ -115,7 +115,7 @@ class KBRunner_Storage(KBRunner):
 
                 if self.config.prompt_before_run:
                     print "Press enter to start running benchmarking tools..."
-                    raw_input()
+                    input()
 
             test_count = len(self.config.storage_tool_configs)
             perf_tool = self.client_dict.values()[0].perf_tool
