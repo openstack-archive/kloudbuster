@@ -82,7 +82,7 @@ class KBRunner_Multicast(KBRunner):
 
                 if self.config.prompt_before_run:
                     print "Press enter to start running benchmarking tools..."
-                    raw_input()
+                    input()
 
             LOG.info("Running Multicast Benchmarking...")
             self.report = {'seq': 0, 'report': None}
