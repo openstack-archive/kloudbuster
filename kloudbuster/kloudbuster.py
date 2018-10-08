@@ -675,7 +675,7 @@ class KloudBuster(object):
         while 1:
             if self.interactive:
                 print()
-                runlabel = raw_input('>> KB ready, enter label for next run or "q" to quit: ')
+                runlabel = input('>> KB ready, enter label for next run or "q" to quit: ')
                 if runlabel.lower() == "q":
                     break
 

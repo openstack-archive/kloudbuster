@@ -85,7 +85,7 @@ class KBRunner_HTTP(KBRunner):
 
                 if self.config.prompt_before_run:
                     print "Press enter to start running benchmarking tools..."
-                    raw_input()
+                    input()
 
             LOG.info("Running HTTP Benchmarking...")
             self.report = {'seq': 0, 'report': None}

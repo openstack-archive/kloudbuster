@@ -60,6 +60,7 @@ import cinderclient
 from keystoneclient import client as keystoneclient
 import neutronclient
 from novaclient.exceptions import NotFound
+from six.moves import input
 from tabulate import tabulate
 
 # kloudbuster base code
@@ -70,7 +71,7 @@ resource_name_re = None
 def prompt_to_run():
     print "Warning: You didn't specify a resource list file as the input. "\
           "The script will delete all resources shown above."
-    answer = raw_input("Are you sure? (y/n) ")
+    answer = input("Are you sure? (y/n) ")
     if answer.lower() != 'y':
         sys.exit(0)
 
