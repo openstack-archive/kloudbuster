@@ -139,7 +139,7 @@ If you are interested in OpenStack Performance and Scale, contributions and
 feedbacks are welcome!
 
 If you have any feedbacks or would like to contribute,
-send an email to openstack-dev@lists.openstack.org with a '[kloudbuster]'
+send an email to openstack-discuss@lists.openstack.org with a '[kloudbuster]'
 tag in the subject.
 
 
