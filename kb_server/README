@@ -1,5 +1,0 @@
-Run below command once after the installation:
-python setup.py develop
-
-Run below command to start the server:
-pecan serve config.py

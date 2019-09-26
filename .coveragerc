@@ -1,7 +1,0 @@
-[run]
-branch = True
-source = kloudbuster
-omit = kloudbuster/openstack/*
-
-[report]
-ignore_errors = True

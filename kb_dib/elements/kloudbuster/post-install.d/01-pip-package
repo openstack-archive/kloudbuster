@@ -1,5 +1,0 @@
-#!/bin/sh
-
-pip install --upgrade pip
-hash -r pip
-pip install setuptools wheel
